@@ -805,7 +805,7 @@ std::string FullInterface::getWavetableName(int index) {
 
 std::string FullInterface::getSignedInName() {
   if (authentication_ == nullptr || !auth_.loggedIn())
-    return "";
+    return "Anon";
   
   return authentication_->getSignedInName();
 }

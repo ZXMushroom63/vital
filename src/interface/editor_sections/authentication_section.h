@@ -134,11 +134,11 @@ class AuthenticationSection : public Overlay, public TextEditor::Listener, publi
     }
 
     std::string getSignedInName() {
-      return signed_in_email_;
+      return "Anon";
     }
 
     std::string getEmail() {
-      return signed_in_email_;
+      return "Anon";
     }
 
     void workOffline() override;
@@ -187,7 +187,7 @@ class AuthenticationSection : public Component {
 
     AuthenticationSection(Authentication* auth) { }
 
-    std::string getSignedInName() { return ""; }
+    std::string getSignedInName() { return "Anon"; }
     void signOut() { }
     void create() { }
     void setFocus() { }

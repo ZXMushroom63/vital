@@ -203,15 +203,9 @@ void SynthPresetSelector::showPopupMenu(Component* anchor) {
   options.addItem(kInitPreset, "Initialize Preset");
   options.addItem(-1, "");
   options.addItem(kLoadTuning, "Load Tuning File");
-  if (!hasDefaultTuning())
+  if (!hasDefaultTuning()) {
     options.addItem(kClearTuning, "Clear Tuning: " + getTuningName());
-  
-  options.addItem(-1, "");
-  std::string logged_in_as = loggedInName();
-  if (logged_in_as.empty())
-    options.addItem(kLogIn, "Log in");
-  else
-    options.addItem(kLogOut, "Log out - " + redactEmail(logged_in_as).toStdString());
+  }
 
   if (LoadSave::getDefaultSkin().exists()) {
     options.addItem(-1, "");
@@ -371,7 +365,7 @@ std::string SynthPresetSelector::loggedInName() {
   FullInterface* full_interface = findParentComponentOfClass<FullInterface>();
   if (full_interface)
     return full_interface->getSignedInName();
-  return "";
+  return "Anon";
 }
 
 void SynthPresetSelector::signOut() {
