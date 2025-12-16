@@ -110,7 +110,9 @@ public:
         auto glBounds = component.getTopLevelComponent()
                            ->getLocalArea (&component, component.getLocalBounds());
 
-        glBounds = Desktop::getInstance().getDisplays().logicalToPhysical (glBounds);
+        if (JUCEApplicationBase::isStandaloneApp()) {
+            //glBounds = Desktop::getInstance().getDisplays().logicalToPhysical (glBounds);
+        }
 
         embeddedWindow = X11Symbols::getInstance()->xCreateWindow (display, windowH,
                                                                    glBounds.getX(), glBounds.getY(),
@@ -214,7 +216,7 @@ public:
 
     void updateWindowPosition (Rectangle<int> newBounds)
     {
-        bounds = newBounds;
+        bounds = newBounds.translated(0, 48);
         auto physicalBounds = Desktop::getInstance().getDisplays().logicalToPhysical (bounds);
 
         XWindowSystemUtilities::ScopedXLock xLock;
