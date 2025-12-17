@@ -14,17 +14,8 @@ PAID := 1
 VERSION := $(shell sh -c 'grep -oh -m 1 "VERSION=[0-9\.]*" standalone/builds/linux/Makefile | cut -d "=" -f 2')
 
 MACHINE := $(shell sh -c 'uname -m 2> /dev/null || echo not')
-ifneq (,$(findstring aarch,$(MACHINE)))
-	SIMDFLAGS := -march=armv8-a -mtune=cortex-a53
-  GLFLAGS := -DOPENGL_ES=1
-else
-ifneq (,$(findstring arm,$(MACHINE)))
-	SIMDFLAGS := -march=armv8-a -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
-  GLFLAGS := -DOPENGL_ES=1
-else
-	SIMDFLAGS := -msimd128 -mavx2 -O3 --cache ./emsdk_cache
-endif
-endif
+
+EMXXFLAGS := -msimd128 -mavx2 -O3 --cache ./emsdk_cache -s USE_WEBGL2=1 -s GL_ES_VERSION=3
 
 PROGRAM = vital
 LIB_PROGRAM = Vital
@@ -84,34 +75,38 @@ install_icons:
 	cp $(ICON256) $(ICONDEST256)/$(PROGRAM).png
 
 standalone:
-	$(MAKE) -C standalone/builds/linux CONFIG=$(CONFIG) SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+	$(MAKE) -C standalone/builds/linux CONFIG=$(CONFIG) EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
 wasm_beta:
-	$(MAKE) -C headless/builds/wasm CONFIG=$(CONFIG) SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+	$(MAKE) -C headless/builds/wasm CONFIG=$(CONFIG) EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+
+wasm_full:
+	$(MAKE) -C headless/builds/wasm_full CONFIG=$(CONFIG) EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+
 
 lv2:
-	$(MAKE) -C plugin/builds/linux_lv2 CONFIG=$(CONFIG) AR=gcc-ar SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+	$(MAKE) -C plugin/builds/linux_lv2 CONFIG=$(CONFIG) AR=gcc-ar EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
 effects_lv2:
-	$(MAKE) -C effects/builds/linux_lv2 CONFIG=$(CONFIG) AR=gcc-ar SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+	$(MAKE) -C effects/builds/linux_lv2 CONFIG=$(CONFIG) AR=gcc-ar EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
 vst:
-	$(MAKE) -C plugin/builds/linux_vst VST CONFIG=$(CONFIG) AR=gcc-ar SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+	$(MAKE) -C plugin/builds/linux_vst VST CONFIG=$(CONFIG) AR=gcc-ar EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
 vst3:
-	$(MAKE) -C plugin/builds/linux_vst VST3 CONFIG=$(CONFIG) AR=gcc-ar SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+	$(MAKE) -C plugin/builds/linux_vst VST3 CONFIG=$(CONFIG) AR=gcc-ar EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
 effects_vst:
-	$(MAKE) -C effects/builds/linux_vst VST CONFIG=$(CONFIG) AR=gcc-ar SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+	$(MAKE) -C effects/builds/linux_vst VST CONFIG=$(CONFIG) AR=gcc-ar EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
 effects_vst3:
-	$(MAKE) -C effects/builds/linux_vst VST3 CONFIG=$(CONFIG) AR=gcc-ar SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"v
+	$(MAKE) -C effects/builds/linux_vst VST3 CONFIG=$(CONFIG) AR=gcc-ar EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"v
 
 headless_server:
-	$(MAKE) -C headless/builds/linux CONFIG=$(CONFIG) SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+	$(MAKE) -C headless/builds/linux CONFIG=$(CONFIG) EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
 test:
-	$(MAKE) -C tests/builds/linux CONFIG=$(CONFIG) SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+	$(MAKE) -C tests/builds/linux CONFIG=$(CONFIG) EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
 clean:
 	$(MAKE) clean -C headless/builds/was CONFIG=$(CONFIG)

@@ -3,7 +3,6 @@
     # nativeBuildInputs is usually what you want -- tools you need to run
     nativeBuildInputs = with pkgs.buildPackages; [
         gnumake
-        libglvnd
         alsa-lib
         alsa-oss
         portaudio

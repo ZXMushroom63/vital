@@ -75,7 +75,7 @@
  #endif
 
  #if JUCE_MINGW
-  #include <GL/gl.h>
+  #include <GLES3/gl3.h>
  #else
   #include <gl/GL.h>
  #endif
@@ -89,7 +89,7 @@
   #undef CLEAR_TEMP_APIENTRY
  #endif
 #elif JUCE_LINUX
- #include <GL/gl.h>
+ #include <GLES3/gl3.h>
  #undef KeyPress
 #elif JUCE_IOS
  #if defined (__IPHONE_12_0) && __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_12_0

@@ -119,7 +119,7 @@
 /*
  * Always include OpenGL and GLU headers
  */
-#include <GL/gl.h>
+#include <GLES3/gl3.h>
 #include <GL/glu.h>
 
 /*
