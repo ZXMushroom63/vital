@@ -333,15 +333,6 @@ void Thread::launch (std::function<void()> functionToRun)
 //==============================================================================
 void SpinLock::enter() const noexcept
 {
-    if (! tryEnter())
-    {
-        for (int i = 20; --i >= 0;)
-            if (tryEnter())
-                return;
-
-        while (! tryEnter())
-            Thread::yield();
-    }
 }
 
 //==============================================================================

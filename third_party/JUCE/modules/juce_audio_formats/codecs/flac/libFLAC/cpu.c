@@ -480,15 +480,7 @@ void FLAC__cpu_info_x86(FLAC__uint32 level, FLAC__uint32 *eax, FLAC__uint32 *ebx
 
 FLAC__uint32 FLAC__cpu_xgetbv_x86(void)
 {
-#if (defined _MSC_VER || defined __INTEL_COMPILER) && defined FLAC__AVX_SUPPORTED
-	return (FLAC__uint32)_xgetbv(0);
-#elif defined __GNUC__
-	FLAC__uint32 lo, hi;
-	asm volatile (".byte 0x0f, 0x01, 0xd0" : "=a"(lo), "=d"(hi) : "c" (0));
-	return lo;
-#else
-	return 0;
-#endif
+return 0;
 }
 
 #endif /* (FLAC__CPU_IA32 || FLAC__CPU_X86_64) && FLAC__HAS_X86INTRIN */

@@ -36,7 +36,7 @@
   #import <UIKit/UIKit.h>
   #import <CoreData/CoreData.h>
   #import <MobileCoreServices/MobileCoreServices.h>
-  #include <sys/fcntl.h>
+  #include "emsdk_fcntl.h"
  #else
   #if JUCE_MODULE_AVAILABLE_juce_opengl && defined (MAC_OS_X_VERSION_10_14) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_14
    #define GL_SILENCE_DEPRECATION 1
@@ -238,8 +238,6 @@
  #include <sys/file.h>
  #include <sys/ioctl.h>
  #include <sys/mman.h>
- #include <sys/prctl.h>
- #include <sys/ptrace.h>
  #include <sys/socket.h>
  #include <sys/stat.h>
  #include <sys/sysinfo.h>

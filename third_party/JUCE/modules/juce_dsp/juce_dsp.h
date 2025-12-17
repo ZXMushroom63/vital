@@ -67,7 +67,7 @@
  #endif
 
  #ifndef JUCE_USE_SIMD
-  #define JUCE_USE_SIMD 1
+  #define JUCE_USE_SIMD 0
  #endif
 
  #if JUCE_USE_SIMD
@@ -77,7 +77,7 @@
 #elif defined (__ARM_NEON__) || defined (__ARM_NEON) || defined (__arm64__) || defined (__aarch64__)
 
  #ifndef JUCE_USE_SIMD
-  #define JUCE_USE_SIMD 1
+  #define JUCE_USE_SIMD 0
  #endif
 
  #include <arm_neon.h>

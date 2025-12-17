@@ -22,7 +22,7 @@ ifneq (,$(findstring arm,$(MACHINE)))
 	SIMDFLAGS := -march=armv8-a -mtune=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
   GLFLAGS := -DOPENGL_ES=1
 else
-	SIMDFLAGS := -msse2
+	SIMDFLAGS := -msimd128 -mavx2 -O3 --cache ./emsdk_cache
 endif
 endif
 
@@ -86,6 +86,9 @@ install_icons:
 standalone:
 	$(MAKE) -C standalone/builds/linux CONFIG=$(CONFIG) SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
+wasm_beta:
+	$(MAKE) -C headless/builds/wasm CONFIG=$(CONFIG) SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+
 lv2:
 	$(MAKE) -C plugin/builds/linux_lv2 CONFIG=$(CONFIG) AR=gcc-ar SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
@@ -111,7 +114,7 @@ test:
 	$(MAKE) -C tests/builds/linux CONFIG=$(CONFIG) SIMDFLAGS="$(SIMDFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
 clean:
-	$(MAKE) clean -C standalone/builds/linux CONFIG=$(CONFIG)
+	$(MAKE) clean -C headless/builds/was CONFIG=$(CONFIG)
 	$(MAKE) clean -C plugin/builds/linux_vst CONFIG=$(CONFIG)
 	$(MAKE) clean -C plugin/builds/linux_lv2 CONFIG=$(CONFIG)
 	$(MAKE) clean -C effects/builds/linux_vst CONFIG=$(CONFIG)

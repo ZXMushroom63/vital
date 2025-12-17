@@ -41,7 +41,7 @@ ifeq ($(CONFIG),Debug)
 
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -g -ggdb -O0 -ffast-math ${SIMDFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -funroll-loops $(CFLAGS)
   JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++14 $(CXXFLAGS)
-  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) -L/usr/X11R6/lib/ -L../../../third_party/firebase_cpp_sdk/libs/linux/x86_64/ $(shell pkg-config --libs alsa freetype2 libcurl) -fvisibility=hidden -ffast-math ${SIMDFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -lcurl -lrt -ldl -lpthread -lGL -lfirebase_auth -lfirebase_app -lsecret-1 -lglib-2.0 $(LDFLAGS)
+  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) -L/usr/X11R6/lib/ -L../../../third_party/firebase_cpp_sdk/libs/linux/x86_64/ $(shell pkg-config --libs alsa freetype2 libcurl) -fvisibility=hidden -ffast-math ${SIMDFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -lrt -ldl -lpthread -lGL -lfirebase_auth -lfirebase_app -lsecret-1 -lglib-2.0 $(LDFLAGS)
 
   CLEANCMD = rm -rf $(JUCE_OUTDIR)/$(TARGET) $(JUCE_OBJDIR)
 endif
@@ -62,7 +62,7 @@ ifeq ($(CONFIG),Release)
 
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -Ofast -flto -ffast-math ${SIMDFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -funroll-loops $(CFLAGS)
   JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++14 $(CXXFLAGS)
-  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) -L/usr/X11R6/lib/ -L../../../third_party/firebase_cpp_sdk/libs/linux/x86_64/ $(shell pkg-config --libs alsa freetype2 libcurl) -fvisibility=hidden -flto -ffast-math ${SIMDFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -lcurl -lrt -ldl -lpthread -lGL -lfirebase_auth -lfirebase_app -lsecret-1 -lglib-2.0 $(LDFLAGS)
+  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) -L/usr/X11R6/lib/ -L../../../third_party/firebase_cpp_sdk/libs/linux/x86_64/ $(shell pkg-config --libs alsa freetype2 libcurl) -fvisibility=hidden -flto -ffast-math ${SIMDFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -lrt -ldl -lpthread -lGL -lfirebase_auth -lfirebase_app -lsecret-1 -lglib-2.0 $(LDFLAGS)
 
   CLEANCMD = rm -rf $(JUCE_OUTDIR)/$(TARGET) $(JUCE_OBJDIR)
 endif

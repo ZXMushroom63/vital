@@ -13,7 +13,6 @@
         xorg.libXinerama
         xorg.libXext
         xorg.libXcursor
-        curl
         pkg-config
         glib
         libsecret
@@ -24,5 +23,6 @@
         cmake
         ftgl
         freetype
+        emscripten
     ];
 }

@@ -273,12 +273,6 @@ void MessageManager::doPlatformSpecificShutdown()
 
 bool MessageManager::postMessageToSystemQueue (MessageManager::MessageBase* const message)
 {
-    if (auto* queue = InternalMessageQueue::getInstanceWithoutCreating())
-    {
-        queue->postMessage (message);
-        return true;
-    }
-
     return false;
 }
 

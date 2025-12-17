@@ -25,20 +25,13 @@ namespace juce
 
 CriticalSection::CriticalSection() noexcept
 {
-    pthread_mutexattr_t atts;
-    pthread_mutexattr_init (&atts);
-    pthread_mutexattr_settype (&atts, PTHREAD_MUTEX_RECURSIVE);
-   #if ! JUCE_ANDROID
-    pthread_mutexattr_setprotocol (&atts, PTHREAD_PRIO_INHERIT);
-   #endif
-    pthread_mutex_init (&lock, &atts);
-    pthread_mutexattr_destroy (&atts);
+    
 }
 
-CriticalSection::~CriticalSection() noexcept        { pthread_mutex_destroy (&lock); }
-void CriticalSection::enter() const noexcept        { pthread_mutex_lock (&lock); }
-bool CriticalSection::tryEnter() const noexcept     { return pthread_mutex_trylock (&lock) == 0; }
-void CriticalSection::exit() const noexcept         { pthread_mutex_unlock (&lock); }
+CriticalSection::~CriticalSection() noexcept        {  }
+void CriticalSection::enter() const noexcept        {  }
+bool CriticalSection::tryEnter() const noexcept     { true; }
+void CriticalSection::exit() const noexcept         {  }
 
 //==============================================================================
 void JUCE_CALLTYPE Thread::sleep (int millisecs)
@@ -923,45 +916,17 @@ void Thread::killThread()
 
 void JUCE_CALLTYPE Thread::setCurrentThreadName (const String& name)
 {
-   #if JUCE_IOS || JUCE_MAC
-    JUCE_AUTORELEASEPOOL
-    {
-        [[NSThread currentThread] setName: juceStringToNS (name)];
-    }
-   #elif JUCE_LINUX || JUCE_ANDROID
-    #if ((JUCE_LINUX && (__GLIBC__ * 1000 + __GLIBC_MINOR__) >= 2012) \
-          || JUCE_ANDROID && __ANDROID_API__ >= 9)
-     pthread_setname_np (pthread_self(), name.toRawUTF8());
-    #else
-     prctl (PR_SET_NAME, name.toRawUTF8(), 0, 0, 0);
-    #endif
-   #endif
+    return;
 }
 
 bool Thread::setThreadPriority (void* handle, int priority)
 {
-    struct sched_param param;
-    int policy;
-    priority = jlimit (0, 10, priority);
-
-    if (handle == nullptr)
-        handle = (void*) pthread_self();
-
-    if (pthread_getschedparam ((pthread_t) handle, &policy, &param) != 0)
-        return false;
-
-    policy = priority == 0 ? SCHED_OTHER : SCHED_RR;
-
-    const int minPriority = sched_get_priority_min (policy);
-    const int maxPriority = sched_get_priority_max (policy);
-
-    param.sched_priority = ((maxPriority - minPriority) * priority) / 10 + minPriority;
-    return pthread_setschedparam ((pthread_t) handle, policy, &param) == 0;
+    return true;
 }
 
 Thread::ThreadID JUCE_CALLTYPE Thread::getCurrentThreadId()
 {
-    return (ThreadID) pthread_self();
+    return 0;
 }
 
 void JUCE_CALLTYPE Thread::yield()
