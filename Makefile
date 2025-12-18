@@ -15,7 +15,7 @@ VERSION := $(shell sh -c 'grep -oh -m 1 "VERSION=[0-9\.]*" standalone/builds/lin
 
 MACHINE := $(shell sh -c 'uname -m 2> /dev/null || echo not')
 
-EMXXFLAGS := -msimd128 -mavx2 -O3 --cache ./emsdk_cache -s USE_WEBGL2=1 -s GL_ES_VERSION=3
+EMXXFLAGS := -msimd128 -mavx2 -O3 --cache ./emsdk_cache -sUSE_WEBGL2=1 -sFULL_ES3 -sFULL_ES2 -sMIN_WEBGL_VERSION=2 -sMODULARIZE=1 -sEXPORT_NAME='createModule'
 
 PROGRAM = vital
 LIB_PROGRAM = Vital
@@ -81,8 +81,7 @@ wasm_beta:
 	$(MAKE) -C headless/builds/wasm CONFIG=$(CONFIG) EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
 wasm_full:
-	$(MAKE) -C headless/builds/wasm_full CONFIG=$(CONFIG) EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
-
+	$(MAKE) -C standalone/builds/wasm_full CONFIG=$(CONFIG) EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
 lv2:
 	$(MAKE) -C plugin/builds/linux_lv2 CONFIG=$(CONFIG) AR=gcc-ar EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"

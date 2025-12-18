@@ -21,6 +21,8 @@
 #include "common.h"
 #include <map>
 
+#include <GLES3/gl3.h>
+
 class Shaders {
   public:
     enum VertexShader {

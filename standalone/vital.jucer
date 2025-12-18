@@ -858,8 +858,8 @@
       </MODULEPATHS>
     </XCODE_MAC>
     <LINUX_MAKE targetFolder="builds/linux" bigIcon="JqKIEw" smallIcon="oFf3hH"
-                extraCompilerFlags="-ffast-math ${SIMDFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -funroll-loops"
-                extraLinkerFlags="-ffast-math ${SIMDFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize "
+                extraCompilerFlags="-ffast-math ${EMXXFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -funroll-loops"
+                extraLinkerFlags="-ffast-math ${EMXXFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize "
                 extraDefs="BUILD_DATE=$(BUILD_DATE)&#10;REQUIRE_AUTH=1&#10;_GLIBCXX_USE_CXX11_ABI=0&#10;JUCE_JACK_CLIENT_NAME=&quot;Vital&quot;&#10;JUCE_ALSA_MIDI_INPUT_NAME=&quot;Vital&quot;&#10;JUCE_ALSA_MIDI_OUTPUT_NAME=&quot;Vital&quot;&#10;JUCE_USE_XRANDR=0&#10;JUCE_OPENGL3=1&#10;JUCE_DSP_USE_SHARED_FFTW=1"
                 externalLibraries="firebase_auth&#10;firebase_app&#10;secret-1&#10;glib-2.0">
       <CONFIGURATIONS>

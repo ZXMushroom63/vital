@@ -136,7 +136,7 @@ public:
  #endif
 
  #if JucePlugin_Build_Standalone
-  #if JUCE_USE_CUSTOM_PLUGIN_STANDALONE_APP
+  #if true
     #define START_JUCE_APPLICATION(AppClass) JUCE_CREATE_APPLICATION_DEFINE(AppClass)
     #if JUCE_IOS
      #define START_JUCE_APPLICATION_WITH_CUSTOM_DELEGATE(AppClass, DelegateClass) JUCE_CREATE_APPLICATION_DEFINE_CUSTOM_DELEGATE(AppClass, DelegateClass)

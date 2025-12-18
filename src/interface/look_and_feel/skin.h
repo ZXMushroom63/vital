@@ -19,6 +19,7 @@
 #include "JuceHeader.h"
 
 #include "json/json.h"
+#include <GLES3/gl3.h>
 
 using json = nlohmann::json;
 
