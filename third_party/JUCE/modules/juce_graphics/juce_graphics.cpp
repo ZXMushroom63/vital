@@ -81,6 +81,8 @@
  #endif
 #endif
 
+extern "C" {
+
 #if JUCE_USE_FREETYPE
  #if JUCE_USE_FREETYPE_AMALGAMATED
   #include "native/freetype/FreeTypeAmalgam.h"
@@ -90,6 +92,7 @@
  #endif
 #endif
 
+}
 #undef SIZEOF
 
 #if (JUCE_MAC || JUCE_IOS) && USE_COREGRAPHICS_RENDERING && JUCE_USE_COREIMAGE_LOADER

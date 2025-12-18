@@ -278,7 +278,8 @@ private:
  #include "native/juce_OpenGL_win32.h"
 
 #elif JUCE_LINUX
- #include "native/juce_OpenGL_linux_X11.h"
+ #include "native/juce_OpenGL_linux_EMSDK.h" 
+//#include "native/juce_OpenGL_linux_X11.h"
 
 #elif JUCE_ANDROID
  #include "native/juce_OpenGL_android.h"
