@@ -35,7 +35,7 @@ EM_JS(int, getEmsdkChannelCount, (), {
 });
 
 static void silentErrorHandler (const char*, int, const char*, int, const char*,...) {}
-#define JUCE_EMSDK_LOG(dbgtext)   { juce::String tempDbgBuf ("ALSA: "); tempDbgBuf << dbgtext; Logger::writeToLog (tempDbgBuf); DBG (tempDbgBuf); }
+#define JUCE_EMSDK_LOG(dbgtext)   { juce::String tempDbgBuf ("EMSDK_Audio: "); tempDbgBuf << dbgtext; Logger::writeToLog (tempDbgBuf); DBG (tempDbgBuf); }
 
 //==============================================================================
 class EMSDKAudioIODevice   : public AudioIODevice
@@ -148,7 +148,7 @@ public:
         }
 
         if (outBuffer == nullptr) {
-            outBuffer = new float[512];
+            //outBuffer = ;
         }
 
         isStarted = callback != nullptr;
@@ -170,7 +170,8 @@ public:
 private:
     bool isOpen_ = false, isStarted = false;
 };
-
+AudioIODeviceCallback* EMSDKAudioIODevice::internalCallback = nullptr;
+float* EMSDKAudioIODevice::outBuffer = new float[512];
 
 //==============================================================================
 class EMSDKAudioIODeviceType  : public AudioIODeviceType
