@@ -140,5 +140,6 @@ JUCE_API bool JUCE_CALLTYPE juce_isRunningUnderDebugger() noexcept
 {
    return false;
 }
+void CPUInformation::initialise() noexcept {}; //shim
 
 } // namespace juce

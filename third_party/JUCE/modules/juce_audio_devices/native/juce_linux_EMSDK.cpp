@@ -148,7 +148,7 @@ public:
         }
 
         if (outBuffer == nullptr) {
-            //outBuffer = ;
+            outBuffer = new float[512];
         }
 
         isStarted = callback != nullptr;
@@ -171,7 +171,7 @@ private:
     bool isOpen_ = false, isStarted = false;
 };
 AudioIODeviceCallback* EMSDKAudioIODevice::internalCallback = nullptr;
-float* EMSDKAudioIODevice::outBuffer = new float[512];
+float* EMSDKAudioIODevice::outBuffer = nullptr;
 
 //==============================================================================
 class EMSDKAudioIODeviceType  : public AudioIODeviceType

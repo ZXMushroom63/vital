@@ -74,7 +74,7 @@ ifeq ($(CONFIG),Release)
   # i already went through the suffering of compiling libfreetype.a
   FTFLAGS = -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include -L/home/zxmushroom63/Documents/Code/vital/standalone/builds/wasm_full/freetype -lfreetype -v
 
-  JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -O3 -flto -ffast-math ${EMXXFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -funroll-loops $(CFLAGS)  $(FTFLAGS)
+  JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -flto -ffast-math ${EMXXFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -funroll-loops $(CFLAGS)  $(FTFLAGS)
   JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++14 $(CXXFLAGS)  $(FTFLAGS)
   JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) -L/usr/X11R6/lib/ -fvisibility=hidden -flto -ffast-math ${EMXXFLAGS} ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -lrt -ldl -lpthread $(LDFLAGS) $(FTFLAGS)
   CLEANCMD = rm -rf $(JUCE_OUTDIR)/$(TARGET) $(JUCE_OBJDIR)
@@ -116,6 +116,8 @@ $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) : $(OBJECTS_APP) $(RESOURCES)
 	-$(V_AT)mkdir -p $(JUCE_LIBDIR)
 	-$(V_AT)mkdir -p $(JUCE_OUTDIR)
 	$(V_AT)$(CXX) -o $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) $(OBJECTS_APP) $(JUCE_LDFLAGS) $(JUCE_LDFLAGS_APP) $(RESOURCES) $(TARGET_ARCH)
+	-$(V_AT)cp template/index.html build/index.html
+	-$(V_AT)mv build/vial build/vial.js
 
 $(JUCE_OBJDIR)/common_24cbed85.o: ../../../src/unity_build/common.cpp
 	-$(V_AT)mkdir -p $(JUCE_OBJDIR)

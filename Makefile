@@ -17,9 +17,9 @@ MACHINE := $(shell sh -c 'uname -m 2> /dev/null || echo not')
 
 EMXXFLAGS := -msimd128 -mavx2 -O3 --cache ./emsdk_cache -sUSE_WEBGL2=1 -sFULL_ES3 -sFULL_ES2 -sMIN_WEBGL_VERSION=2 -sMODULARIZE=1 -sEXPORT_NAME='createModule'
 
-PROGRAM = vital
-LIB_PROGRAM = Vital
-LIB_PROGRAM_FX = VitalFX
+PROGRAM = vial
+LIB_PROGRAM = Vial
+LIB_PROGRAM_FX = VialFX
 BIN = $(DESTDIR)/usr/bin
 BINFILE = $(BIN)/$(PROGRAM)
 LV2 = $(DESTDIR)/$(LIBDIR)/lv2/$(LIB_PROGRAM).lv2

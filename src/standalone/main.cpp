@@ -21,11 +21,14 @@
 #include "startup.h"
 #include "synth_editor.h"
 #include "tuning.h"
+#include <emscripten.h>
 
 #if JUCE_MODULE_AVAILABLE_juce_graphics
 #include "wavetable_edit_section.h"
 #include "wavetable_3d.h"
 #endif
+
+#define STDOUT_LOG(txt) {std::cout << txt << newLine;}
 
 void handleVitalCrash(void* data) {
   LoadSave::writeCrashLog(SystemStats::getStackBacktrace());
@@ -536,4 +539,25 @@ class SynthApplication : public JUCEApplication {
     std::unique_ptr<MainWindow> main_window_;
 };
 
-START_JUCE_APPLICATION(SynthApplication)
+SynthApplication* appInst = nullptr;
+extern "C" {
+    EMSCRIPTEN_KEEPALIVE  
+    void startApplication()
+    {
+        if (appInst == nullptr) {
+          STDOUT_LOG("Janky startup sequence!");
+          appInst = new SynthApplication();
+          appInst->initialise("");
+        }
+    }
+}
+// int main(int argc, char* argv[])
+// {
+//     JUCEApplication::createInstance = []() -> JUCEApplicationBase*
+//     {
+//         return nullptr;
+//     };
+
+//     return JUCEApplication::main(argc, argv);
+// }
+//START_JUCE_APPLICATION(SynthApplication)
