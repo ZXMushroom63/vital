@@ -15,7 +15,7 @@ VERSION := $(shell sh -c 'grep -oh -m 1 "VERSION=[0-9\.]*" standalone/builds/lin
 
 MACHINE := $(shell sh -c 'uname -m 2> /dev/null || echo not')
 
-EMXXFLAGS := -msimd128 -mavx2 -O3 --cache ./emsdk_cache -sUSE_WEBGL2=1 -sFULL_ES3 -sFULL_ES2 -sMIN_WEBGL_VERSION=2 -sMODULARIZE=1 -sEXPORT_NAME='createModule'
+EMXXFLAGS := -msimd128 -mavx2 -O0 -g3 -gsource-map --cache ./emsdk_cache -sUSE_WEBGL2=1 -sFULL_ES3 -sFULL_ES2 -sMIN_WEBGL_VERSION=2 -sMODULARIZE=1 -sEXPORT_NAME='createModule'
 
 PROGRAM = vial
 LIB_PROGRAM = Vial
