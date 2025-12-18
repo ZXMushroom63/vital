@@ -73,7 +73,7 @@
     the availability of Xrandr is queried during runtime.
 */
 #ifndef JUCE_USE_XRANDR
- #define JUCE_USE_XRANDR 1
+ #define JUCE_USE_XRANDR 0
 #endif
 
 /** Config: JUCE_USE_XINERAMA
@@ -84,7 +84,7 @@
     the availability of Xinerama is queried during runtime.
 */
 #ifndef JUCE_USE_XINERAMA
- #define JUCE_USE_XINERAMA 1
+ #define JUCE_USE_XINERAMA 0
 #endif
 
 /** Config: JUCE_USE_XSHM
@@ -92,7 +92,7 @@
     unless you have a good reason to disable it.
 */
 #ifndef JUCE_USE_XSHM
- #define JUCE_USE_XSHM 1
+ #define JUCE_USE_XSHM 0
 #endif
 
 /** Config: JUCE_USE_XRENDER
@@ -107,14 +107,14 @@
     a good reason to disable it.
 */
 #ifndef JUCE_USE_XCURSOR
- #define JUCE_USE_XCURSOR 1
+ #define JUCE_USE_XCURSOR 0
 #endif
 
 /** Config: JUCE_WIN_PER_MONITOR_DPI_AWARE
     Enables per-monitor DPI awareness on Windows 8.1 and above.
 */
 #ifndef JUCE_WIN_PER_MONITOR_DPI_AWARE
- #define JUCE_WIN_PER_MONITOR_DPI_AWARE 1
+ #define JUCE_WIN_PER_MONITOR_DPI_AWARE 0
 #endif
 
 //==============================================================================
@@ -298,7 +298,7 @@ namespace juce
   // If you're missing these headers, you need to install the libx11-dev package
   #include <X11/Xlib.h>
   #include <X11/Xatom.h>
-  #include <X11/Xresource.h>
+  //#include <X11/Xresource.h>
   #include <X11/Xutil.h>
   #include <X11/Xmd.h>
   #include <X11/keysym.h>

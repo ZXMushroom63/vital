@@ -23,6 +23,11 @@
   ==============================================================================
 */
 
+#include <EGL/egl.h>
+#include <GLES2/gl2.h>
+#include <emscripten/emscripten.h>
+#include <emscripten/html5.h>
+
 namespace juce
 {
 

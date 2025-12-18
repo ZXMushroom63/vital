@@ -316,10 +316,4 @@ float* audioCallback() {
 
 }
 
-
-AudioIODeviceType* createAudioIODeviceType_EMSDK_PCMDevices()
-{
-    return new EMSDKAudioIODeviceType (false, "WebAudio");
-}
-
 } // namespace juce

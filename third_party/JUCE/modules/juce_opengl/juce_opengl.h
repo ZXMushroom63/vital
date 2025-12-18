@@ -77,7 +77,7 @@
  #if JUCE_MINGW
   #include <GLES3/gl3.h>
  #else
-  #include <gl/GL.h>
+  #include <GLES3/gl3.h>
  #endif
 
  #ifdef CLEAR_TEMP_WINGDIAPI

@@ -171,7 +171,7 @@ extern "C" {
  #endif
 #else
  #if defined(GLFW_INCLUDE_GL3)
-  #include <GL3/gl3.h>
+  #include <GLES3/gl3.h>
  #else
   #include <GLES3/gl3.h>
  #endif

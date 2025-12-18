@@ -159,6 +159,7 @@ public:
     static AudioIODeviceType* createAudioIODeviceType_ALSA();
     /** Creates a JACK device type if it's available on this platform, or returns null. */
     static AudioIODeviceType* createAudioIODeviceType_JACK();
+    static AudioIODeviceType* createAudioIODeviceType_EMSDK();
     /** Creates an Android device type if it's available on this platform, or returns null. */
     static AudioIODeviceType* createAudioIODeviceType_Android();
     /** Creates an Android OpenSLES device type if it's available on this platform, or returns null. */

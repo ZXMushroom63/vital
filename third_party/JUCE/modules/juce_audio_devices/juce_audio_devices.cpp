@@ -51,7 +51,7 @@
 #if JUCE_LINUX
   //#include <alsa/asoundlib.h>
   #include "native/juce_linux_EMSDK.cpp"
-  #include "native/juce_linux_Midi.cpp" //MARKER WOO LOOKIE HERE MIDI SUPPORT LATER
+  #include "native/juce_linux_webMidi.cpp"
 #endif
 
 #if ! JUCE_SYSTEMAUDIOVOL_IMPLEMENTED

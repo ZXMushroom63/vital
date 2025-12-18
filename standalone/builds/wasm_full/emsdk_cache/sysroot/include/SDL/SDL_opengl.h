@@ -51,7 +51,7 @@
 #include <OpenGL/gl.h>          /* Header File For The OpenGL Library */
 #define __X_GL_H
 #else
-#include <GL/gl.h>              /* Header File For The OpenGL Library */
+#include <GLES3/gl3.h>              /* Header File For The OpenGL Library */
 #endif
 #ifndef NO_SDL_GLEXT
 #undef __glext_h_

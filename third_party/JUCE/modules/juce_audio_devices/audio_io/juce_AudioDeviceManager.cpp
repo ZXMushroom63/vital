@@ -177,19 +177,21 @@ static void addIfNotNull (OwnedArray<AudioIODeviceType>& list, AudioIODeviceType
 
 void AudioDeviceManager::createAudioDeviceTypes (OwnedArray<AudioIODeviceType>& list)
 {
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_WASAPI (WASAPIDeviceMode::shared));
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_WASAPI (WASAPIDeviceMode::exclusive));
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_WASAPI (WASAPIDeviceMode::sharedLowLatency));
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_DirectSound());
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_ASIO());
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_CoreAudio());
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_iOSAudio());
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_Bela());
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_ALSA());
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_JACK());
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_Oboe());
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_OpenSLES());
-    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_Android());
+    addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_EMSDK());
+    
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_WASAPI (WASAPIDeviceMode::shared));
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_WASAPI (WASAPIDeviceMode::exclusive));
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_WASAPI (WASAPIDeviceMode::sharedLowLatency));
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_DirectSound());
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_ASIO());
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_CoreAudio());
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_iOSAudio());
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_Bela());
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_ALSA());
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_JACK());
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_Oboe());
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_OpenSLES());
+    // addIfNotNull (list, AudioIODeviceType::createAudioIODeviceType_Android());
 }
 
 void AudioDeviceManager::addAudioDeviceType (std::unique_ptr<AudioIODeviceType> newDeviceType)

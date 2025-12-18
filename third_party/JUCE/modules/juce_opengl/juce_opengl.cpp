@@ -59,7 +59,8 @@
     If you want to install OpenGL support, the packages to get are "mesa-common-dev"
     and "freeglut3-dev".
  */
- #include <GL/glx.h>
+#include <GLES2/gl2.h>
+#include <EGL/egl.h>
 
 //==============================================================================
 #elif JUCE_MAC

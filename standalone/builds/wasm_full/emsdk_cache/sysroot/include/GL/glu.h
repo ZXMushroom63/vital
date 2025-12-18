@@ -35,7 +35,7 @@
 #include "glu_mangle.h"
 #endif
 
-#include <GL/gl.h>
+#include <GLES3/gl3.h>
 
 #ifndef GLAPIENTRY
 #if defined(_MSC_VER) || defined(__MINGW32__)
