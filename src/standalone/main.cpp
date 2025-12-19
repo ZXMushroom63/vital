@@ -498,7 +498,7 @@ class SynthApplication : public JUCEApplication {
       }
       else {
         bool visible = !command.contains(" --headless ");
-        main_window_ = std::make_unique<MainWindow>(getApplicationName(), visible);
+        main_window_ = std::make_unique<MainWindow>("Vial", visible);
 
         StringArray args = getCommandLineParameterArray();
         bool last_arg_was_option = false;

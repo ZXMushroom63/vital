@@ -15,7 +15,7 @@ VERSION := $(shell sh -c 'grep -oh -m 1 "VERSION=[0-9\.]*" standalone/builds/lin
 
 MACHINE := $(shell sh -c 'uname -m 2> /dev/null || echo not')
 
-EMXXFLAGS := -msimd128 -mavx2 -O0 -g3 -ggdb --cache ./emsdk_cache -sUSE_WEBGL2=1 -sFULL_ES3 -sFULL_ES2 -sMIN_WEBGL_VERSION=2 -sMODULARIZE=1 -sEXPORT_NAME='createModule' -fvisibility=default -Wl,--keep-section=.debug_* "-DDEBUG=1" -gseparate-dwarf -gdwarf-4 -fno-split-dwarf-inlining -sINVOKE_RUN=0 --source-map-base http://localhost:3000/ -fdebug-prefix-map=/emsdk/=/emroot/ -sASSERTIONS=2 -sSTACK_SIZE=5242880 -sALLOW_MEMORY_GROWTH=1 -sSTACK_OVERFLOW_CHECK=2
+EMXXFLAGS := -msimd128 -mavx2 -O0 -g3 -ggdb --cache ./emsdk_cache -sUSE_WEBGL2=1 -sFULL_ES3 -sFULL_ES2 -sMIN_WEBGL_VERSION=2 -sMODULARIZE=1 -sEXPORT_NAME='createModule' -fvisibility=default -Wl,--keep-section=.debug_* "-DDEBUG=1" -gseparate-dwarf -gdwarf-4 -fno-split-dwarf-inlining -sINVOKE_RUN=0 --source-map-base http://localhost:3000/ -fdebug-prefix-map=/emsdk/=/emroot/ -sASSERTIONS=2 -sSTACK_SIZE=67108864 -sALLOW_MEMORY_GROWTH=1 -sSTACK_OVERFLOW_CHECK=2
 # -flto -fvisibility=hidden "-DNDEBUG=1"
 # -Wl,--export-all
 
