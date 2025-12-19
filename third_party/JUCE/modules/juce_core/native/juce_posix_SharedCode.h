@@ -961,7 +961,7 @@ void JUCE_CALLTYPE Thread::setCurrentThreadAffinityMask (uint32 affinityMask)
     // NB: this call isn't really correct because it sets the affinity of the process,
     // (getpid) not the thread (not gettid). But it's included here as a fallback for
     // people who are using ridiculously old versions of glibc
-    sched_setaffinity (getpid(), sizeof (cpu_set_t), &affinity);
+    //sched_setaffinity (getpid(), sizeof (cpu_set_t), &affinity);
    #endif
 
     sched_yield();

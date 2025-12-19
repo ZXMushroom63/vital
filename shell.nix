@@ -9,6 +9,7 @@
         portmidi
         jack2
         xorg.libX11
+        libllvm
         xorg.libXinerama
         xorg.libXext
         xorg.libXcursor

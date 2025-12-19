@@ -550,14 +550,12 @@ extern "C" {
           appInst->initialise("");
         }
     }
+    int main(int argc, char* argv[])
+    {
+        STDOUT_LOG("Main function called!");
+        startApplication();
+        return 0;
+    }
 }
-// int main(int argc, char* argv[])
-// {
-//     JUCEApplication::createInstance = []() -> JUCEApplicationBase*
-//     {
-//         return nullptr;
-//     };
 
-//     return JUCEApplication::main(argc, argv);
-// }
 //START_JUCE_APPLICATION(SynthApplication)
