@@ -67,7 +67,7 @@ extern "C" {
 
 /* In order for extension support to be portable, we need to define an
  * OpenGL function call method. We use the keyword APIENTRY, which is
- * defined for Win32. (Note: Windows also needs this for <GLES3/gl3.h>)
+ * defined for Win32. (Note: Windows also needs this for <GL/gl.h>)
  */
 #ifndef APIENTRY
  #ifdef _WIN32
@@ -80,7 +80,7 @@ extern "C" {
 
 
 /* The following three defines are here solely to make some Windows-based
- * <GLES3/gl3.h> files happy. Theoretically we could include <windows.h>, but
+ * <GL/gl.h> files happy. Theoretically we could include <windows.h>, but
  * it has the major drawback of severely polluting our namespace.
  */
 
@@ -155,7 +155,7 @@ extern "C" {
 
 /* Include standard OpenGL headers: GLFW uses GL_FALSE/GL_TRUE, and it is
  * convenient for the user to only have to include <GL/glfw.h>. This also
- * solves the problem with Windows <GLES3/gl3.h> and <GL/glu.h> needing some
+ * solves the problem with Windows <GL/gl.h> and <GL/glu.h> needing some
  * special defines which normally requires the user to include <windows.h>
  * (which is not a nice solution for portable programs).
  */
@@ -171,9 +171,9 @@ extern "C" {
  #endif
 #else
  #if defined(GLFW_INCLUDE_GL3)
-  #include <GLES3/gl3.h>
+  #include <GL3/gl3.h>
  #else
-  #include <GLES3/gl3.h>
+  #include <GL/gl.h>
  #endif
  #ifndef GLFW_NO_GLU
   #include <GL/glu.h>

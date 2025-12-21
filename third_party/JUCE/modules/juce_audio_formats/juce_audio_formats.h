@@ -62,7 +62,7 @@
     reduce the size of your codebase and build time.
 */
 #ifndef JUCE_USE_FLAC
- #define JUCE_USE_FLAC 1
+ #define JUCE_USE_FLAC 0
 #endif
 
 /** Config: JUCE_USE_OGGVORBIS
@@ -71,7 +71,7 @@
     reduce the size of your codebase and build time.
 */
 #ifndef JUCE_USE_OGGVORBIS
- #define JUCE_USE_OGGVORBIS 1
+ #define JUCE_USE_OGGVORBIS 0
 #endif
 
 /** Config: JUCE_USE_MP3AUDIOFORMAT
@@ -101,7 +101,7 @@
     Enables the Windows Media SDK codecs.
 */
 #ifndef JUCE_USE_WINDOWS_MEDIA_FORMAT
- #define JUCE_USE_WINDOWS_MEDIA_FORMAT 1
+ #define JUCE_USE_WINDOWS_MEDIA_FORMAT 0
 #endif
 
 #if ! JUCE_MSVC

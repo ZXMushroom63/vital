@@ -219,6 +219,7 @@ StringArray JUCEApplicationBase::getCommandLineParameterArray()
 
 int JUCEApplicationBase::main (int argc, const char* argv[])
 {
+    std::cout << "Main1" << newLine;
     JUCE_AUTORELEASEPOOL
     {
         juce_argc = argc;
@@ -247,6 +248,7 @@ int JUCEApplicationBase::main (int argc, const char* argv[])
 //==============================================================================
 int JUCEApplicationBase::main()
 {
+    std::cout << "Main0" << newLine;
     ScopedJuceInitialiser_GUI libraryInitialiser;
     jassert (createInstance != nullptr);
 

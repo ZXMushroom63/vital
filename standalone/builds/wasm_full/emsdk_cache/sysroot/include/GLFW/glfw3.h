@@ -238,7 +238,7 @@ extern "C" {
 
  #else /*__APPLE__*/
 
-  #include <GLES3/gl3.h>
+  #include <GL/gl.h>
   #if defined(GLFW_INCLUDE_GLEXT)
    #include <GL/glext.h>
   #endif

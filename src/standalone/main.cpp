@@ -96,12 +96,14 @@ class SynthApplication : public JUCEApplication {
 
         MainWindow(const String& name, bool visible) :
             DocumentWindow(name, Colours::lightgrey, DocumentWindow::allButtons, visible), editor_(nullptr) {
-          if (!Startup::isComputerCompatible()) {
-            String error = String(ProjectInfo::projectName) +
-                           " requires SSE2, NEON or AVX2 compatible processor. Exiting.";
-            AlertWindow::showNativeDialogBox("Computer not supported", error, false);
-            quit();
-          }
+          STDOUT_LOG("Window constructor called!");
+          // if (!Startup::isComputerCompatible()) {
+          //   String error = String(ProjectInfo::projectName) +
+          //                  " requires SSE2, NEON or AVX2 compatible processor. Exiting.";
+          //   STDOUT_LOG("Unsupported system! blahblahblah");
+          //   //AlertWindow::showNativeDialogBox("Computer not supported", error, false);
+          //   quit();
+          // }
 
           SystemStats::setApplicationCrashHandler(handleVitalCrash);
               
@@ -113,6 +115,7 @@ class SynthApplication : public JUCEApplication {
           editor_ = new SynthEditor(visible);
           constrainer_.setGui(editor_->getGui());
           if (visible) {
+            STDOUT_LOG("setting up animation callback");
             editor_->animate(true);
             setContentOwned(editor_, true);
 
@@ -524,10 +527,12 @@ class SynthApplication : public JUCEApplication {
     }
 
     void shutdown() override {
+      STDOUT_LOG("shutdown() called??");
       main_window_ = nullptr;
     }
 
     void systemRequestedQuit() override {
+      STDOUT_LOG("quit was requested.");;
       quit();
     }
 
@@ -542,20 +547,43 @@ class SynthApplication : public JUCEApplication {
 SynthApplication* appInst = nullptr;
 extern "C" {
     EMSCRIPTEN_KEEPALIVE  
-    void startApplication()
+    int startApplication_Classic()
     {
         if (appInst == nullptr) {
+          juce::initialiseJuce_GUI();
           STDOUT_LOG("Janky startup sequence!");
           appInst = new SynthApplication();
           appInst->initialise("");
         }
+        return 0;
     }
+
+    juce::JUCEApplicationBase* juce_CreateApplication() { return new SynthApplication(); }
+
+    EMSCRIPTEN_KEEPALIVE
+    int startApplication_Advanced()
+    {
+        char* fakeArgv[] = { (char*)"vial", nullptr };
+        juce::JUCEApplicationBase::createInstance = &juce_CreateApplication;
+        return juce::JUCEApplicationBase::main();
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    bool dispatchSystemMessage(bool retFalseIfNonePending) {
+        STDOUT_LOG("Dispatch from JS");
+        return MessageManager::getInstance()->dispatchNextMessageOnSystemQueue(retFalseIfNonePending);
+    }
+    
+
     int main(int argc, char* argv[])
     {
         STDOUT_LOG("Main function called!");
-        startApplication();
+        startApplication_Classic();
+        startApplication_Advanced();
+        dispatchSystemMessage(false);
         return 0;
     }
 }
-
 //START_JUCE_APPLICATION(SynthApplication)
+// investigate runDispatchLoop
+// CURRENT PROBLEM! the opengl context never actually initialises!

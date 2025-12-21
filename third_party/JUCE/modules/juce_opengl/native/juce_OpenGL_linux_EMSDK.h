@@ -62,6 +62,7 @@ public:
                    OpenGLVersion)
         : component (comp), contextToShareWith (shareContext), dummy (*this)
     {
+        GLES_DEBUG("Creating GLES context.");
         display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 
         if (display == EGL_NO_DISPLAY) {
@@ -111,6 +112,7 @@ public:
         // X11Symbols::getInstance()->xSync (display, False);
 
         // juce_LinuxAddRepaintListener (peer, &dummy);
+        _ctx = this;
     }
 
     ~NativeContext()
@@ -120,6 +122,7 @@ public:
 
     bool initialiseOnRenderThread (OpenGLContext& c)
     {
+        GLES_DEBUG("FINALLY! It has initialised.");;
         if (display == EGL_NO_DISPLAY) {
             GLES_DEBUG("Attempted init with no display");
             return false;
@@ -162,6 +165,7 @@ public:
 
     void shutdownOnRenderThread()
     {
+        GLES_DEBUG("Shutting down renderer.");
         openglContext = nullptr;
         deactivateCurrentContext();
         
@@ -200,6 +204,7 @@ public:
 
     void swapBuffers()
     {
+        GLES_DEBUG("swapping buffers!");
         if (display != EGL_NO_DISPLAY && surface != EGL_NO_SURFACE)
             eglSwapBuffers (display, surface);
     }
@@ -236,6 +241,8 @@ public:
     }
 
     struct Locker { Locker (NativeContext&) {} };
+    static OpenGLContext::NativeContext* _ctx;
+    OpenGLContext* openglContext = nullptr;
 
 private:
     Component& component;
@@ -248,7 +255,6 @@ private:
     Rectangle<int> bounds;
     void* contextToShareWith;
 
-    OpenGLContext* openglContext = nullptr;
     DummyComponent dummy;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NativeContext)
@@ -258,6 +264,28 @@ private:
 bool OpenGLHelpers::isContextActive()
 {
     return eglGetCurrentContext() != EGL_NO_CONTEXT;
+}
+
+extern "C" {
+    OpenGLContext::NativeContext* OpenGLContext::NativeContext::_ctx = nullptr;
+
+    EMSCRIPTEN_KEEPALIVE
+    void testNewBounds() {
+        OpenGLContext::NativeContext* ctx = OpenGLContext::NativeContext::_ctx;
+        if (ctx != nullptr) {
+            ctx->updateWindowPosition(Rectangle<int>(0, 0,
+               400, 300));
+        }
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void testRepaint() {
+        OpenGLContext::NativeContext* ctx = OpenGLContext::NativeContext::_ctx;
+        if (ctx != nullptr) {
+            GLES_DEBUG("forcing repaint.");
+            ctx->triggerRepaint();
+        }
+    }
 }
 
 } // namespace juce

@@ -1033,6 +1033,7 @@ void OpenGLContext::deactivateCurrentContext()
 
 void OpenGLContext::triggerRepaint()
 {
+    std::cout << "test???" << std::endl;
     if (auto* cachedImage = getCachedImage())
         cachedImage->triggerRepaint();
 }

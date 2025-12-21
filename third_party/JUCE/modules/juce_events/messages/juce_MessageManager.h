@@ -313,6 +313,12 @@ public:
     ~MessageManager() noexcept;
    #endif
 
+   static bool postMessageToSystemQueue (MessageBase*);
+   static void* exitModalLoopCallback (void*);
+   static void doPlatformSpecificInitialisation();
+   static void doPlatformSpecificShutdown();
+   static bool dispatchNextMessageOnSystemQueue (bool returnIfNoPendingMessages);
+
 private:
     //==============================================================================
     MessageManager() noexcept;
@@ -328,12 +334,6 @@ private:
     Atomic<int> quitMessagePosted { 0 }, quitMessageReceived { 0 };
     Thread::ThreadID messageThreadId;
     Atomic<Thread::ThreadID> threadWithLock;
-
-    static bool postMessageToSystemQueue (MessageBase*);
-    static void* exitModalLoopCallback (void*);
-    static void doPlatformSpecificInitialisation();
-    static void doPlatformSpecificShutdown();
-    static bool dispatchNextMessageOnSystemQueue (bool returnIfNoPendingMessages);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MessageManager)
 };

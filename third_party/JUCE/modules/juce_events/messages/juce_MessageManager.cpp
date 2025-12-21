@@ -81,6 +81,7 @@ bool MessageManager::MessageBase::post()
 #if JUCE_MODAL_LOOPS_PERMITTED && ! (JUCE_MAC || JUCE_IOS)
 bool MessageManager::runDispatchLoopUntil (int millisecondsToRunFor)
 {
+    std::cout << "Dispatch1" << newLine;
     jassert (isThisTheMessageThread()); // must only be called by the message thread
 
     auto endTime = Time::currentTimeMillis() + millisecondsToRunFor;
@@ -119,10 +120,12 @@ public:
 
 void MessageManager::runDispatchLoop()
 {
+    std::cout << "Dispatch0" << newLine;
     jassert (isThisTheMessageThread()); // must only be called by the message thread
 
     while (quitMessageReceived.get() == 0)
     {
+        
         JUCE_TRY
         {
             if (! dispatchNextMessageOnSystemQueue (false))
