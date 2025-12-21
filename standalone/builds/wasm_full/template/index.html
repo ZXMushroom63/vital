@@ -17,8 +17,7 @@
         function detectWebGLContext() {
             const canvas = document.createElement("canvas");
             const gl = canvas.getContext("webgl");
-            return
-                gl instanceof WebGLRenderingContext
+            return (gl instanceof WebGLRenderingContext)
                     ? "Congratulations! Your browser supports WebGL."
                     : "Failed. Your browser or device may not support WebGL.";
         }

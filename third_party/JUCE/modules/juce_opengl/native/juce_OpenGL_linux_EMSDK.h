@@ -123,7 +123,7 @@ public:
 
     bool initialiseOnRenderThread (OpenGLContext& c)
     {
-        GLES_DEBUG("FINALLY! It has initialised.");;
+        GLES_DEBUG("P1 - FINALLY! It has initialised.");
         if (display == EGL_NO_DISPLAY) {
             GLES_DEBUG("Attempted init with no display");
             return false;
@@ -131,34 +131,49 @@ public:
 
         EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
         context = eglCreateContext (display, config, (EGLContext)contextToShareWith, contextAttribs);
+        GLES_DEBUG("P2 - First context created: " + std::to_string((context == EGL_NO_CONTEXT) ? -1 : 0));
+        if (context == nullptr) {
+            GLES_DEBUG("No context somehow??");
+        }
         if (context == EGL_NO_CONTEXT)
         {
             // webgl 1 fallback
             contextAttribs[1] = 2;
+            GLES_DEBUG("P2.1 - Trying to create fallback.");
             context = eglCreateContext (display, config, (EGLContext)contextToShareWith, contextAttribs);
             GLES_DEBUG("Fallback occured. If context creation fails, the render loop will crash.");
         }
 
-        if (context == EGL_NO_CONTEXT)
+        // the fact that people intentionally dont use brackets triggers me so hard
+        // that took 2.5 hours to debug. im crine
+        if (context == EGL_NO_CONTEXT) {
             GLES_DEBUG("Context creation failed.");
             return false;
+        }
 
+        GLES_DEBUG("P3 - Creating surface...");
         surface = eglCreateWindowSurface(
             display,
             config,
             (EGLNativeWindowType)0, //find default canvas in DOM
             nullptr
         );
+        GLES_DEBUG("P4 - Created surface...");
 
-        if (surface == EGL_NO_SURFACE)
+        if (surface == EGL_NO_SURFACE) {
             GLES_DEBUG("Target <canvas> not found .");
             return false;
+        }
 
-        if (!makeActive())
+        GLES_DEBUG("ThreadInit: Preparing to activate context.");
+        GLES_DEBUG("P5 - Activating self...");
+        if (!makeActive()) {
             GLES_DEBUG("Failed to activate context.");
             return false;
+        }
+        GLES_DEBUG("P6 - Activating openglContext...");
 
-
+        GLES_DEBUG("PRE: Successfully created opengl context!");
         c.makeActive();
         openglContext = &c;
         GLES_DEBUG("Successfully created opengl context!");
@@ -189,8 +204,10 @@ public:
     bool makeActive() const noexcept
     {
         if (context != EGL_NO_CONTEXT && surface != EGL_NO_SURFACE)
+            GLES_DEBUG("Calling EMSDK context activation...");
             return eglMakeCurrent(display, surface, surface, context);
 
+        GLES_DEBUG("Skipping EMSDK context activation (something failed on first init?)...");
         return false;
     }
 
