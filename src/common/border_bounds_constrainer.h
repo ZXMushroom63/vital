@@ -35,8 +35,9 @@ class BorderBoundsConstrainer : public ComponentBoundsConstrainer {
     void setBorder(const BorderSize<int>& border) { border_ = border; }
     void setGui(FullInterface* gui) { gui_ = gui; }
 
-  protected:
     FullInterface* gui_;
+
+  protected:
     BorderSize<int> border_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BorderBoundsConstrainer)

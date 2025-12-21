@@ -9,7 +9,9 @@
     <canvas width="960" height="540" id="canvas" style="width: 480; height: 270; border: 1px solid black;"></canvas>
     <script src="vial.js"></script>
     <script>
-        createModule().then(Vial => {
+        createModule({
+            canvas: document.querySelector("#canvas")
+        }).then(Vial => {
             globalThis.Vial = Vial;
         });
     </script>

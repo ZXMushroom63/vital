@@ -159,6 +159,8 @@ class FullInterface : public SynthSection, public AuthenticationSection::Listene
     void toggleFilter1Zoom();
     void toggleFilter2Zoom();
 
+    juce::OpenGLContext& getGLContext() { return open_gl_context_; }
+
   private:
     bool wavetableEditorsInitialized() {
       for (int i = 0; i < vital::kNumOscillators; ++i) {

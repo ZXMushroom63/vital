@@ -68,11 +68,10 @@ class SynthGuiInterface {
     void externalPresetLoaded(File preset);
     void setGuiSize(float scale);
     FullInterface* getGui() { return gui_.get(); }
+    std::unique_ptr<FullInterface> gui_;
 
   protected:
     SynthBase* synth_;
-
-    std::unique_ptr<FullInterface> gui_;
   
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthGuiInterface)
 };

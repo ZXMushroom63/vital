@@ -43,7 +43,7 @@
 #include "text_look_and_feel.h"
 #include "update_check_section.h"
 #include "voice_section.h"
-
+#include <emscripten.h>
 FullInterface::FullInterface(SynthGuiData* synth_data) : SynthSection("full_interface"), width_(0), resized_width_(0),
                                                          last_render_scale_(0.0f), display_scale_(1.0f),
                                                          pixel_multiple_(1), setting_all_values_(false),
@@ -223,17 +223,19 @@ FullInterface::FullInterface(SynthGuiData* synth_data) : SynthSection("full_inte
     authentication_->create();
 #endif
 
+  std::cout << "Renderer should start initialising" << std::endl;
+
   setAllValues(synth_data->controls);
   setOpaque(true);
   setSkinValues(default_skin, true);
 
   needs_download_ = UpdateMemory::getInstance()->incrementChecker();
 
-  open_gl_context_.setContinuousRepainting(true);
+  open_gl_context_.setContinuousRepainting(false);
   open_gl_context_.setOpenGLVersionRequired(OpenGLContext::openGL3_2);
   open_gl_context_.setSwapInterval(0);
   open_gl_context_.setRenderer(this);
-  open_gl_context_.setComponentPaintingEnabled(false);
+  open_gl_context_.setComponentPaintingEnabled(true);
   open_gl_context_.attachTo(*this);
 }
 
@@ -241,11 +243,11 @@ FullInterface::FullInterface() : SynthSection("EMPTY"), open_gl_(open_gl_context
   Skin default_skin;
   setSkinValues(default_skin, true);
 
-  open_gl_context_.setContinuousRepainting(true);
+  open_gl_context_.setContinuousRepainting(false);
   open_gl_context_.setOpenGLVersionRequired(OpenGLContext::openGL3_2);
   open_gl_context_.setSwapInterval(0);
   open_gl_context_.setRenderer(this);
-  open_gl_context_.setComponentPaintingEnabled(false);
+  open_gl_context_.setComponentPaintingEnabled(true);
   open_gl_context_.attachTo(*this);
 
   reset();
@@ -254,7 +256,7 @@ FullInterface::FullInterface() : SynthSection("EMPTY"), open_gl_(open_gl_context
 
 FullInterface::~FullInterface() {
   UpdateMemory::getInstance()->decrementChecker();
-
+  std::cout << "Interface brutally murdered!" << std::endl;
   open_gl_context_.detach();
   open_gl_context_.setRenderer(nullptr);
 }
@@ -547,10 +549,10 @@ void FullInterface::createModulationSliders(const vital::output_map& mono_modula
 
 void FullInterface::animate(bool animate) {
   if (animate_ != animate)
-    open_gl_context_.setContinuousRepainting(animate);
+    open_gl_context_.setContinuousRepainting(false);
 
   animate_ = animate;
-  SynthSection::animate(animate);
+  SynthSection::animate(false);
 }
 
 void FullInterface::reset() {

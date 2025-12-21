@@ -112,6 +112,7 @@ public:
         // X11Symbols::getInstance()->xSync (display, False);
 
         // juce_LinuxAddRepaintListener (peer, &dummy);
+        GLES_DEBUG("assigned _ctx");
         _ctx = this;
     }
 
@@ -135,6 +136,7 @@ public:
             // webgl 1 fallback
             contextAttribs[1] = 2;
             context = eglCreateContext (display, config, (EGLContext)contextToShareWith, contextAttribs);
+            GLES_DEBUG("Fallback occured. This is likely the souce of a render issue.");
         }
 
         if (context == EGL_NO_CONTEXT)

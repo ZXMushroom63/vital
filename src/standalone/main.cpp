@@ -29,6 +29,7 @@
 #endif
 
 #define STDOUT_LOG(txt) {std::cout << txt << newLine;}
+SynthEditor* global_editor = nullptr;
 
 void handleVitalCrash(void* data) {
   LoadSave::writeCrashLog(SystemStats::getStackBacktrace());
@@ -113,6 +114,7 @@ class SynthApplication : public JUCEApplication {
           }
 
           editor_ = new SynthEditor(visible);
+          global_editor = editor_;
           constrainer_.setGui(editor_->getGui());
           if (visible) {
             STDOUT_LOG("setting up animation callback");
@@ -569,6 +571,18 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE
+    void vialSetWindowSize(int w, int h)
+    {
+        global_editor->setBounds(0, 0, w, h);
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void vialRedraw()
+    {
+        global_editor->gui_->getGLContext().triggerRepaint();
+    }
+
+    EMSCRIPTEN_KEEPALIVE
     bool dispatchSystemMessage(bool retFalseIfNonePending) {
         STDOUT_LOG("Dispatch from JS");
         return MessageManager::getInstance()->dispatchNextMessageOnSystemQueue(retFalseIfNonePending);
@@ -587,3 +601,4 @@ extern "C" {
 //START_JUCE_APPLICATION(SynthApplication)
 // investigate runDispatchLoop
 // CURRENT PROBLEM! the opengl context never actually initialises!
+// initialiseOnRenderThread()

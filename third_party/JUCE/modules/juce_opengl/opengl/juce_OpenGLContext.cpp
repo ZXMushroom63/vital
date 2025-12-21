@@ -148,6 +148,7 @@ public:
     //==============================================================================
     void paint (Graphics&) override
     {
+        std::cout << "FBO Paint occurred." << std::endl;
         updateViewportSize (false);
     }
 
@@ -173,7 +174,12 @@ public:
     void triggerRepaint()
     {
         needsUpdate = 1;
-        repaintEvent.signal();
+        if (!hasInitialised) {
+            initialiseOnThread();
+            hasInitialised = true;
+        }
+        renderFrame();
+        //repaintEvent.signal();
     }
 
     //==============================================================================
@@ -216,6 +222,8 @@ public:
 
     bool renderFrame()
     {
+        std::cout << "Drawing to CachedImage FBO..." << std::endl;
+        // i should debugger here
         MessageManager::Lock::ScopedTryLockType mmLock (messageManagerLock, false);
 
         auto isUpdatingTestValue = true;
@@ -278,6 +286,7 @@ public:
         context.swapBuffers();
 
         OpenGLContext::deactivateCurrentContext();
+        std::cout << "Draw to FBO + BufferSwap succeeded!" << std::endl;
         return true;
     }
 
@@ -967,6 +976,7 @@ void OpenGLContext::attachTo (Component& component)
     {
         detach();
         attachment.reset (new Attachment (*this, component));
+        std::cout << "OGL : Attached" << std::endl;
     }
 }
 
@@ -974,11 +984,12 @@ void OpenGLContext::detach()
 {
     if (auto* a = attachment.get())
     {
+        std::cout << "OGL : Detached" << std::endl;
         a->detach(); // must detach before nulling our pointer
         attachment.reset();
     }
 
-    nativeContext = nullptr;
+    //nativeContext = nullptr;
 }
 
 bool OpenGLContext::isAttached() const noexcept
@@ -1012,10 +1023,12 @@ bool OpenGLContext::makeActive() const noexcept
 
     if (nativeContext != nullptr && nativeContext->makeActive())
     {
+        std::cout << "Context successfully activated." << std::endl;
         current = const_cast<OpenGLContext*> (this);
         return true;
     }
 
+    std::cout << "Context failed to activate." << std::endl;
     current = nullptr;
     return false;
 }
@@ -1033,9 +1046,11 @@ void OpenGLContext::deactivateCurrentContext()
 
 void OpenGLContext::triggerRepaint()
 {
-    std::cout << "test???" << std::endl;
-    if (auto* cachedImage = getCachedImage())
+    std::cout << "OpenGL Repaint Triggered" << std::endl;
+    if (auto* cachedImage = getCachedImage()) {
+        std::cout << "Repainting cached image" << std::endl;
         cachedImage->triggerRepaint();
+    }
 }
 
 void OpenGLContext::swapBuffers()
@@ -1067,8 +1082,8 @@ void* OpenGLContext::getRawContext() const noexcept
 OpenGLContext::CachedImage* OpenGLContext::getCachedImage() const noexcept
 {
     if (auto* comp = getTargetComponent())
-        return CachedImage::get (*comp);
-
+        {return CachedImage::get (*comp);}
+    std::cout << "Failed to find CachedImage for target component!" << std::endl;
     return nullptr;
 }
 
