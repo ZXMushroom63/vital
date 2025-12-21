@@ -136,7 +136,7 @@ public:
             // webgl 1 fallback
             contextAttribs[1] = 2;
             context = eglCreateContext (display, config, (EGLContext)contextToShareWith, contextAttribs);
-            GLES_DEBUG("Fallback occured. This is likely the souce of a render issue.");
+            GLES_DEBUG("Fallback occured. If context creation fails, the render loop will crash.");
         }
 
         if (context == EGL_NO_CONTEXT)

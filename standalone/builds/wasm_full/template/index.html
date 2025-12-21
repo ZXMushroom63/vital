@@ -1,19 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VialTemplate</title>
 </head>
+
 <body>
-    <canvas width="960" height="540" id="canvas" style="width: 480; height: 270; border: 1px solid black;"></canvas>
+    <canvas width="400" height="300" id="canvas"
+        style="width: 400; height: 300; border: 1px solid black; image-rendering: pixelated; background-color: ;"></canvas>
+    <br>
+    <span>Checking WebGL Availability...</span>
     <script src="vial.js"></script>
     <script>
+        function detectWebGLContext() {
+            const canvas = document.createElement("canvas");
+            const gl = canvas.getContext("webgl");
+            return
+                gl instanceof WebGLRenderingContext
+                    ? "Congratulations! Your browser supports WebGL."
+                    : "Failed. Your browser or device may not support WebGL.";
+        }
         createModule({
             canvas: document.querySelector("#canvas")
         }).then(Vial => {
             globalThis.Vial = Vial;
         });
+        addEventListener("load", ()=>{
+            document.querySelector("span").innerText = detectWebGLContext();
+        });
     </script>
 </body>
+
 </html>
