@@ -35,7 +35,7 @@ void OpenGlImageComponent::redrawImage(bool force) {
 
   Component* component = component_ ? component_ : this;
 
-  int pixel_scale = Desktop::getInstance().getDisplays().findDisplayForPoint(getScreenPosition()).scale;
+  int pixel_scale = 1;
   int width = component->getWidth() * pixel_scale;
   int height = component->getHeight() * pixel_scale;
   if (width <= 0 || height <= 0)
@@ -54,6 +54,7 @@ void OpenGlImageComponent::redrawImage(bool force) {
   Graphics g(*draw_image_);
   g.addTransform(AffineTransform::scale(pixel_scale));
   paintToImage(g);
+  std::cout << "SETTING IMAGE <<<" << std::endl;
   image_.setImage(draw_image_.get());
 
   float gl_width = vital::utils::nextPowerOfTwo(width);
@@ -77,7 +78,11 @@ void OpenGlImageComponent::render(OpenGlWrapper& open_gl, bool animate) {
   Component* component = component_ ? component_ : this;
   if (!active_ || !setViewPort(component, open_gl) || !component->isVisible())
     return;
-
+  // check if image_.image_ is not a null pointer
+  if (image_.image_ == nullptr) {
+    std::cout << "NO IMAGE ACTIVE, RASTERIZING <<<" << std::endl;
+    redrawImage(true);
+  }
   image_.drawImage(open_gl);
 }
 

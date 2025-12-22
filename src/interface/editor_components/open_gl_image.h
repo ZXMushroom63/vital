@@ -42,6 +42,7 @@ class OpenGlImage {
     }
 
     void setImage(Image* image) {
+      std::cout << "i have received the image" << std::endl;
       image_ = image;
       image_width_ = image->getWidth();
       image_height_ = image->getHeight();
@@ -65,12 +66,12 @@ class OpenGlImage {
     void setAdditive(bool additive) { additive_ = additive; }
     void setUseAlpha(bool use_alpha) { use_alpha_ = use_alpha; }
     void setScissor(bool scissor) { scissor_ = scissor; }
+    Image* image_;
 
   private:
     std::mutex mutex_;
     bool dirty_;
 
-    Image* image_;
     int image_width_;
     int image_height_;
     std::unique_ptr<Image> owned_image_;

@@ -72,8 +72,12 @@ void OpenGlImage::init(OpenGlWrapper& open_gl) {
 void OpenGlImage::drawImage(OpenGlWrapper& open_gl) {
   mutex_.lock();
   if (image_) {
+    // Sometimes this doesnt exist. go figure
     texture_.loadImage(*image_);
-    image_ = nullptr;
+    image_ = nullptr; //potentially comment this out ?? 
+    std::cout << "Image found successfully." << std::endl;
+  } else {
+    std::cout << "No image found. This should be impossible." << std::endl;
   }
   mutex_.unlock();
 

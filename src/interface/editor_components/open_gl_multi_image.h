@@ -54,6 +54,7 @@ class OpenGlMultiImage : public OpenGlComponent {
     }
 
     void setImage(Image* image) {
+      std::cout << "[multi] i have received the image" << std::endl;
       image_ = image;
       image_width_ = image->getWidth();
       image_height_ = image->getHeight();

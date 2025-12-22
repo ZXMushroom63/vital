@@ -9,9 +9,9 @@
 
 <body>
     <canvas width="400" height="300" id="canvas"
-        style="width: 400; height: 300; border: 1px solid black; image-rendering: pixelated; background-color: ;"></canvas>
+        style="width: 400; height: 300; border: 1px solid black; image-rendering: pixelated; background: linear-gradient(132deg,rgba(65, 63, 110, 1) 0%, rgba(141, 138, 166, 1) 35%, rgba(128, 182, 194, 1) 100%);"></canvas>
     <br>
-    <span>Checking WebGL Availability...</span>
+    <span>Checking WebGL Availability...</span><button id="init">init</button>
     <script src="vial.js"></script>
     <script>
         function detectWebGLContext() {
@@ -28,6 +28,10 @@
         });
         addEventListener("load", ()=>{
             document.querySelector("span").innerText = detectWebGLContext();
+            document.querySelector("#init").addEventListener("click", ()=>{
+                Vial._startApplication_Classic();
+                Vial._vialSetWindowSize(400, 300);
+            });
         });
     </script>
 </body>

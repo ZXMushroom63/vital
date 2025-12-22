@@ -388,6 +388,7 @@ public:
        #endif
             context.extensions.glActiveTexture (GL_TEXTURE0);
 
+        std::cout << "BINDING TEXTURE" << std::endl;
         glBindTexture (GL_TEXTURE_2D, cachedImageFrameBuffer.getTextureID());
         bindVertexArray();
 
