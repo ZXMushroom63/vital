@@ -1094,7 +1094,7 @@ bool Shaders::checkShaderCorrect(OpenGLExtensionFunctions& extensions, GLuint sh
   GLchar info[16384];
   GLsizei info_length = 0;
   extensions.glGetShaderInfoLog(shader_id, sizeof(info), &info_length, info);
-  DBG(String(info, (size_t)info_length));
+  std::cout << (String(info, (size_t)info_length)) << std::endl;
   return false;
 }
 
