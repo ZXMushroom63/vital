@@ -232,16 +232,16 @@ public:
         if (context.renderComponents && isUpdating)
         {
             // This avoids hogging the message thread when doing intensive rendering.
-            if (lastMMLockReleaseTime + 1 >= Time::getMillisecondCounter())
-                Thread::sleep (2);
+            // if (lastMMLockReleaseTime + 1 >= Time::getMillisecondCounter())
+            //     Thread::sleep (2);
 
-            while (! shouldExit())
-            {
-                doWorkWhileWaitingForLock (false);
+            // while (! shouldExit())
+            // {
+            //     doWorkWhileWaitingForLock (false);
 
-                if (mmLock.retryLock())
-                    break;
-            }
+            //     if (mmLock.retryLock())
+            //         break;
+            // }
 
             if (shouldExit())
                 return false;
@@ -250,11 +250,11 @@ public:
         if (! context.makeActive())
             return false;
 
-        NativeContext::Locker locker (*nativeContext);
+        //NativeContext::Locker locker (*nativeContext);
 
         JUCE_CHECK_OPENGL_ERROR
 
-        doWorkWhileWaitingForLock (true);
+        //doWorkWhileWaitingForLock (true);
 
         if (context.renderer != nullptr)
         {
@@ -264,23 +264,25 @@ public:
             clearGLError();
 
             bindVertexArray();
+            std::cout << "something renderer" << std::endl;
         }
 
         if (context.renderComponents)
         {
-            if (isUpdating)
+            if (true)
             {
                 paintComponent();
 
                 if (! hasInitialised)
                     return false;
 
-                messageManagerLock.exit();
-                lastMMLockReleaseTime = Time::getMillisecondCounter();
+                //messageManagerLock.exit();
+                //lastMMLockReleaseTime = Time::getMillisecondCounter();
             }
 
             glViewport (0, 0, viewportArea.getWidth(), viewportArea.getHeight());
             drawComponentBuffer();
+            std::cout << "Drawing component buffer." << std::endl;
         }
 
         context.swapBuffers();
@@ -375,7 +377,7 @@ public:
     void drawComponentBuffer()
     {
        #if ! JUCE_ANDROID
-        glEnable (GL_TEXTURE_2D);
+        //glEnable (GL_TEXTURE_2D);
         clearGLError();
        #endif
 
