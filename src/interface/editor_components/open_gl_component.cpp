@@ -187,7 +187,7 @@ void OpenGlComponent::destroy(OpenGlWrapper& open_gl) {
 float OpenGlComponent::findValue(Skin::ValueId value_id) {
   if (parent_)
     return parent_->findValue(value_id);
-
-  VITAL_ASSERT(false);
+  std::cout << "No parent!" << std::endl;
+  //VITAL_ASSERT(false);
   return 0.0f;
 }

@@ -615,21 +615,40 @@ void FilterResponse::drawFilterResponse(OpenGlWrapper& open_gl) {
 
 void FilterResponse::renderLineResponse(OpenGlWrapper& open_gl) {
   glEnable(GL_BLEND);
-  open_gl.context.extensions.glBeginTransformFeedback(GL_POINTS);
+
+  GLuint fbo;
+  glGenFramebuffers(1, &fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+  GLuint texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, kResolution, 1, 0, GL_RGBA, GL_FLOAT, nullptr);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    return;
+  }
+
+  glBeginTransformFeedback(GL_POINTS);
   glDrawArrays(GL_POINTS, 0, kResolution);
-  open_gl.context.extensions.glEndTransformFeedback();
+  glEndTransformFeedback();
 
-  void* buffer = open_gl.context.extensions.glMapBufferRange(GL_TRANSFORM_FEEDBACK_BUFFER, 0,
-                                                             kResolution * sizeof(float), GL_MAP_READ_BIT);
+  std::vector<float> response_data(kResolution * 4);
+  glReadPixels(0, 0, kResolution, 1, GL_RGBA, GL_FLOAT, response_data.data());
 
-  float* response_data = (float*)buffer;
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
   float width = getWidth();
   float y_adjust = getHeight() / 2.0f;
   for (int i = 0; i < kResolution; ++i) {
+    float response_value = response_data[i * 4];
     setXAt(i, width * i / (kResolution - 1.0f));
-    setYAt(i, y_adjust * (1.0f - response_data[i]));
+    setYAt(i, y_adjust * (1.0f - response_value));
   }
 
-  open_gl.context.extensions.glUnmapBuffer(GL_TRANSFORM_FEEDBACK_BUFFER);
+  glDeleteFramebuffers(1, &fbo);
+  glDeleteTextures(1, &texture);
+
   glDisable(GL_BLEND);
 }

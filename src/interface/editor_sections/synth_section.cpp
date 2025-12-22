@@ -379,7 +379,9 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper& open_gl, bool animate) 
   for (auto& open_gl_component : open_gl_components_) {
     if (open_gl_component->isVisible() && !open_gl_component->isAlwaysOnTop()) {
       open_gl_component->render(open_gl, animate);
-      VITAL_ASSERT(glGetError() == GL_NO_ERROR);
+      int err = glGetError();
+      std::cout << "GLERROR_0: " << err << std::endl;
+      VITAL_ASSERT(err == GL_NO_ERROR);
     }
   }
 
@@ -391,7 +393,9 @@ void SynthSection::renderOpenGlComponents(OpenGlWrapper& open_gl, bool animate) 
   for (auto& open_gl_component : open_gl_components_) {
     if (open_gl_component->isVisible() && open_gl_component->isAlwaysOnTop()) {
       open_gl_component->render(open_gl, animate);
-      VITAL_ASSERT(glGetError() == GL_NO_ERROR);
+      int err = glGetError();
+      std::cout << "GLERROR_1: " << err << std::endl;
+      VITAL_ASSERT(err == GL_NO_ERROR);
     }
   }
 }

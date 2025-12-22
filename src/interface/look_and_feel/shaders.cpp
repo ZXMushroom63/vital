@@ -949,20 +949,24 @@ namespace {
       "}\n";
 
   inline String translateFragmentShader(const String& code) {
-  #if OPENGL_ES
-    return String("#version 300 es\n") + "out mediump vec4 fragColor;\n" +
+  #if true
+    String out = String("#version 300 es\nprecision mediump float;\n") + "out mediump vec4 fragColor;\n" +
       code.replace("varying", "in").replace("texture2D", "texture").replace("gl_FragColor", "fragColor");
   #else
-    return OpenGLHelpers::translateFragmentShaderToV3(code);
+    String out = OpenGLHelpers::translateFragmentShaderToV3(code);
   #endif
+  std::cout << "|FRAG|\n" << out << std::endl;
+  return out;
   }
 
   inline String translateVertexShader(const String& code) {
-  #if OPENGL_ES
-    return String("#version 300 es\n") + code.replace("attribute", "in").replace("varying", "out");
+  #if true
+    String out = String("#version 300 es\nprecision mediump float;\n") + code.replace("attribute", "in").replace("varying", "out");
   #else
-    return OpenGLHelpers::translateVertexShaderToV3(code);
+    String out = OpenGLHelpers::translateVertexShaderToV3(code);
   #endif
+  std::cout << "|VERT|\n" << out << std::endl;
+  return out;
   }
 } // namespace
 
