@@ -26,10 +26,10 @@
 namespace juce
 {
 extern "C" {
-    Displays::Display virtualDisplay = {
+    extern Displays::Display virtualDisplay = {
         true, //ismain
         Rectangle<int>(0, 0, 1920, 1080),
-        Rectangle<int>(0, 40, 1920, 1080),
+        Rectangle<int>(0, 0, 1920, 1080),
         Point<int>(0, 0),
         1.0,
         96.0

@@ -83,6 +83,8 @@ void OpenGLTexture::create (const int w, const int h, const void* pixels, GLenum
     width  = getAllowedTextureSize (w);
     height = getAllowedTextureSize (h);
 
+
+    type = GL_RGBA; //test override
     if (type != GL_RGBA) {
         std::cout << "bad gl_tex_type: " << type << std::endl;
     }

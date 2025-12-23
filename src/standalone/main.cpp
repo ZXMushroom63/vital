@@ -573,6 +573,10 @@ extern "C" {
     EMSCRIPTEN_KEEPALIVE
     void vialSetWindowSize(int w, int h)
     {
+        juce::virtualDisplay.totalArea.setWidth(w);
+        juce::virtualDisplay.userArea.setWidth(w);
+        juce::virtualDisplay.totalArea.setHeight(h);
+        juce::virtualDisplay.userArea.setHeight(h);
         global_editor->setBounds(0, 0, w, h);
     }
 

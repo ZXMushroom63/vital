@@ -150,5 +150,7 @@ private:
 
     Display emptyDisplay;
 };
-
+extern "C" {
+    extern Displays::Display virtualDisplay;
+};
 } // namespace juce
