@@ -973,8 +973,10 @@ namespace {
 OpenGLShaderProgram* Shaders::getShaderProgram(VertexShader vertex_shader, FragmentShader fragment_shader,
                                                const GLchar** varyings) {
   int shader_program_index = vertex_shader * kNumFragmentShaders + fragment_shader;
+  
   if (shader_programs_.count(shader_program_index))
     return shader_programs_.at(shader_program_index).get();
+  std::cout << "[UNIQUE] getting shader #" << shader_program_index << " | FRAGBASE="<<kNumFragmentShaders << std::endl;
 
   shader_programs_[shader_program_index] = std::make_unique<OpenGLShaderProgram>(*open_gl_context_);
   OpenGLShaderProgram* result = shader_programs_[shader_program_index].get();

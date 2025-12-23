@@ -85,6 +85,7 @@ bool OpenGLShaderProgram::addShader (const String& code, GLenum type)
        #if true //JUCE_DEBUG && ! JUCE_DONT_ASSERT_ON_GLSL_COMPILE_ERROR
         // Your GLSL code contained compile errors!
         // Hopefully this compile log should help to explain what went wrong.
+        DBG ("shaderiv failed!");
         DBG (errorLog);
         jassertfalse;
        #endif
@@ -109,6 +110,8 @@ bool OpenGLShaderProgram::link() noexcept
     GLuint progID = getProgramID();
 
     context.extensions.glLinkProgram (progID);
+    int err = glGetError();
+    std::cout << "prog linked (" << progID << "). ERRNO" << err << std::endl;
 
     GLint status = GL_FALSE;
     context.extensions.glGetProgramiv (progID, GL_LINK_STATUS, &status);
@@ -123,6 +126,7 @@ bool OpenGLShaderProgram::link() noexcept
        #if true //JUCE_DEBUG && ! JUCE_DONT_ASSERT_ON_GLSL_COMPILE_ERROR
         // Your GLSL code contained link errors!
         // Hopefully this compile log should help to explain what went wrong.
+        DBG ("programiv failed!");
         DBG (errorLog);
         jassertfalse;
        #endif
@@ -163,6 +167,10 @@ void OpenGLShaderProgram::setUniformMat4 (const char* name, const GLfloat* v, GL
 OpenGLShaderProgram::Attribute::Attribute (const OpenGLShaderProgram& program, const char* name)
     : attributeID ((GLuint) program.context.extensions.glGetAttribLocation (program.getProgramID(), name))
 {
+    int error = glGetError();
+    if (error != 0) {
+        std::cout << "AttributeError: (prog=" << program.getProgramID() << ", err=" << error << ")" << std::endl;
+    }
    #if true //JUCE_DEBUG && ! JUCE_DONT_ASSERT_ON_GLSL_COMPILE_ERROR
     jassert ((GLint) attributeID >= 0);
    #endif
@@ -171,6 +179,10 @@ OpenGLShaderProgram::Attribute::Attribute (const OpenGLShaderProgram& program, c
 OpenGLShaderProgram::Uniform::Uniform (const OpenGLShaderProgram& program, const char* const name)
     : uniformID (program.context.extensions.glGetUniformLocation (program.getProgramID(), name)), context (program.context)
 {
+    int error = glGetError();
+    if (error != 0) {
+        std::cout << "UniformError: (prog=" << program.getProgramID() << ", err=" << error << ")" << std::endl;
+    }
    #if true //JUCE_DEBUG && ! JUCE_DONT_ASSERT_ON_GLSL_COMPILE_ERROR
     jassert (uniformID >= 0);
    #endif

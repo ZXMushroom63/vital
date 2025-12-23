@@ -33,6 +33,13 @@
                 Vial._vialSetWindowSize(400, 300);
             });
         });
+        function getProgramComponents(programID, kNumShaders) {
+            kNumShaders ||= 21;
+            return {
+                "VertexShaderID": Math.floor(programID / kNumShaders),
+                "FragmentShaderID": programID % kNumShaders
+            };
+        }
     </script>
 </body>
 
