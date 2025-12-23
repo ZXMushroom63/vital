@@ -264,7 +264,7 @@ public:
             clearGLError();
 
             bindVertexArray();
-            std::cout << "something renderer" << std::endl;
+            std::cout << "Viewport Configured, w: "<<viewportArea.getWidth()<<", h: "<<viewportArea.getHeight()<<", scale(=1): "<<scale<< std::endl;
         }
 
         if (context.renderComponents)

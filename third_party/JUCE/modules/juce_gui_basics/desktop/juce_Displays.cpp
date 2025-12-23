@@ -25,7 +25,16 @@
 
 namespace juce
 {
-
+extern "C" {
+    Displays::Display virtualDisplay = {
+        true, //ismain
+        Rectangle<int>(0, 0, 1920, 1080),
+        Rectangle<int>(0, 40, 1920, 1080),
+        Point<int>(0, 0),
+        1.0,
+        96.0
+    };
+}
 Displays::Displays (Desktop& desktop)
 {
     init (desktop);
@@ -33,11 +42,14 @@ Displays::Displays (Desktop& desktop)
 
 void Displays::init (Desktop& desktop)
 {
-    findDisplays (desktop.getGlobalScaleFactor());
+    //findDisplays (desktop.getGlobalScaleFactor());
 }
 
 const Displays::Display* Displays::getDisplayForRect (Rectangle<int> rect, bool isPhysical) const noexcept
 {
+    //EMPATCH
+    return &virtualDisplay;
+
     int maxArea = -1;
     const Display* foundDisplay = nullptr;
 
@@ -63,6 +75,9 @@ const Displays::Display* Displays::getDisplayForRect (Rectangle<int> rect, bool 
 
 const Displays::Display* Displays::getDisplayForPoint (Point<int> point, bool isPhysical) const noexcept
 {
+    //EMPATCH
+    return &virtualDisplay;
+
     auto minDistance = std::numeric_limits<int>::max();
     const Display* foundDisplay = nullptr;
 
@@ -90,6 +105,9 @@ const Displays::Display* Displays::getDisplayForPoint (Point<int> point, bool is
 
 Rectangle<int> Displays::physicalToLogical (Rectangle<int> rect, const Display* useScaleFactorOfDisplay) const noexcept
 {
+    //EMPATCH
+    return rect;
+
     const auto* display = useScaleFactorOfDisplay != nullptr ? useScaleFactorOfDisplay
                                                              : getDisplayForRect (rect, true);
 
@@ -103,6 +121,9 @@ Rectangle<int> Displays::physicalToLogical (Rectangle<int> rect, const Display* 
 
 Rectangle<int> Displays::logicalToPhysical (Rectangle<int> rect, const Display* useScaleFactorOfDisplay) const noexcept
 {
+    //EMPATCH
+    return rect;
+
     const auto* display = useScaleFactorOfDisplay != nullptr ? useScaleFactorOfDisplay
                                                              : getDisplayForRect (rect, false);
 
@@ -117,6 +138,9 @@ Rectangle<int> Displays::logicalToPhysical (Rectangle<int> rect, const Display* 
 template <typename ValueType>
 Point<ValueType> Displays::physicalToLogical (Point<ValueType> point, const Display* useScaleFactorOfDisplay) const noexcept
 {
+    //EMPATCH
+    return point;
+    
     const auto* display = useScaleFactorOfDisplay != nullptr ? useScaleFactorOfDisplay
                                                              : getDisplayForPoint (point.roundToInt(), true);
 
@@ -134,6 +158,9 @@ Point<ValueType> Displays::physicalToLogical (Point<ValueType> point, const Disp
 template <typename ValueType>
 Point<ValueType> Displays::logicalToPhysical (Point<ValueType> point, const Display* useScaleFactorOfDisplay)  const noexcept
 {
+    //EMPATCH
+    return point;
+
     const auto* display = useScaleFactorOfDisplay != nullptr ? useScaleFactorOfDisplay
                                                              : getDisplayForPoint (point.roundToInt(), false);
 
@@ -150,6 +177,9 @@ Point<ValueType> Displays::logicalToPhysical (Point<ValueType> point, const Disp
 
 const Displays::Display* Displays::getPrimaryDisplay() const noexcept
 {
+    //EMPATCH
+    return &virtualDisplay;
+    
     JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
 
     for (auto& d : displays)
@@ -164,8 +194,7 @@ RectangleList<int> Displays::getRectangleList (bool userAreasOnly) const
     JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
     RectangleList<int> rl;
 
-    for (auto& d : displays)
-        rl.addWithoutMerging (userAreasOnly ? d.userArea : d.totalArea);
+    rl.addWithoutMerging (userAreasOnly ? virtualDisplay.userArea : virtualDisplay.totalArea);
 
     return rl;
 }
@@ -177,6 +206,7 @@ Rectangle<int> Displays::getTotalBounds (bool userAreasOnly) const
 
 void Displays::refresh()
 {
+    return;
     Array<Display> oldDisplays;
     oldDisplays.swapWith (displays);
 
@@ -373,6 +403,8 @@ void Displays::updateToLogical()
 // Deprecated methods
 const Displays::Display& Displays::getDisplayContaining (Point<int> position) const noexcept
 {
+    return virtualDisplay;
+
     JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED
     const auto* best = &displays.getReference (0);
     auto bestDistance = std::numeric_limits<int>::max();
@@ -399,6 +431,9 @@ const Displays::Display& Displays::getDisplayContaining (Point<int> position) co
 
 const Displays::Display& Displays::findDisplayForRect (Rectangle<int> rect, bool isPhysical) const noexcept
 {
+    //EMPATCH
+    return virtualDisplay;
+
     if (auto* display = getDisplayForRect (rect, isPhysical))
         return *display;
 
@@ -407,6 +442,9 @@ const Displays::Display& Displays::findDisplayForRect (Rectangle<int> rect, bool
 
 const Displays::Display& Displays::findDisplayForPoint (Point<int> point, bool isPhysical) const noexcept
 {
+    //EMPATCH
+    return virtualDisplay;
+
     if (auto* display = getDisplayForPoint (point, isPhysical))
         return *display;
 
@@ -415,6 +453,9 @@ const Displays::Display& Displays::findDisplayForPoint (Point<int> point, bool i
 
 const Displays::Display& Displays::getMainDisplay() const noexcept
 {
+    //EMPATCH
+    return virtualDisplay;
+
     if (auto* display = getPrimaryDisplay())
         return *display;
 

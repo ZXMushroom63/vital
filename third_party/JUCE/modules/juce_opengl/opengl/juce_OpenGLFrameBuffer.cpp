@@ -70,7 +70,7 @@ public:
 
             context.extensions.glRenderbufferStorage (GL_RENDERBUFFER,
                                       (wantsDepthBuffer && wantsStencilBuffer) ? GL_DEPTH24_STENCIL8
-                                                                              #if JUCE_OPENGL_ES
+                                                                              #if true
                                                                                : GL_DEPTH_COMPONENT16,
                                                                               #else
                                                                                : GL_DEPTH_COMPONENT,
