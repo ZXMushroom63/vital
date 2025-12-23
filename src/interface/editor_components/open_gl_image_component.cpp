@@ -54,7 +54,7 @@ void OpenGlImageComponent::redrawImage(bool force) {
   Graphics g(*draw_image_);
   g.addTransform(AffineTransform::scale(pixel_scale));
   paintToImage(g);
-  std::cout << "SETTING IMAGE <<<" << std::endl;
+  //std::cout << "SETTING IMAGE <<<" << std::endl;
   image_.setImage(draw_image_.get());
 
   float gl_width = vital::utils::nextPowerOfTwo(width);
@@ -80,7 +80,7 @@ void OpenGlImageComponent::render(OpenGlWrapper& open_gl, bool animate) {
     return;
   // check if image_.image_ is not a null pointer
   if (image_.image_ == nullptr) {
-    std::cout << "NO IMAGE ACTIVE, RASTERIZING <<<" << std::endl;
+    //std::cout << "NO IMAGE ACTIVE, RASTERIZING <<<" << std::endl; //EMDEBUG
     redrawImage(true);
   }
   image_.drawImage(open_gl);

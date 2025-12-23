@@ -955,7 +955,7 @@ namespace {
   #else
     String out = OpenGLHelpers::translateFragmentShaderToV3(code);
   #endif
-  std::cout << "|FRAG|\n" << out << std::endl;
+  //std::cout << "|FRAG|\n" << out << std::endl; //EMDEBUG
   return out;
   }
 
@@ -965,7 +965,7 @@ namespace {
   #else
     String out = OpenGLHelpers::translateVertexShaderToV3(code);
   #endif
-  std::cout << "|VERT|\n" << out << std::endl;
+  //std::cout << "|VERT|\n" << out << std::endl; //EMDEBUG
   return out;
   }
 } // namespace

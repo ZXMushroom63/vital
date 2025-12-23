@@ -75,7 +75,7 @@ void OpenGlImage::drawImage(OpenGlWrapper& open_gl) {
     // Sometimes this doesnt exist. go figure
     texture_.loadImage(*image_);
     image_ = nullptr; //potentially comment this out ?? 
-    std::cout << "Image found successfully." << std::endl;
+    //std::cout << "Image found successfully." << std::endl; //EMDEBUG
   } else {
     std::cout << "No image found. This should be impossible." << std::endl;
   }

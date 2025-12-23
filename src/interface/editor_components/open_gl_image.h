@@ -42,7 +42,7 @@ class OpenGlImage {
     }
 
     void setImage(Image* image) {
-      std::cout << "i have received the image" << std::endl;
+      //std::cout << "i have received the image" << std::endl;
       image_ = image;
       image_width_ = image->getWidth();
       image_height_ = image->getHeight();
