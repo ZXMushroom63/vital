@@ -681,7 +681,7 @@ public:
     ReferenceCountedArray<ReferenceCountedObject> associatedObjects;
 
     WaitableEvent canPaintNowFlag, finishedPaintingFlag, repaintEvent;
-   #if JUCE_OPENGL_ES
+   #if true //EMPATCH
     bool shadersAvailable = true;
    #else
     bool shadersAvailable = false;

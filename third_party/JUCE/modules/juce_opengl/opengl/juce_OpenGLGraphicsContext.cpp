@@ -391,7 +391,7 @@ struct ShaderPrograms  : public ReferenceCountedObject
 
             if (program.addVertexShader (OpenGLHelpers::translateVertexShaderToV3 (vertexShader))
                  && program.addFragmentShader (OpenGLHelpers::translateFragmentShaderToV3 (fragmentShader))
-                 && program.link())
+                 && program.link()) //this is the problem ???
             {
                 JUCE_CHECK_OPENGL_ERROR
             }
@@ -984,11 +984,11 @@ struct StateHelpers
                         JUCE_CHECK_OPENGL_ERROR
 
                        #if ! JUCE_ANDROID
-                        if ((textureIndexMask & (1 << i)) != 0)
-                            glEnable (GL_TEXTURE_2D);
-                        else
+                        if ((textureIndexMask & (1 << i)) != 0) {
+                            //glEnable (GL_TEXTURE_2D);
+                        } else
                         {
-                            glDisable (GL_TEXTURE_2D);
+                            //glDisable (GL_TEXTURE_2D);
                             currentTextureID[i] = 0;
                         }
 
@@ -1768,7 +1768,7 @@ struct NonShaderContext   : public LowLevelGraphicsSoftwareRenderer
 
        #if ! JUCE_ANDROID
         target.context.extensions.glActiveTexture (GL_TEXTURE0);
-        glEnable (GL_TEXTURE_2D);
+        //glEnable (GL_TEXTURE_2D);
         clearGLError();
        #endif
 

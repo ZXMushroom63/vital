@@ -127,7 +127,7 @@ void OpenGLExtensionFunctions::initialise()
 
 #undef JUCE_GL_EXTENSION_FUNCTIONS
 
-#if JUCE_DEBUG && ! defined (JUCE_CHECK_OPENGL_ERROR)
+#if true //JUCE_DEBUG && ! defined (JUCE_CHECK_OPENGL_ERROR) //EMDEBUG
 static const char* getGLErrorMessage (const GLenum e) noexcept
 {
     switch (e)
@@ -200,25 +200,17 @@ static bool checkPeerIsValid (OpenGLContext* context)
     return false;
 }
 
-static void checkGLError (const char* file, const int line)
+static void checkGLError (const char* file, int line)
 {
-    for (;;)
-    {
-        const GLenum e = glGetError();
+    int e = glGetError();
 
-        if (e == GL_NO_ERROR)
-            break;
-
-        // if the peer is not valid then ignore errors
-        if (! checkPeerIsValid (OpenGLContext::getCurrentContext()))
-            continue;
-
-        DBG ("***** " << getGLErrorMessage (e) << "  at " << file << " : " << line);
-        jassertfalse;
+    while (e != 0) {
+        std::cerr << "*JuceGL* " << getGLErrorMessage (static_cast<GLenum>(e)) << " in file: " << file << ", line:" << line << std::endl;
+        e = glGetError();
     }
 }
 
- #define JUCE_CHECK_OPENGL_ERROR checkGLError (__FILE__, __LINE__);
+ #define JUCE_CHECK_OPENGL_ERROR checkGLError(__FILE__, __LINE__);
 #else
  #define JUCE_CHECK_OPENGL_ERROR ;
 #endif
