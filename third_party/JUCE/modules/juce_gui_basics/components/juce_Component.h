@@ -2294,6 +2294,7 @@ public:
       }
       return pixel_scaling;
     }
+    void sendMovedResizedMessagesIfPending();
 
 private:
     //==============================================================================
@@ -2384,7 +2385,6 @@ private:
     void paintComponentAndChildren (Graphics&);
     void paintWithinParentContext (Graphics&);
     void sendMovedResizedMessages (bool wasMoved, bool wasResized);
-    void sendMovedResizedMessagesIfPending();
     void repaintParent();
     void sendFakeMouseMove() const;
     void takeKeyboardFocus (FocusChangeType);

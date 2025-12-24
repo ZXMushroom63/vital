@@ -922,6 +922,7 @@ void OpenGLContext::setComponentPaintingEnabled (bool shouldPaintComponent) noex
 void OpenGLContext::setContinuousRepainting (bool shouldContinuouslyRepaint) noexcept
 {
     continuousRepaint = shouldContinuouslyRepaint;
+    std::cout << "Will continuously repaint: " << shouldContinuouslyRepaint << std::endl;
 
     #if JUCE_MAC
      if (auto* component = getTargetComponent())
@@ -1172,7 +1173,22 @@ struct DepthTestDisabler
 
     GLboolean wasEnabled;
 };
+static inline String translateFragmentShader(const String& code) {
+#if true
+    return String("#version 300 es\nprecision mediump float;\n") + "out mediump vec4 fragColor;\n" +
+            code.replace("varying", "in").replace("texture2D", "texture").replace("gl_FragColor", "fragColor");
+#else
+    return OpenGLHelpers::translateFragmentShaderToV3(code);
+#endif
+}
 
+static inline String translateVertexShader(const String& code) {
+#if true
+    return String("#version 300 es\nprecision mediump float;\n") + code.replace("attribute", "in").replace("varying", "out");
+#else
+    return OpenGLHelpers::translateVertexShaderToV3(code);
+#endif
+}
 //==============================================================================
 void OpenGLContext::copyTexture (const Rectangle<int>& targetClipArea,
                                  const Rectangle<int>& anchorPosAndTextureSize,
@@ -1215,7 +1231,7 @@ void OpenGLContext::copyTexture (const Rectangle<int>& targetClipArea,
             {
                 ProgramBuilder (OpenGLShaderProgram& prog)
                 {
-                    prog.addVertexShader (OpenGLHelpers::translateVertexShaderToV3 (
+                    prog.addVertexShader (translateVertexShader (
                         "attribute " JUCE_HIGHP " vec2 position;"
                         "uniform " JUCE_HIGHP " vec2 screenSize;"
                         "uniform " JUCE_HIGHP " float textureBounds[4];"
@@ -1229,15 +1245,17 @@ void OpenGLContext::copyTexture (const Rectangle<int>& targetClipArea,
                           "texturePos = vec2 (texturePos.x, vOffsetAndScale.x + vOffsetAndScale.y * texturePos.y);"
                         "}"));
 
-                    prog.addFragmentShader (OpenGLHelpers::translateFragmentShaderToV3 (
+                    prog.addFragmentShader (translateFragmentShader (
                         "uniform sampler2D imageTexture;"
                         "varying " JUCE_HIGHP " vec2 texturePos;"
                         "void main()"
                         "{"
                           "gl_FragColor = texture2D (imageTexture, texturePos);"
                         "}"));
-
-                    prog.link();
+                    std::cout << "POS1GL. Linking program ID: " << prog.getProgramID() << std::endl;
+                    prog.link(); //huh???
+                    //exit(0); //EMEXIT
+                    JUCE_CHECK_OPENGL_ERROR
                 }
             };
 

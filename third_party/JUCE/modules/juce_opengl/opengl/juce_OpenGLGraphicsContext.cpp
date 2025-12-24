@@ -344,6 +344,23 @@ private:
     };
 };
 
+static inline String translateFragmentShader(const String& code) {
+#if true
+    return String("#version 300 es\nprecision mediump float;\n") + "out mediump vec4 fragColor;\n" +
+            code.replace("varying", "in").replace("texture2D", "texture").replace("gl_FragColor", "fragColor");
+#else
+    return OpenGLHelpers::translateFragmentShaderToV3(code);
+#endif
+}
+
+static inline String translateVertexShader(const String& code) {
+#if true
+    return String("#version 300 es\nprecision mediump float;\n") + code.replace("attribute", "in").replace("varying", "out");
+#else
+    return OpenGLHelpers::translateVertexShaderToV3(code);
+#endif
+}
+
 //==============================================================================
 struct ShaderPrograms  : public ReferenceCountedObject
 {
@@ -373,9 +390,12 @@ struct ShaderPrograms  : public ReferenceCountedObject
             : program (context)
         {
             JUCE_CHECK_OPENGL_ERROR
-
+            bool isUsingDefaultVertexShader = false;
             if (vertexShader == nullptr)
-                vertexShader = "attribute vec2 position;"
+                {
+                    //debugger worthy
+                    isUsingDefaultVertexShader = true;
+                    vertexShader = "attribute vec2 position;"
                                "attribute vec4 colour;"
                                "uniform vec4 screenBounds;"
                                "varying " JUCE_MEDIUMP " vec4 frontColour;"
@@ -388,16 +408,25 @@ struct ShaderPrograms  : public ReferenceCountedObject
                                  "vec2 scaledPos = adjustedPos / screenBounds.zw;"
                                  "gl_Position = vec4 (scaledPos.x - 1.0, 1.0 - scaledPos.y, 0, 1.0);"
                                "}";
+                }
 
-            if (program.addVertexShader (OpenGLHelpers::translateVertexShaderToV3 (vertexShader))
-                 && program.addFragmentShader (OpenGLHelpers::translateFragmentShaderToV3 (fragmentShader))
+            if (program.addVertexShader (translateVertexShader (vertexShader))
+                 && program.addFragmentShader (translateFragmentShader (fragmentShader))
                  && program.link()) //this is the problem ???
             {
+                std::cout << "POS2GL. Linking program ID: " << program.getProgramID() << std::endl;
                 JUCE_CHECK_OPENGL_ERROR
             }
             else
             {
+                std::cout << "POS2GL. Linking program ID failed!!: " << program.getProgramID() << std::endl;
+                JUCE_CHECK_OPENGL_ERROR
                 lastError = program.getLastError();
+                std::cout << "Retrieved stack error: " << lastError << std::endl;
+                std::cout << "Uses default vert shader? " << (isUsingDefaultVertexShader ? 0 : 1) << std::endl;
+                std::cout << "PREPARING TO DUMP /!\\" << std::endl;
+                std::cout << "|2FRAG|\n" << fragmentShader << std::endl;
+                std::cout << "|2VERT|\n" << vertexShader << std::endl;
             }
         }
 
@@ -683,13 +712,17 @@ struct ShaderPrograms  : public ReferenceCountedObject
     struct ImageProgram  : public ShaderBase
     {
         ImageProgram (OpenGLContext& context)
-            : ShaderBase (context, JUCE_DECLARE_VARYING_COLOUR
+            : ShaderBase (context,
+                        //fragment
+                            JUCE_DECLARE_VARYING_COLOUR
                           "uniform sampler2D imageTexture;"
                           "varying " JUCE_HIGHP " vec2 texturePos;"
                           "void main()"
                           "{"
                             "gl_FragColor = frontColour.a * " JUCE_GET_IMAGE_PIXEL ";"
                           "}",
+
+                        //vertex
                           "uniform " JUCE_MEDIUMP " vec2 imageLimits;"
                           JUCE_DECLARE_MATRIX_UNIFORM
                           "attribute vec2 position;"

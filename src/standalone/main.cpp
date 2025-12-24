@@ -587,6 +587,11 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE
+    void vialTickResizeEvents() {
+      global_editor->gui_->sendMovedResizedMessagesIfPending();
+    }
+
+    EMSCRIPTEN_KEEPALIVE
     bool dispatchSystemMessage(bool retFalseIfNonePending) {
         STDOUT_LOG("Dispatch from JS");
         return MessageManager::getInstance()->dispatchNextMessageOnSystemQueue(retFalseIfNonePending);

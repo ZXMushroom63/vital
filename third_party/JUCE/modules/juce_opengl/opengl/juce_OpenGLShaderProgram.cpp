@@ -69,11 +69,14 @@ bool OpenGLShaderProgram::addShader (const String& code, GLenum type)
 
     const GLchar* c = code.toRawUTF8();
     context.extensions.glShaderSource (shaderID, 1, &c, nullptr);
+    JUCE_CHECK_OPENGL_ERROR
 
     context.extensions.glCompileShader (shaderID);
+    JUCE_CHECK_OPENGL_ERROR
 
     GLint status = GL_FALSE;
     context.extensions.glGetShaderiv (shaderID, GL_COMPILE_STATUS, &status);
+    JUCE_CHECK_OPENGL_ERROR
 
     if (status == GL_FALSE)
     {
@@ -94,6 +97,7 @@ bool OpenGLShaderProgram::addShader (const String& code, GLenum type)
     }
 
     context.extensions.glAttachShader (getProgramID(), shaderID);
+    JUCE_CHECK_OPENGL_ERROR
     context.extensions.glDeleteShader (shaderID);
     JUCE_CHECK_OPENGL_ERROR
     return true;
@@ -139,9 +143,15 @@ bool OpenGLShaderProgram::link() noexcept
 void OpenGLShaderProgram::use() const noexcept
 {
     // The shader program must have been successfully linked when this method is called!
+    // ^ i hope that is the case ig
     jassert (programID != 0);
 
     context.extensions.glUseProgram (programID);
+    int err = glGetError();
+    if (err != 0) {
+        // something broke :(
+        std::cout << "glUseProgram() on Prog #" << programID << " failed with error " << err << std::endl;
+    }
 }
 
 GLint OpenGLShaderProgram::getUniformIDFromName (const char* uniformName) const noexcept
