@@ -22,6 +22,7 @@
 
   ==============================================================================
 */
+#include <emscripten.h>
 
 namespace juce
 {
@@ -1828,6 +1829,7 @@ void Component::alphaChanged()
     }
 }
 
+bool Component::preventRendering = false;
 //==============================================================================
 void Component::repaint()
 {
@@ -1852,6 +1854,9 @@ void Component::repaintParent()
 
 void Component::internalRepaint (Rectangle<int> area)
 {
+    if (Component::preventRendering) {
+        return;
+    }
     area = area.getIntersection (getLocalBounds());
 
     if (! area.isEmpty())
@@ -1860,6 +1865,9 @@ void Component::internalRepaint (Rectangle<int> area)
 
 void Component::internalRepaintUnchecked (Rectangle<int> area, bool isEntireComponent)
 {
+    if (Component::preventRendering) {
+        return;
+    }
     // if component methods are being called from threads other than the message
     // thread, you'll need to use a MessageManagerLock object to make sure it's thread-safe.
     JUCE_ASSERT_MESSAGE_MANAGER_IS_LOCKED

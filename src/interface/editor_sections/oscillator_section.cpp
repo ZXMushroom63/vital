@@ -603,6 +603,7 @@ void OscillatorSection::paintBackground(Graphics& g) {
 }
 
 void OscillatorSection::resized() {
+  std::cerr << "enter OscillatorSection resize call." << std::endl;
   if (getWidth() <= 0 || getHeight() <= 0)
     return;
 
@@ -738,6 +739,7 @@ void OscillatorSection::resized() {
     ttwt_error_text_->setBounds(ttwt_->getBounds());
     ttwt_error_text_->setColor(body_text);
   }
+  std::cerr << "exit OscillatorSection resize call." << std::endl;
 }
 
 void OscillatorSection::buttonClicked(Button* clicked_button) {

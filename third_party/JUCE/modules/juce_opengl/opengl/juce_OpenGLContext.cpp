@@ -68,7 +68,16 @@ private:
 #if JUCE_WINDOWS && JUCE_WIN_PER_MONITOR_DPI_AWARE
  extern JUCE_API double getScaleFactorForWindow (HWND);
 #endif
-
+extern "C" {
+    int debugStackFreezeGL();
+    EM_ASYNC_JS(int, debugStackFreezeGL, (void), {
+        await (new Promise(resolve => {
+            globalThis.resumeStackGL = function(debug) {if(debug){debugger;};resolve();globalThis.resumeStackGL=null;};
+        }));
+        console.log("DebugStack Forward");
+        return 0;
+    });
+}
 //==============================================================================
 class OpenGLContext::CachedImage  : public CachedComponentImage,
                                     private ThreadPoolJob
@@ -173,7 +182,7 @@ public:
 
     void triggerRepaint()
     {
-        needsUpdate = 1;
+        //needsUpdate = 1;
         if (!hasInitialised) {
             initialiseOnThread();
             hasInitialised = true;
@@ -222,7 +231,7 @@ public:
 
     bool renderFrame()
     {
-        std::cout << "Drawing to CachedImage FBO..." << std::endl;
+        //std::cout << "Drawing to CachedImage FBO..." << std::endl;
         // i should debugger here
         MessageManager::Lock::ScopedTryLockType mmLock (messageManagerLock, false);
 
@@ -264,7 +273,7 @@ public:
             clearGLError();
 
             bindVertexArray();
-            std::cout << "Viewport Configured, w: "<<viewportArea.getWidth()<<", h: "<<viewportArea.getHeight()<<", scale(=1): "<<scale<< std::endl;
+            //std::cout << "Viewport Configured, w: "<<viewportArea.getWidth()<<", h: "<<viewportArea.getHeight()<<", scale(=1): "<<scale<< std::endl;
         }
 
         if (context.renderComponents)
@@ -282,13 +291,13 @@ public:
 
             glViewport (0, 0, viewportArea.getWidth(), viewportArea.getHeight());
             drawComponentBuffer();
-            std::cout << "Drawing component buffer." << std::endl;
+            //std::cout << "Drawing component buffer." << std::endl;
         }
 
         context.swapBuffers();
 
         OpenGLContext::deactivateCurrentContext();
-        std::cout << "Draw to FBO + BufferSwap succeeded!" << std::endl;
+        //std::cout << "Draw to FBO + BufferSwap succeeded!" << std::endl;
         return true;
     }
 
@@ -376,6 +385,8 @@ public:
 
     void drawComponentBuffer()
     {
+        return;
+        debugStackFreezeGL();
        #if ! JUCE_ANDROID
         //glEnable (GL_TEXTURE_2D);
         clearGLError();
@@ -390,7 +401,7 @@ public:
        #endif
             context.extensions.glActiveTexture (GL_TEXTURE0);
 
-        std::cout << "BINDING TEXTURE" << std::endl;
+        //std::cout << "BINDING TEXTURE" << std::endl;
         glBindTexture (GL_TEXTURE_2D, cachedImageFrameBuffer.getTextureID());
         bindVertexArray();
 
@@ -1027,7 +1038,7 @@ bool OpenGLContext::makeActive() const noexcept
 
     if (nativeContext != nullptr && nativeContext->makeActive())
     {
-        std::cout << "Context successfully activated." << std::endl;
+        //std::cout << "Context successfully activated." << std::endl;
         current = const_cast<OpenGLContext*> (this);
         return true;
     }
@@ -1050,9 +1061,9 @@ void OpenGLContext::deactivateCurrentContext()
 
 void OpenGLContext::triggerRepaint()
 {
-    std::cout << "OpenGL Repaint Triggered" << std::endl;
+    //std::cout << "OpenGL Repaint Triggered" << std::endl;
     if (auto* cachedImage = getCachedImage()) {
-        std::cout << "Repainting cached image" << std::endl;
+        //std::cout << "Repainting cached image" << std::endl;
         cachedImage->triggerRepaint();
     }
 }

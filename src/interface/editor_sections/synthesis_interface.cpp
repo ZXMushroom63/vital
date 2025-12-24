@@ -53,6 +53,7 @@ void SynthesisInterface::paintBackground(Graphics& g) {
 }
 
 void SynthesisInterface::resized() {
+  std::cerr << "enter SynthesisInterface resize call." << std::endl;
   int padding = getPadding();
   int active_width = getWidth() - padding;
   int width_left = (active_width - padding) / 2;
@@ -75,6 +76,7 @@ void SynthesisInterface::resized() {
   filter_section_1_->setBounds(0, filter_y, width_left, filter_height);
   filter_section_2_->setBounds(right_x, filter_y, width_right, filter_height);
   SynthSection::resized();
+  std::cerr << "exit SynthesisInterface resize call." << std::endl;
 }
 
 void SynthesisInterface::visibilityChanged() {

@@ -22,7 +22,6 @@
 
 namespace juce
 {
-
 //==============================================================================
 /**
     Represents a set of audio channel types.

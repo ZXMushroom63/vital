@@ -2295,6 +2295,8 @@ public:
       return pixel_scaling;
     }
     void sendMovedResizedMessagesIfPending();
+    std::unique_ptr<CachedComponentImage> cachedImage;
+    static bool preventRendering;
 
 private:
     //==============================================================================
@@ -2315,7 +2317,6 @@ private:
     WeakReference<LookAndFeel> lookAndFeel;
     MouseCursor cursor;
     ImageEffectFilter* effect = nullptr;
-    std::unique_ptr<CachedComponentImage> cachedImage;
 
     class MouseListenerList;
     std::unique_ptr<MouseListenerList> mouseListeners;

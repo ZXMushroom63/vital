@@ -103,6 +103,7 @@ SynthPresetSelector::~SynthPresetSelector() {
 }
 
 void SynthPresetSelector::resized() {
+  std::cerr << "enter SynthPresetSelector resize call." << std::endl;
   static constexpr float kSelectorButtonPaddingHeightPercent = 0.2f;
 
   int height = getHeight();
@@ -117,6 +118,7 @@ void SynthPresetSelector::resized() {
   resetText();
 
   Component::resized();
+  std::cerr << "exit SynthPresetSelector resize call." << std::endl;
 }
 
 void SynthPresetSelector::buttonClicked(Button* clicked_button) {

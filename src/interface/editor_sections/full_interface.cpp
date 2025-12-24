@@ -391,6 +391,7 @@ void FullInterface::checkShouldReposition(bool resize) {
 }
 
 void FullInterface::resized() {
+  std::cerr << "entering FullInterface resize call." << std::endl;
   checkShouldReposition(false);
 
   width_ = getWidth();
@@ -515,6 +516,8 @@ void FullInterface::resized() {
 
   if (getWidth() && getHeight())
     redoBackground();
+
+  std::cerr << "exit FullInterface resize call." << std::endl;
 }
 
 void FullInterface::setOscilloscopeMemory(const vital::poly_float* memory) {
@@ -613,6 +616,9 @@ void FullInterface::newOpenGLContextCreated() {
 }
 
 void FullInterface::renderOpenGL() {
+  if (Component::preventRendering) {
+    return;
+  }
   if (unsupported_)
     return;
 

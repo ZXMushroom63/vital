@@ -570,14 +570,28 @@ extern "C" {
         return juce::JUCEApplicationBase::main();
     }
 
+    int dbgEntryCounter = 0;
+    int dbgNoExitCounter = 0;
+
     EMSCRIPTEN_KEEPALIVE
     void vialSetWindowSize(int w, int h)
     {
+        std::cerr << "setWindowSize called (entries = " << dbgEntryCounter << ", failed exits = " << dbgNoExitCounter << ")" << std::endl;
+        dbgEntryCounter++;
+        dbgNoExitCounter++;
         juce::virtualDisplay.totalArea.setWidth(w);
         juce::virtualDisplay.userArea.setWidth(w);
         juce::virtualDisplay.totalArea.setHeight(h);
         juce::virtualDisplay.userArea.setHeight(h);
+        Component::preventRendering = true;
         global_editor->setBounds(0, 0, w, h);
+        Component::preventRendering = false;
+        dbgNoExitCounter--;
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void vialInvalidateGui() {
+        global_editor->gui_->cachedImage->invalidateAll();
     }
 
     EMSCRIPTEN_KEEPALIVE

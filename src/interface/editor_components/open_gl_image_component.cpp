@@ -30,6 +30,9 @@ OpenGlImageComponent::OpenGlImageComponent(String name) : OpenGlComponent(name),
 }
 
 void OpenGlImageComponent::redrawImage(bool force) {
+  if (Component::preventRendering) {
+    return;
+  }
   if (!active_)
     return;
 

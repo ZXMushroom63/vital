@@ -31,7 +31,6 @@
 namespace juce
 {
 #define GLES_DEBUG(dbgtext)   { juce::String tempDbgBuf ("GLES: "); tempDbgBuf << dbgtext; Logger::writeToLog (tempDbgBuf); DBG (tempDbgBuf); }
-extern XContext windowHandleXContext;
 
 //=========================================================================
 //==============================================================================
@@ -204,7 +203,7 @@ public:
     bool makeActive() const noexcept
     {
         if (context != EGL_NO_CONTEXT && surface != EGL_NO_SURFACE)
-            GLES_DEBUG("Calling EMSDK context activation...");
+            //GLES_DEBUG("Calling EMSDK context activation...");
             return eglMakeCurrent(display, surface, surface, context);
 
         GLES_DEBUG("Skipping EMSDK context activation (something failed on first init?)...");
@@ -223,7 +222,7 @@ public:
 
     void swapBuffers()
     {
-        GLES_DEBUG("swapping buffers!");
+        //GLES_DEBUG("swapping buffers!");
         if (display != EGL_NO_DISPLAY && surface != EGL_NO_SURFACE)
             eglSwapBuffers (display, surface);
     }
