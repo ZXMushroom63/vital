@@ -9,9 +9,11 @@
 
 <body>
     <canvas width="400" height="300" id="canvas"
-        style="width: 400; height: 300; border: 1px solid black; image-rendering: pixelated; background: linear-gradient(132deg,rgba(65, 63, 110, 1) 0%, rgba(141, 138, 166, 1) 35%, rgba(128, 182, 194, 1) 100%);"></canvas>
+        style="display: block; width: 400px; height: 300px; border: 1px solid black; image-rendering: pixelated; background: linear-gradient(132deg,rgba(65, 63, 110, 1) 0%, rgba(141, 138, 166, 1) 35%, rgba(128, 182, 194, 1) 100%);"></canvas>
     <br>
-    <span>Checking WebGL Availability...</span><button id="init">init</button>
+    <span>Checking WebGL Availability...</span>
+    <button id="init">init</button>
+    <button id="draw">draw</button>
     <script src="vial.js"></script>
     <script>
         function detectWebGLContext() {
@@ -26,11 +28,93 @@
         }).then(Vial => {
             globalThis.Vial = Vial;
         });
+        
         addEventListener("load", ()=>{
+            let inited = false;
             document.querySelector("span").innerText = detectWebGLContext();
             document.querySelector("#init").addEventListener("click", ()=>{
+                inited = true;
                 Vial._startApplication_Classic();
-                Vial._vialSetWindowSize(400, 300);
+                Vial._vialSetWindowSize(1920, 1080);
+            });
+            document.querySelector("#draw").addEventListener("click", ()=>{
+                Vial._vialRedraw();
+            });
+            const ev = {
+                lmb: false,
+                mmb: false,
+                rmb: false,
+                ctrlKey: false,
+                shiftKey: false,
+                altKey: false,
+                x: 0,
+                y: 0
+            }
+            function queueMouseEvent() {
+                if (!inited) {
+                    return;
+                }
+                console.log("sending mouse data.");
+                Vial._processMouseEvent(ev.lmb, ev.mmb, ev.rmb, ev.ctrlKey, ev.shiftKey, ev.altKey, ev.x, ev.y);
+            }
+            const canvas = document.querySelector("#canvas");
+            canvas.addEventListener("mousedown", (event) => {
+                if (event instanceof MouseEvent) {
+                    switch (event.button) {
+                        case 0:
+                            ev.lmb = true;
+                            break;
+                        case 1:
+                            ev.mmb = true;
+                            break;
+                        case 2:
+                            ev.rmb = true;
+                            break;
+                    
+                        default:
+                            break;
+                    }
+                    ev.ctrlKey = event.ctrlKey;
+                    ev.altKey = event.altKey;
+                    ev.shiftKey = event.shiftKey;
+                    ev.x = event.layerX;
+                    ev.y = event.layerY;
+                    queueMouseEvent();
+                }
+            });
+            canvas.addEventListener("mouseup", (event) => {
+                if (event instanceof MouseEvent) {
+                    switch (event.button) {
+                        case 0:
+                            ev.lmb = false;
+                            break;
+                        case 1:
+                            ev.mmb = false;
+                            break;
+                        case 2:
+                            ev.rmb = false;
+                            break;
+                    
+                        default:
+                            break;
+                    }
+                    ev.ctrlKey = event.ctrlKey;
+                    ev.altKey = event.altKey;
+                    ev.shiftKey = event.shiftKey;
+                    ev.x = event.layerX;
+                    ev.y = event.layerY;
+                    queueMouseEvent();
+                }
+            });
+            canvas.addEventListener("mousemove", (event) => {
+                if (event instanceof MouseEvent) {
+                    ev.ctrlKey = event.ctrlKey;
+                    ev.altKey = event.altKey;
+                    ev.shiftKey = event.shiftKey;
+                    ev.x = event.layerX;
+                    ev.y = event.layerY;
+                    queueMouseEvent();
+                }
             });
         });
         function getProgramComponents(programID, kNumShaders) {

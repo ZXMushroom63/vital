@@ -149,8 +149,8 @@ void OpenGLShaderProgram::use() const noexcept
     context.extensions.glUseProgram (programID);
     int err = glGetError();
     if (err != 0) {
-        // something broke :(
-        std::cout << "glUseProgram() on Prog #" << programID << " failed with error " << err << std::endl;
+        // something broke :( (or its program 54 screwing things up for no damn reason)
+        //std::cout << "glUseProgram() on Prog #" << programID << " failed with error " << err << std::endl;
     }
 }
 

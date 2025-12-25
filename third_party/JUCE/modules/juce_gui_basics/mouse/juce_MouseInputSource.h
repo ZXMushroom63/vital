@@ -248,6 +248,8 @@ public:
     // hasMovedSignificantlySincePressed() instead.
     JUCE_DEPRECATED (bool hasMouseMovedSignificantlySincePressed() const noexcept);
    #endif
+
+   explicit MouseInputSource (MouseInputSourceInternal*) noexcept;
 private:
     //==============================================================================
     friend class ComponentPeer;
@@ -257,7 +259,7 @@ private:
 
     struct SourceList;
 
-    explicit MouseInputSource (MouseInputSourceInternal*) noexcept;
+    
     void handleEvent (ComponentPeer&, Point<float>, int64 time, ModifierKeys, float, float, const PenDetails&);
     void handleWheel (ComponentPeer&, Point<float>, int64 time, const MouseWheelDetails&);
     void handleMagnifyGesture (ComponentPeer&, Point<float>, int64 time, float scaleFactor);

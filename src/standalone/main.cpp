@@ -545,8 +545,19 @@ class SynthApplication : public JUCEApplication {
   private:
     std::unique_ptr<MainWindow> main_window_;
 };
-
+struct EmscriptenMouseEvent {
+  bool leftMouseDown;
+  bool middleMouseDown;
+  bool rightMouseDown;
+  bool ctrlKey;
+  bool shiftKey;
+  bool altKey;
+  int screenX;
+  int screenY;
+};
 SynthApplication* appInst = nullptr;
+//MouseInputSourceInternal* misi = new MouseInputSourceInternal(0, MouseInputSource::InputSourceType::mouse);
+MouseInputSource* mis = new MouseInputSource(nullptr);
 extern "C" {
     EMSCRIPTEN_KEEPALIVE  
     int startApplication_Classic()
@@ -610,7 +621,83 @@ extern "C" {
         STDOUT_LOG("Dispatch from JS");
         return MessageManager::getInstance()->dispatchNextMessageOnSystemQueue(retFalseIfNonePending);
     }
-    
+
+    Component* lastComponent;
+    bool wasLeftButtonDown = false;
+    EMSCRIPTEN_KEEPALIVE
+    void processMouseEvent(bool lmb, bool mmb, bool rmb, bool ctrlKey, bool shiftKey, bool altKey, int screenX, int screenY)
+    {
+        Component::preventRendering = false;
+        EmscriptenMouseEvent emscriptenEvent;
+        emscriptenEvent.leftMouseDown = lmb;
+        emscriptenEvent.middleMouseDown = mmb;
+        emscriptenEvent.rightMouseDown = rmb;
+        emscriptenEvent.ctrlKey = ctrlKey;
+        emscriptenEvent.shiftKey = shiftKey;
+        emscriptenEvent.altKey = altKey;
+        emscriptenEvent.screenX = screenX;
+        emscriptenEvent.screenY = screenY;
+        Point<int> screenPosition(emscriptenEvent.screenX, emscriptenEvent.screenY);
+        mis->setScreenPosition(screenPosition.toFloat());
+
+        Component* targetComponent = global_editor->gui_->getComponentAt(screenPosition);
+        ModifierKeys::Flags modifier = ModifierKeys::Flags::noModifiers;
+        if (ctrlKey) {
+          modifier = static_cast<ModifierKeys::Flags>(static_cast<int>(modifier) | static_cast<int>(ModifierKeys::ctrlModifier));
+        }
+        if (shiftKey) {
+          modifier = static_cast<ModifierKeys::Flags>(static_cast<int>(modifier) | static_cast<int>(ModifierKeys::shiftModifier));
+        }
+        if (altKey) {
+          modifier = static_cast<ModifierKeys::Flags>(static_cast<int>(modifier) | static_cast<int>(ModifierKeys::altModifier));
+        }
+
+        ModifierKeys mod;
+
+        Time fakeTime;
+        bool isLeftButtonDown = emscriptenEvent.leftMouseDown;
+            bool isMiddleButtonDown = emscriptenEvent.middleMouseDown;
+            bool isRightButtonDown = emscriptenEvent.rightMouseDown;
+
+            Point<float> localPosition = (targetComponent->getLocalPoint(global_editor->getGui(), screenPosition)).toFloat();
+            MouseEvent mouseEvent(*mis, localPosition, mod.withFlags(modifier), 0, 0, 0, 0, 0, targetComponent, global_editor->getGui(), fakeTime, localPosition,
+             fakeTime, 0, (wasLeftButtonDown == lmb));
+
+        if (targetComponent != nullptr)
+        {
+            if (isLeftButtonDown && !wasLeftButtonDown) 
+            {
+                targetComponent->mouseDown(mouseEvent);
+            }
+            else if (!isLeftButtonDown && wasLeftButtonDown) 
+            {
+                targetComponent->mouseUp(mouseEvent);
+            }
+
+            if (lastComponent != targetComponent) 
+            {
+                if (lastComponent != nullptr) 
+                {
+                    lastComponent->mouseExit(mouseEvent);
+                }
+                targetComponent->mouseEnter(mouseEvent);
+                lastComponent = targetComponent;
+            }
+
+            if (isLeftButtonDown || isMiddleButtonDown || isRightButtonDown) 
+            {
+                targetComponent->mouseDrag(mouseEvent);
+            }
+        }
+        else if (lastComponent != nullptr) 
+        {
+            lastComponent->mouseExit(mouseEvent);
+            lastComponent = nullptr;
+        }
+
+        wasLeftButtonDown = lmb;
+        Component::preventRendering = false;
+    }
 
     int main(int argc, char* argv[])
     {
@@ -618,6 +705,7 @@ extern "C" {
         startApplication_Classic();
         startApplication_Advanced();
         dispatchSystemMessage(false);
+        processMouseEvent(false, false, false, false, false, false, 0, 0);
         return 0;
     }
 }
