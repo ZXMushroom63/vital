@@ -114,8 +114,8 @@ bool OpenGLShaderProgram::link() noexcept
     GLuint progID = getProgramID();
 
     context.extensions.glLinkProgram (progID);
-    int err = glGetError();
-    std::cout << "prog linked (" << progID << "). ERRNO" << err << std::endl;
+    // int err = glGetError();
+    // std::cout << "prog linked (" << progID << "). ERRNO" << err << std::endl;
 
     GLint status = GL_FALSE;
     context.extensions.glGetProgramiv (progID, GL_LINK_STATUS, &status);
@@ -147,11 +147,11 @@ void OpenGLShaderProgram::use() const noexcept
     jassert (programID != 0);
 
     context.extensions.glUseProgram (programID);
-    int err = glGetError();
-    if (err != 0) {
-        // something broke :( (or its program 54 screwing things up for no damn reason)
-        //std::cout << "glUseProgram() on Prog #" << programID << " failed with error " << err << std::endl;
-    }
+    // int err = glGetError();
+    // if (err != 0) {
+    //     //something broke :( (or its program 54 screwing things up for no damn reason)
+    //     std::cout << "glUseProgram() on Prog #" << programID << " failed with error " << err << std::endl;
+    // }
 }
 
 GLint OpenGLShaderProgram::getUniformIDFromName (const char* uniformName) const noexcept
@@ -177,10 +177,10 @@ void OpenGLShaderProgram::setUniformMat4 (const char* name, const GLfloat* v, GL
 OpenGLShaderProgram::Attribute::Attribute (const OpenGLShaderProgram& program, const char* name)
     : attributeID ((GLuint) program.context.extensions.glGetAttribLocation (program.getProgramID(), name))
 {
-    int error = glGetError();
-    if (error != 0) {
-        std::cout << "AttributeError: (prog=" << program.getProgramID() << ", err=" << error << ")" << std::endl;
-    }
+    // int error = glGetError();
+    // if (error != 0) {
+    //     std::cout << "AttributeError: (prog=" << program.getProgramID() << ", err=" << error << ")" << std::endl;
+    // }
    #if true //JUCE_DEBUG && ! JUCE_DONT_ASSERT_ON_GLSL_COMPILE_ERROR
     jassert ((GLint) attributeID >= 0);
    #endif
@@ -189,10 +189,10 @@ OpenGLShaderProgram::Attribute::Attribute (const OpenGLShaderProgram& program, c
 OpenGLShaderProgram::Uniform::Uniform (const OpenGLShaderProgram& program, const char* const name)
     : uniformID (program.context.extensions.glGetUniformLocation (program.getProgramID(), name)), context (program.context)
 {
-    int error = glGetError();
-    if (error != 0) {
-        std::cout << "UniformError: (prog=" << program.getProgramID() << ", err=" << error << ")" << std::endl;
-    }
+    // int error = glGetError();
+    // if (error != 0) {
+    //     std::cout << "UniformError: (prog=" << program.getProgramID() << ", err=" << error << ")" << std::endl;
+    // }
    #if true //JUCE_DEBUG && ! JUCE_DONT_ASSERT_ON_GLSL_COMPILE_ERROR
     jassert (uniformID >= 0);
    #endif

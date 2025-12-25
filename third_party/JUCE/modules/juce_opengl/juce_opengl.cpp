@@ -202,6 +202,7 @@ static bool checkPeerIsValid (OpenGLContext* context)
 
 static void checkGLError (const char* file, int line)
 {
+    return; //EMDEBUG
     int e = glGetError();
 
     while (e != 0) {
@@ -217,6 +218,7 @@ static void checkGLError (const char* file, int line)
 
 static void clearGLError() noexcept
 {
+    return;
     while (glGetError() != GL_NO_ERROR) {}
 }
 
