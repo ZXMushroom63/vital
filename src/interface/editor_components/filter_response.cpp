@@ -611,14 +611,16 @@ void FilterResponse::drawFilterResponse(OpenGlWrapper& open_gl) {
 
   unbind(shader, open_gl.context);
   glDisable(GL_BLEND);
-  int error = glGetError();
-  if (error != 0) {
-    std::cerr << "Failed filter response with err: " << error << std::endl;
-  }
+  // int error = glGetError();
+  // if (error != 0) {
+  //   std::cerr << "Failed filter response with err: " << error << std::endl;
+  // }
   //checkGlError();
 }
 
 void FilterResponse::renderLineResponse(OpenGlWrapper& open_gl) {
+  // Currently broken
+  return;
   glEnable(GL_BLEND);
 
   GLuint fbo;

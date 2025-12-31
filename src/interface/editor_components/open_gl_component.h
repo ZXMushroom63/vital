@@ -90,7 +90,7 @@ class OpenGlComponent : public Component {
     }
 
     force_inline void checkGlError() {
-    #if true
+    #if false
       int error = glGetError();
       assert(error == GL_NO_ERROR);
     #endif

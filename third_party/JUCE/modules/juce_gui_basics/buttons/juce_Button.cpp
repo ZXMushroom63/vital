@@ -331,7 +331,9 @@ enum { clickMessageId = 0x2f3f4f99 };
 
 void Button::triggerClick()
 {
-    postCommandMessage (clickMessageId);
+    //clicked();
+    handleCommandMessage(clickMessageId);
+    //postCommandMessage (clickMessageId);
 }
 
 void Button::internalClickCallback (const ModifierKeys& modifiers)
@@ -342,8 +344,8 @@ void Button::internalClickCallback (const ModifierKeys& modifiers)
 
         if (shouldBeOn != getToggleState())
         {
-            setToggleState (shouldBeOn, sendNotification);
-            return;
+        setToggleState (shouldBeOn, sendNotification);
+        return;
         }
     }
 
@@ -383,7 +385,6 @@ void Button::removeListener (Listener* l)   { buttonListeners.remove (l); }
 void Button::sendClickMessage (const ModifierKeys& modifiers)
 {
     Component::BailOutChecker checker (this);
-
     if (commandManagerToUse != nullptr && commandID != 0)
     {
         ApplicationCommandTarget::InvocationInfo info (commandID);
@@ -394,14 +395,9 @@ void Button::sendClickMessage (const ModifierKeys& modifiers)
     }
 
     clicked (modifiers);
-
-    if (checker.shouldBailOut())
-        return;
-
     buttonListeners.callChecked (checker, [this] (Listener& l) { l.buttonClicked (this); });
 
-    if (checker.shouldBailOut())
-        return;
+    
 
     if (onClick != nullptr)
         onClick();
@@ -445,11 +441,10 @@ void Button::mouseExit (const MouseEvent&)      { updateState (false, false); }
 void Button::mouseDown (const MouseEvent& e)
 {
     updateState (true, true);
-
     if (isDown())
     {
-        if (autoRepeatDelay >= 0)
-            callbackHelper->startTimer (autoRepeatDelay);
+        //if (autoRepeatDelay >= 0)
+        //    callbackHelper->startTimer (autoRepeatDelay);
 
         if (triggerOnMouseDown)
             internalClickCallback (e.mods);

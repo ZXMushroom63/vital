@@ -67,6 +67,7 @@ class OpenGlImage {
     void setUseAlpha(bool use_alpha) { use_alpha_ = use_alpha; }
     void setScissor(bool scissor) { scissor_ = scissor; }
     Image* image_;
+    bool hasBeenLoaded = false;
 
   private:
     std::mutex mutex_;

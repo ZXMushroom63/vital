@@ -147,11 +147,11 @@ void OpenGLShaderProgram::use() const noexcept
     jassert (programID != 0);
 
     context.extensions.glUseProgram (programID);
-    int err = glGetError();
-    if (err != 0) {
-        //something broke
-        std::cout << "glUseProgram() on Prog #" << programID << " failed with error " << err << std::endl;
-    }
+    // int err = glGetError();
+    // if (err != 0) {
+    //     //something broke
+    //     std::cout << "glUseProgram() on Prog #" << programID << " failed with error " << err << std::endl;
+    // }
 }
 
 GLint OpenGLShaderProgram::getUniformIDFromName (const char* uniformName) const noexcept

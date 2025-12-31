@@ -39,13 +39,23 @@
                 }, delay);
             };
         }
+        
         addEventListener("load", () => {
             let inited = false;
             document.querySelector("span").innerText = detectWebGLContext();
             document.querySelector("#init").addEventListener("click", () => {
+                if (inited) {
+                    return;
+                }
                 inited = true;
                 Vial._startApplication_Classic();
                 Vial._vialSetWindowSize(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio);
+                function renderLoop() {
+                    Vial._vialRedraw();
+                    setTimeout(renderLoop, 1000 / 10);
+                }
+                renderLoop();
+                document.querySelector("#canvas").style.zIndex = 100;
             });
             document.querySelector("#draw").addEventListener("click", () => {
                 Vial._vialRedraw();
@@ -103,7 +113,7 @@
                 queueMouseEvent();
             });
             canvas.addEventListener("wheel", (e) => {
-                ev.wheel += e.deltaY;
+                ev.wheel += Math.min(Math.max(-1, e.deltaY), 1);
                 queueMouseEvent();
             });
             canvas.addEventListener("mouseup", (event) => {

@@ -28,6 +28,7 @@ namespace juce
 
 void OpenGLHelpers::resetErrorState()
 {
+    return;
     while (glGetError() != GL_NO_ERROR) {}
 }
 

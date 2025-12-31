@@ -628,7 +628,7 @@ extern "C" {
     EMSCRIPTEN_KEEPALIVE
     void processMouseEvent(bool lmb, bool mmb, bool rmb, bool ctrlKey, bool shiftKey, bool altKey, int screenX, int screenY, bool dblOccured, float wheel)
     {
-        Component::preventRendering = false;
+        Component::preventRendering = true;
         EmscriptenMouseEvent emscriptenEvent;
         emscriptenEvent.leftMouseDown = lmb;
         emscriptenEvent.middleMouseDown = mmb;
@@ -652,8 +652,10 @@ extern "C" {
         if (altKey) {
           modifier = static_cast<ModifierKeys::Flags>(static_cast<int>(modifier) | static_cast<int>(ModifierKeys::altModifier));
         }
-
         ModifierKeys mod;
+        ModifierKeys::currentModifiers = mod.withFlags(modifier);
+
+        
 
         Time fakeTime;
         bool isLeftButtonDown = emscriptenEvent.leftMouseDown;
@@ -666,7 +668,7 @@ extern "C" {
 
         if (targetComponent != nullptr)
         {
-            if (wheel > 0) {
+            if (wheel != 0) {
               MouseWheelDetails mouseWheelData;
               mouseWheelData.deltaX = 0.0;
               mouseWheelData.deltaY = wheel;
@@ -690,7 +692,9 @@ extern "C" {
             else if (!isLeftButtonDown && wasLeftButtonDown) 
             {
                 targetComponent->mouseUp(mouseEvent);
-                lastComponent->mouseUp(mouseEvent);
+                if (targetComponent != lastComponent) {
+                  lastComponent->mouseUp(mouseEvent);
+                }
             }
 
             if (lastComponent != targetComponent) 
