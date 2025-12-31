@@ -445,6 +445,9 @@ void PresetList::initOpenGlComponents(OpenGlWrapper& open_gl) {
 
 void PresetList::viewPositionChanged() {
   int row_height = getRowHeight();
+  if (row_height == 0) {
+    return;
+  }
 
   int last_cache_position = cache_position_;
   cache_position_ = getViewPosition() / row_height;
