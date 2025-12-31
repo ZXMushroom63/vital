@@ -61,6 +61,11 @@ AsyncUpdater::~AsyncUpdater()
 
 void AsyncUpdater::triggerAsyncUpdate()
 {
+    handleAsyncUpdate();
+    return;
+    // ^^ EMPATCH
+
+
     // If you're calling this before (or after) the MessageManager is
     // running, then you're not going to get any callbacks!
     JUCE_ASSERT_MESSAGE_MANAGER_EXISTS

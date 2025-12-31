@@ -563,6 +563,7 @@ void FilterResponse::drawFilterResponse(OpenGlWrapper& open_gl) {
   vital::constants::FilterModel model = filter_model_;
   bool new_response = setupFilterState(model);
   new_response = new_response || isStereoState();
+  new_response = true; //EMPATCH
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_BLEND);
@@ -610,7 +611,11 @@ void FilterResponse::drawFilterResponse(OpenGlWrapper& open_gl) {
 
   unbind(shader, open_gl.context);
   glDisable(GL_BLEND);
-  checkGlError();
+  int error = glGetError();
+  if (error != 0) {
+    std::cerr << "Failed filter response with err: " << error << std::endl;
+  }
+  //checkGlError();
 }
 
 void FilterResponse::renderLineResponse(OpenGlWrapper& open_gl) {

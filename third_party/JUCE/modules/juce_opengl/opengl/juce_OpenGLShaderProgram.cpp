@@ -114,8 +114,8 @@ bool OpenGLShaderProgram::link() noexcept
     GLuint progID = getProgramID();
 
     context.extensions.glLinkProgram (progID);
-    // int err = glGetError();
-    // std::cout << "prog linked (" << progID << "). ERRNO" << err << std::endl;
+    int err = glGetError();
+    std::cout << "prog linked (" << progID << "). ERRNO" << err << std::endl;
 
     GLint status = GL_FALSE;
     context.extensions.glGetProgramiv (progID, GL_LINK_STATUS, &status);
@@ -147,11 +147,11 @@ void OpenGLShaderProgram::use() const noexcept
     jassert (programID != 0);
 
     context.extensions.glUseProgram (programID);
-    // int err = glGetError();
-    // if (err != 0) {
-    //     //something broke :( (or its program 54 screwing things up for no damn reason)
-    //     std::cout << "glUseProgram() on Prog #" << programID << " failed with error " << err << std::endl;
-    // }
+    int err = glGetError();
+    if (err != 0) {
+        //something broke
+        std::cout << "glUseProgram() on Prog #" << programID << " failed with error " << err << std::endl;
+    }
 }
 
 GLint OpenGLShaderProgram::getUniformIDFromName (const char* uniformName) const noexcept

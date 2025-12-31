@@ -320,7 +320,7 @@ public:
         {
             owner.valueChanged();
 
-            if (notification == sendNotificationSync)
+            if (notification == sendNotificationSync || true) //EMPATCH
                 handleAsyncUpdate();
             else
                 triggerAsyncUpdate();

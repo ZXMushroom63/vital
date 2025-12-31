@@ -658,7 +658,7 @@ void FullInterface::deleteRequested(File preset) {
 void FullInterface::tabSelected(int index) {
   ScopedLock lock(open_gl_critical_section_);
   bool make_visible = !preset_browser_->isVisible() && !bank_exporter_->isVisible();
-
+  std::cout << "Selected tab: " << index << std::endl;
   if (synthesis_interface_)
     synthesis_interface_->setVisible(index == 0 && make_visible);
 

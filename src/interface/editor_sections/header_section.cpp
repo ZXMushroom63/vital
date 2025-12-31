@@ -218,8 +218,8 @@ void HeaderSection::paintBackground(Graphics& g) {
   synth_preset_selector_->paintBackground(g);
   g.restoreState();
 
-  if (LoadSave::doesExpire()) {
-    String countdown = "Beta expires in: " + String(LoadSave::getDaysToExpire()) + " days";
+  if (true) {
+    String countdown = "Web Port by @ZXMushroom63";
     int countdown_height = volume_section_->getY() + volume_section_->getBuffer();
     g.setFont(Fonts::instance()->proportional_regular().withPointHeight(countdown_height / 2.0f));
     g.setColour(findColour(Skin::kTextComponentText, true));
@@ -301,6 +301,7 @@ void HeaderSection::buttonClicked(Button* clicked_button) {
 
 void HeaderSection::sliderValueChanged(Slider* slider) {
   if (slider == tab_selector_.get()) {
+    std::cout << "Slider Updated" << std::endl;
     int index = tab_selector_->getValue();
     for (Listener* listener : listeners_)
       listener->tabSelected(index);

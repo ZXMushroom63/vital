@@ -303,6 +303,9 @@ void PopupList::renderOpenGlComponents(OpenGlWrapper& open_gl, bool animate) {
   rows_.setTopRight(2.0f * width_ratio - 1.0f, 1.0f + y_offset);
   rows_.setBottomLeft(-1.0f, 1.0f + y_offset - 2.0f * height_ratio);
   rows_.setBottomRight(2.0f * width_ratio - 1.0f, 1.0f + y_offset - 2.0f * height_ratio);
+  if (rows_.image_ == nullptr) {
+    redoImage();
+  }
   rows_.drawImage(open_gl);
 
   if (hovered_ >= 0) {

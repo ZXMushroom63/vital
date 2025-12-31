@@ -20,8 +20,8 @@
             const canvas = document.createElement("canvas");
             const gl = canvas.getContext("webgl");
             return (gl instanceof WebGLRenderingContext)
-                    ? "Congratulations! Your browser supports WebGL."
-                    : "Failed. Your browser or device may not support WebGL.";
+                ? "Congratulations! Your browser supports WebGL."
+                : "Failed. Your browser or device may not support WebGL.";
         }
         createModule({
             canvas: document.querySelector("#canvas")
@@ -29,17 +29,25 @@
             globalThis.Vial = Vial;
         });
 
-        addEventListener("contextmenu", (e)=>{e.preventDefault();});
-        
-        addEventListener("load", ()=>{
+        addEventListener("contextmenu", (e) => { e.preventDefault(); });
+        function debounce(func, delay) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+        addEventListener("load", () => {
             let inited = false;
             document.querySelector("span").innerText = detectWebGLContext();
-            document.querySelector("#init").addEventListener("click", ()=>{
+            document.querySelector("#init").addEventListener("click", () => {
                 inited = true;
                 Vial._startApplication_Classic();
                 Vial._vialSetWindowSize(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio);
             });
-            document.querySelector("#draw").addEventListener("click", ()=>{
+            document.querySelector("#draw").addEventListener("click", () => {
                 Vial._vialRedraw();
             });
             const ev = {
@@ -50,15 +58,21 @@
                 shiftKey: false,
                 altKey: false,
                 x: 0,
-                y: 0
+                y: 0,
+                dbl: false,
+                wheel: 0,
             }
-            function queueMouseEvent() {
+
+            function sendMouseEvent() {
                 if (!inited) {
                     return;
                 }
                 console.log("sending mouse data.");
-                Vial._processMouseEvent(ev.lmb, ev.mmb, ev.rmb, ev.ctrlKey, ev.shiftKey, ev.altKey, ev.x, ev.y);
+                Vial._processMouseEvent(ev.lmb, ev.mmb, ev.rmb, ev.ctrlKey, ev.shiftKey, ev.altKey, Math.floor(ev.x * devicePixelRatio), Math.floor(ev.y * devicePixelRatio), ev.dbl, ev.wheel);
+                ev.wheel = 0;
+                ev.dbl = false;
             }
+            const queueMouseEvent = debounce(sendMouseEvent, 1000 / 60);
             const canvas = document.querySelector("#canvas");
             canvas.addEventListener("mousedown", (event) => {
                 if (event instanceof MouseEvent) {
@@ -72,7 +86,7 @@
                         case 2:
                             ev.rmb = true;
                             break;
-                    
+
                         default:
                             break;
                     }
@@ -83,6 +97,14 @@
                     ev.y = event.layerY;
                     queueMouseEvent();
                 }
+            });
+            canvas.addEventListener("dblclick", () => {
+                ev.dbl = true;
+                queueMouseEvent();
+            });
+            canvas.addEventListener("wheel", (e) => {
+                ev.wheel += e.deltaY;
+                queueMouseEvent();
             });
             canvas.addEventListener("mouseup", (event) => {
                 if (event instanceof MouseEvent) {
@@ -96,7 +118,7 @@
                         case 2:
                             ev.rmb = false;
                             break;
-                    
+
                         default:
                             break;
                     }
@@ -118,21 +140,16 @@
                     queueMouseEvent();
                 }
             });
-            const resizeHandler = ()=>{
+            const resizeHandler = () => {
                 console.log("Triggering resize!");
+                if (!inited) {
+                    return;
+                }
                 Vial._vialSetWindowSize(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio);
             };
-            function debounce(func, delay) {
-                let timeout;
-                return function (...args) {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => {
-                        func.apply(this, args);
-                    }, delay);
-                };
-            }
+
             const debouncedHandler = debounce(resizeHandler, 850);
-            addEventListener("resize", ()=>{
+            addEventListener("resize", () => {
                 debouncedHandler();
             });
         });

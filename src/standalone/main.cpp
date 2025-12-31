@@ -624,8 +624,9 @@ extern "C" {
 
     Component* lastComponent;
     bool wasLeftButtonDown = false;
+    Component* focusedComponent = nullptr;
     EMSCRIPTEN_KEEPALIVE
-    void processMouseEvent(bool lmb, bool mmb, bool rmb, bool ctrlKey, bool shiftKey, bool altKey, int screenX, int screenY)
+    void processMouseEvent(bool lmb, bool mmb, bool rmb, bool ctrlKey, bool shiftKey, bool altKey, int screenX, int screenY, bool dblOccured, float wheel)
     {
         Component::preventRendering = false;
         EmscriptenMouseEvent emscriptenEvent;
@@ -665,13 +666,31 @@ extern "C" {
 
         if (targetComponent != nullptr)
         {
+            if (wheel > 0) {
+              MouseWheelDetails mouseWheelData;
+              mouseWheelData.deltaX = 0.0;
+              mouseWheelData.deltaY = wheel;
+              mouseWheelData.isReversed = false;
+              mouseWheelData.isSmooth = false;
+              mouseWheelData.isInertial = false;
+              targetComponent->mouseWheelMove(mouseEvent, mouseWheelData);
+            }
+            if (dblOccured) {
+              targetComponent->mouseDoubleClick(mouseEvent);
+            }
             if (isLeftButtonDown && !wasLeftButtonDown) 
             {
                 targetComponent->mouseDown(mouseEvent);
+                if (focusedComponent != nullptr) {
+                  focusedComponent->focusLost(Component::FocusChangeType::focusChangedByMouseClick);
+                }
+                targetComponent->focusGained(Component::FocusChangeType::focusChangedByMouseClick);
+                focusedComponent = targetComponent;
             }
             else if (!isLeftButtonDown && wasLeftButtonDown) 
             {
                 targetComponent->mouseUp(mouseEvent);
+                lastComponent->mouseUp(mouseEvent);
             }
 
             if (lastComponent != targetComponent) 
@@ -705,7 +724,7 @@ extern "C" {
         startApplication_Classic();
         startApplication_Advanced();
         dispatchSystemMessage(false);
-        processMouseEvent(false, false, false, false, false, false, 0, 0);
+        processMouseEvent(false, false, false, false, false, false, 0, 0, false, 0.0);
         return 0;
     }
 }

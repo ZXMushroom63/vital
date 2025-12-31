@@ -77,7 +77,7 @@ void OpenGlImage::drawImage(OpenGlWrapper& open_gl) {
     image_ = nullptr; //potentially comment this out ?? 
     //std::cout << "Image found successfully." << std::endl; //EMDEBUG
   } else {
-    //std::cout << "No image found. This should be impossible." << std::endl;
+    std::cout << "No image found. This should be impossible." << std::endl;
   }
   mutex_.unlock();
 
