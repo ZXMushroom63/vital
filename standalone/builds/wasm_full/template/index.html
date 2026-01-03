@@ -9,7 +9,7 @@
 
 <body>
     <canvas width="400" height="300" id="canvas"
-        style="position: fixed; left: 0px; top: 0px; width: 100vw; height: 100vh; z-index: -1; border: 1px solid black; image-rendering: pixelated; background: linear-gradient(132deg,rgba(65, 63, 110, 1) 0%, rgba(141, 138, 166, 1) 35%, rgba(128, 182, 194, 1) 100%);"></canvas>
+        style="position: fixed; left: 0px; top: 0px; width: 100vw; height: 100vh; z-index: -1; image-rendering: pixelated; background: linear-gradient(132deg,rgba(65, 63, 110, 1) 0%, rgba(141, 138, 166, 1) 35%, rgba(128, 182, 194, 1) 100%);"></canvas>
     <br>
     <span>Checking WebGL Availability...</span>
     <button id="init">init</button>
@@ -23,6 +23,10 @@
                 ? "Congratulations! Your browser supports WebGL."
                 : "Failed. Your browser or device may not support WebGL.";
         }
+
+        globalThis.VIAL_CHANNEL_COUNT = 1;
+        globalThis.VIAL_TARGET_SAMPLERATE = 8000;
+
         createModule({
             canvas: document.querySelector("#canvas")
         }).then(Vial => {
@@ -56,6 +60,23 @@
                 }
                 renderLoop();
                 document.querySelector("#canvas").style.zIndex = 100;
+
+                setTimeout(()=>{
+                    const outContext = new AudioContext({
+                        sampleRate: globalThis.VIAL_TARGET_SAMPLERATE,
+                        latencyHint: "balanced"
+                    });
+                    const scriptProcessor = outContext.createScriptProcessor(512, 0, globalThis.VIAL_CHANNEL_COUNT);
+                    //setup audio render loop
+                    const fptr = Vial._audioCallback(1) / 4;
+                    const buffer = Vial.HEAPF32.subarray(fptr, fptr + 512);
+                    scriptProcessor.onaudioprocess = function (ev) {
+                        Vial._audioCallback(1);
+                        buffer.forEach((x, i)=>buffer[i]+=(Math.random()-0.5)*0.000);
+                        ev.outputBuffer.copyToChannel(buffer, 0);
+                    }
+                    scriptProcessor.connect(outContext.destination);
+                }, 250);
             });
             document.querySelector("#draw").addEventListener("click", () => {
                 Vial._vialRedraw();
@@ -77,7 +98,7 @@
                 if (!inited) {
                     return;
                 }
-                console.log("sending mouse data.");
+                //console.log("sending mouse data.");
                 Vial._processMouseEvent(ev.lmb, ev.mmb, ev.rmb, ev.ctrlKey, ev.shiftKey, ev.altKey, Math.floor(ev.x * devicePixelRatio), Math.floor(ev.y * devicePixelRatio), ev.dbl, ev.wheel);
                 ev.wheel = 0;
                 ev.dbl = false;

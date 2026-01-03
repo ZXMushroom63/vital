@@ -279,18 +279,18 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EMSDKAudioIODeviceType)
 };
 
+Array<float*> outputChannelDataForCallback;
 EMSCRIPTEN_KEEPALIVE
 float* audioCallback(int c) {
     float* outBuf = EMSDKAudioIODevice::outBuffer;
     if (outBuf == nullptr) {
         return nullptr;
     }
-    Array<float*> outputChannelDataForCallback;
     
-    int oldSize = outputChannelDataForCallback.size();
-    for (int i = 0; i < oldSize; ++i) {
-        delete outputChannelDataForCallback[i];
-    }
+    //int oldSize = outputChannelDataForCallback.size();
+    // for (int i = 0; i < oldSize; ++i) {
+    //     delete outputChannelDataForCallback[i];
+    // }
     std::fill(outBuf, outBuf + 512, 0.0f);
     if (outputChannelDataForCallback.size() == 512) {
         for (int i = 0; i < 512; ++i) {
@@ -307,6 +307,11 @@ float* audioCallback(int c) {
             if (outputChannelDataForCallback[i] != nullptr) {
                 outBuf[i] = *(outputChannelDataForCallback[i]);
             }
+        }
+    } else {
+        outputChannelDataForCallback.resize(512);
+        for (int i = 0; i < 512; ++i) {
+            outputChannelDataForCallback.set(i, new float(0.0f));
         }
     }
     return outBuf;
