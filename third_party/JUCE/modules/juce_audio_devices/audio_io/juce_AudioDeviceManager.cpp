@@ -540,6 +540,7 @@ static void updateSetupChannels (AudioDeviceManager::AudioDeviceSetup& setup, in
 String AudioDeviceManager::setAudioDeviceSetup (const AudioDeviceSetup& newSetup,
                                                 bool treatAsChosenDevice)
 {
+    std::cout << "Setting up audio ctx" << std::endl;
     jassert (&newSetup != &currentSetup);    // this will have no effect
 
     if (newSetup != currentSetup)
@@ -589,6 +590,7 @@ String AudioDeviceManager::setAudioDeviceSetup (const AudioDeviceSetup& newSetup
         if (error.isNotEmpty())
         {
             deleteCurrentDevice();
+            std::cout << error << std::endl;
             return error;
         }
     }

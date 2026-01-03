@@ -722,6 +722,8 @@ extern "C" {
         Component::preventRendering = false;
     }
 
+    
+
     int main(int argc, char* argv[])
     {
         STDOUT_LOG("Main function called!");

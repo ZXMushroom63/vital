@@ -121,7 +121,7 @@ public:
 
     bool isOpen() override                           { return isOpen_; }
     bool isPlaying() override                        { return isStarted; }
-    String getLastError() override                   { return "nothing here"; }
+    String getLastError() override                   { return ""; }
 
     int getCurrentBufferSizeSamples() override       { return 512; }
     double getCurrentSampleRate() override           { return getEmsdkSamplerate(); }
@@ -280,22 +280,29 @@ private:
 };
 
 EMSCRIPTEN_KEEPALIVE
-float* audioCallback() {
+float* audioCallback(int c) {
     float* outBuf = EMSDKAudioIODevice::outBuffer;
     if (outBuf == nullptr) {
         return nullptr;
     }
     Array<float*> outputChannelDataForCallback;
-    EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
-        nullptr,
-        0,
-        outputChannelDataForCallback.getRawDataPointer(),
-        512,
-        512
-    );
     
+    int oldSize = outputChannelDataForCallback.size();
+    for (int i = 0; i < oldSize; ++i) {
+        delete outputChannelDataForCallback[i];
+    }
     std::fill(outBuf, outBuf + 512, 0.0f);
     if (outputChannelDataForCallback.size() == 512) {
+        for (int i = 0; i < 512; ++i) {
+            outputChannelDataForCallback.set(i, new float(0.0f));
+        }
+        EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
+            nullptr,
+            0,
+            outputChannelDataForCallback.getRawDataPointer(),
+            c,
+            512
+        );
         for (int i = 0; i < 512; ++i) { //assuming 512 in length, if it isn't, we have bigger problems
             if (outputChannelDataForCallback[i] != nullptr) {
                 outBuf[i] = *(outputChannelDataForCallback[i]);
@@ -306,15 +313,15 @@ float* audioCallback() {
 
     // MEANWHILE, IN PEACEFUL JAVASCRIPT LAND
     /*
-        const ptr = Module._audioCallback(); //get the most recent audio block output
+        const ptr = Vial._audioCallback(globalThis.VIAL_CHANNEL_COUNT || 1); //get the most recent audio block output
         if (ptr === -1) {
             // exit early, audio system not initialised yet
         }
-        const pcm_copy = new Float32Array(Module.HEAP32.buffer, ptr, 512); // copy
-        const pcm_ref = Module.HEAP32.subarray(ptr, ptr + 512); // reference (fast ver.)
+        const pcm_copy = new Float32Array(Vial.HEAPF32.buffer, ptr, 512); // copy
+        const pcm_ref = Vial.HEAPF32.subarray(ptr / 4, (ptr / 4) + 512); // reference (fast ver.)
     */
 }
-
 }
+
 
 } // namespace juce
