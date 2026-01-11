@@ -58,7 +58,7 @@
                 let prevFrame = Date.now();
                 function renderLoop() {
                     const now = Date.now();
-                    document.querySelector("#fps_counter").innerText = (now - prevFrame).toFixed(1) + "ms frametime";
+                    document.querySelector("#fps_counter").innerText = (1000/(now - prevFrame)).toFixed(1) + " FPS";
                     Vial._vialRedraw();
                     setTimeout(renderLoop, 1000 / 10);
                     prevFrame = now;
