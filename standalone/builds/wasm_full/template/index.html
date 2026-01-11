@@ -10,8 +10,9 @@
 <body>
     <canvas width="400" height="300" id="canvas"
         style="position: fixed; left: 0px; top: 0px; width: 100vw; height: 100vh; z-index: -1; image-rendering: pixelated; background: linear-gradient(132deg,rgba(65, 63, 110, 1) 0%, rgba(141, 138, 166, 1) 35%, rgba(128, 182, 194, 1) 100%);"></canvas>
+    <span id="fps_counter" style="position: fixed; top: 0; left: 0; color: white; pointer-events: none; z-index: 102; font-family: sans-serif;">0 FPS</span>
     <br>
-    <span>Checking WebGL Availability...</span>
+    <span id="webgl">Checking WebGL Availability...</span>
     <button id="init">init</button>
     <button id="draw">draw</button>
     <script src="vial.js"></script>
@@ -25,7 +26,7 @@
         }
 
         globalThis.VIAL_CHANNEL_COUNT = 1;
-        globalThis.VIAL_TARGET_SAMPLERATE = 8000;
+        globalThis.VIAL_TARGET_SAMPLERATE = 48000;
 
         createModule({
             canvas: document.querySelector("#canvas")
@@ -46,7 +47,7 @@
         
         addEventListener("load", () => {
             let inited = false;
-            document.querySelector("span").innerText = detectWebGLContext();
+            document.querySelector("#webgl").innerText = detectWebGLContext();
             document.querySelector("#init").addEventListener("click", () => {
                 if (inited) {
                     return;
@@ -54,9 +55,13 @@
                 inited = true;
                 Vial._startApplication_Classic();
                 Vial._vialSetWindowSize(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio);
+                let prevFrame = Date.now();
                 function renderLoop() {
+                    const now = Date.now();
+                    document.querySelector("#fps_counter").innerText = (now - prevFrame).toFixed(1) + "ms frametime";
                     Vial._vialRedraw();
                     setTimeout(renderLoop, 1000 / 10);
+                    prevFrame = now;
                 }
                 renderLoop();
                 document.querySelector("#canvas").style.zIndex = 100;
@@ -67,9 +72,10 @@
                         latencyHint: "balanced"
                     });
                     const scriptProcessor = outContext.createScriptProcessor(512, 0, globalThis.VIAL_CHANNEL_COUNT);
-                    //setup audio render loop
+                    
                     const fptr = Vial._audioCallback(1) / 4;
                     const buffer = Vial.HEAPF32.subarray(fptr, fptr + 512);
+                    // audio render loop
                     scriptProcessor.onaudioprocess = function (ev) {
                         Vial._audioCallback(1);
                         buffer.forEach((x, i)=>buffer[i]+=(Math.random()-0.5)*0.000);

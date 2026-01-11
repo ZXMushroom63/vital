@@ -279,7 +279,8 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EMSDKAudioIODeviceType)
 };
 
-Array<float*> outputChannelDataForCallback;
+float** outputChannelDataForCallback = (float**)malloc(sizeof(float*) * 1);
+
 EMSCRIPTEN_KEEPALIVE
 float* audioCallback(int c) {
     float* outBuf = EMSDKAudioIODevice::outBuffer;
@@ -292,29 +293,26 @@ float* audioCallback(int c) {
     //     delete outputChannelDataForCallback[i];
     // }
     std::fill(outBuf, outBuf + 512, 0.0f);
-    if (outputChannelDataForCallback.size() == 512) {
-        for (int i = 0; i < 512; ++i) {
-            outputChannelDataForCallback.set(i, new float(0.0f));
-        }
+    if (outputChannelDataForCallback[0] != nullptr) {
         EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
             nullptr,
             0,
-            outputChannelDataForCallback.getRawDataPointer(),
+            outputChannelDataForCallback,
             c,
             512
         );
-        for (int i = 0; i < 512; ++i) { //assuming 512 in length, if it isn't, we have bigger problems
-            if (outputChannelDataForCallback[i] != nullptr) {
-                outBuf[i] = *(outputChannelDataForCallback[i]);
-            }
-        }
+        // for (int i = 0; i < 512; ++i) { //assuming 512 in length, if it isn't, we have bigger problems
+        //     if (outputChannelDataForCallback[i] != nullptr) {
+        //         outBuf[i] = *(outputChannelDataForCallback[i]);
+        //     }
+        // }
     } else {
-        outputChannelDataForCallback.resize(512);
-        for (int i = 0; i < 512; ++i) {
-            outputChannelDataForCallback.set(i, new float(0.0f));
+        outputChannelDataForCallback[0] = (float*)malloc(sizeof(float) * 512);
+        for (int i = 0; i < 512; i++) {
+            outputChannelDataForCallback[0][i] = 0.0f;
         }
     }
-    return outBuf;
+    return outputChannelDataForCallback[0];
 
     // MEANWHILE, IN PEACEFUL JAVASCRIPT LAND
     /*
