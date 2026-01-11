@@ -176,7 +176,7 @@
     filters and algorithms.
 */
 #ifndef JUCE_DSP_ENABLE_SNAP_TO_ZERO
- #define JUCE_DSP_ENABLE_SNAP_TO_ZERO 1
+ #define JUCE_DSP_ENABLE_SNAP_TO_ZERO 0
 #endif
 
 

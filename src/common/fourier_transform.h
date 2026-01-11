@@ -17,6 +17,7 @@
 #pragma once
 
 #include "JuceHeader.h"
+#include <kissfft.hh>
 
 namespace vital {
   #if INTEL_IPP
@@ -62,7 +63,7 @@ namespace vital {
       JUCE_LEAK_DETECTOR(FourierTransform)
   };
 
-  #elif JUCE_MODULE_AVAILABLE_juce_dsp
+  #elif 0
 
   class FourierTransform {
     public:
@@ -119,8 +120,6 @@ namespace vital {
   };
 
   #else
-
-  #include "kissfft/kissfft.h"
 
   class FourierTransform {
     public:

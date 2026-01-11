@@ -10,7 +10,7 @@
 <body>
     <canvas width="400" height="300" id="canvas"
         style="position: fixed; left: 0px; top: 0px; width: 100vw; height: 100vh; z-index: -1; image-rendering: pixelated; background: linear-gradient(132deg,rgba(65, 63, 110, 1) 0%, rgba(141, 138, 166, 1) 35%, rgba(128, 182, 194, 1) 100%);"></canvas>
-    <span id="fps_counter" style="position: fixed; top: 0; left: 0; color: white; pointer-events: none; z-index: 102; font-family: sans-serif;">0 FPS</span>
+    <span id="fps_counter" style="position: fixed; top: 0; left: 0; color: white; pointer-events: none; z-index: 102; font-family: monospace;">NaN FPS</span>
     <br>
     <span id="webgl">Checking WebGL Availability...</span>
     <button id="init">init</button>
@@ -58,7 +58,7 @@
                 let prevFrame = Date.now();
                 function renderLoop() {
                     const now = Date.now();
-                    document.querySelector("#fps_counter").innerText = (1000/(now - prevFrame)).toFixed(1) + " FPS";
+                    document.querySelector("#fps_counter").innerText = (1000/(now - prevFrame)).toFixed(3) + " FPS";
                     Vial._vialRedraw();
                     setTimeout(renderLoop, 1000 / 10);
                     prevFrame = now;

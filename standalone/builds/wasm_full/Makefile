@@ -27,7 +27,10 @@ ifndef CONFIG
 endif
 
 JUCE_ARCH_LABEL := $(shell uname -m)
+FTFLAGS = -v -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include/freetype -L/home/zxmushroom63/Documents/Code/vital/standalone/builds/wasm_full/freetype -lfreetype
 
+#kissfft, dw abt it
+FTFLAGS += -I/home/zxmushroom63/Documents/Code/vital/third_party/kissfft/include -L/home/zxmushroom63/Documents/Code/vital/third_party/kissfft/install -lkissfft
 ifeq ($(CONFIG),Debug)
   JUCE_BINDIR := build
   JUCE_LIBDIR := build
@@ -42,8 +45,7 @@ ifeq ($(CONFIG),Debug)
   JUCE_CPPFLAGS_APP :=  "-DJucePlugin_Build_VST=0" "-DJucePlugin_Build_VST3=0" "-DJucePlugin_Build_AU=0" "-DJucePlugin_Build_AUv3=0" "-DJucePlugin_Build_RTAS=0" "-DJucePlugin_Build_AAX=0" "-DJucePlugin_Build_Standalone=1" "-DJucePlugin_Build_Unity=0"
   JUCE_TARGET_APP := vial
 
-  FTFLAGS = -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include/freetype -L/home/zxmushroom63/Documents/Code/vital/standalone/builds/wasm_full/freetype -lfreetype -v
-
+  
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -g -ggdb -O0 -ffast-math ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -funroll-loops $(CFLAGS) $(FTFLAGS) ${EMXXFLAGS} 
   JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++14 $(CXXFLAGS) $(FTFLAGS) 
   JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) -L/usr/X11R6/lib/ -fvisibility=hidden -ffast-math ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -lrt -ldl -lpthread $(LDFLAGS) $(FTFLAGS) ${EMXXFLAGS}
@@ -72,7 +74,6 @@ ifeq ($(CONFIG),Release)
   # cd freetype-wasm
   # ./deps.sh
   # i already went through the suffering of compiling libfreetype.a
-  FTFLAGS = -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include -L/home/zxmushroom63/Documents/Code/vital/standalone/builds/wasm_full/freetype -lfreetype -v
 
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -ffast-math ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -funroll-loops $(CFLAGS)  $(FTFLAGS) ${EMXXFLAGS}
   JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++14 $(CXXFLAGS)  $(FTFLAGS)

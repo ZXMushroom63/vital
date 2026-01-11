@@ -20,6 +20,9 @@
         ninja
         fftw
         fftwFloat
+        fftwQuad
+        fftwMpi
+        fftwLongDouble
         cmake
         ftgl
         freetype

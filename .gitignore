@@ -33,3 +33,4 @@ build
 Debug
 Profile
 Release
+emsdk_cache

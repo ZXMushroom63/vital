@@ -18,7 +18,7 @@ class kissfft
 {
     public:
 
-        using cpx_t = std::complex<scalar_t>;
+        typedef std::complex<scalar_t> cpx_t;
 
         kissfft( const std::size_t nfft,
                  const bool inverse )
@@ -27,9 +27,9 @@ class kissfft
         {
             // fill twiddle factors
             _twiddles.resize(_nfft);
-            const scalar_t phinc =  (_inverse?2:-2)* acos( (scalar_t) -1)  / _nfft;
+            const scalar_t phinc =  (_inverse?2:-2)* std::acos( (scalar_t) -1)  / _nfft;
             for (std::size_t i=0;i<_nfft;++i)
-                _twiddles[i] = exp( cpx_t(0,i*phinc) );
+                _twiddles[i] = std::exp( cpx_t(0,i*phinc) );
 
             //factorize
             //start factoring out 4's, then 2's, then 3,5,7,9,...
@@ -126,7 +126,7 @@ class kissfft
         /// of size @c 2*N.
         ///
         /// The 0-th and N-th value of the DFT are real numbers. These are
-        /// stored in @c dst[0].real() and @c dst[1].imag() respectively.
+        /// stored in @c dst[0].real() and @c dst[0].imag() respectively.
         /// The remaining DFT values up to the index N-1 are stored in
         /// @c dst[1] to @c dst[N-1].
         /// The other half of the DFT values can be calculated from the
@@ -166,9 +166,9 @@ class kissfft
                                dst[0].real() - dst[0].imag() );
 
             // post processing for all the other k = 1, 2, ..., N-1
-            const scalar_t pi = acos( (scalar_t) -1);
+            const scalar_t pi = std::acos( (scalar_t) -1);
             const scalar_t half_phi_inc = ( _inverse ? pi : -pi ) / N;
-            const cpx_t twiddle_mul = exp( cpx_t(0, half_phi_inc) );
+            const cpx_t twiddle_mul = std::exp( cpx_t(0, half_phi_inc) );
             for ( std::size_t k = 1; 2*k < N; ++k )
             {
                 const cpx_t w = (scalar_t)0.5 * cpx_t(
@@ -182,10 +182,10 @@ class kissfft
                     _twiddles[k/2] :
                     _twiddles[k/2] * twiddle_mul;
                 dst[  k] =       w + twiddle * z;
-                dst[N-k] = conj( w - twiddle * z );
+                dst[N-k] = std::conj( w - twiddle * z );
             }
             if ( N % 2 == 0 )
-                dst[N/2] = conj( dst[N/2] );
+                dst[N/2] = std::conj( dst[N/2] );
         }
 
     private:
@@ -326,24 +326,25 @@ class kissfft
                 ) const
         {
             const cpx_t * twiddles = &_twiddles[0];
-            cpx_t scratchbuf[p];
+
+            if(p > _scratchbuf.size()) _scratchbuf.resize(p);
 
             for ( std::size_t u=0; u<m; ++u ) {
                 std::size_t k = u;
                 for ( std::size_t q1=0 ; q1<p ; ++q1 ) {
-                    scratchbuf[q1] = Fout[ k  ];
+                    _scratchbuf[q1] = Fout[ k  ];
                     k += m;
                 }
 
                 k=u;
                 for ( std::size_t q1=0 ; q1<p ; ++q1 ) {
                     std::size_t twidx=0;
-                    Fout[ k ] = scratchbuf[0];
+                    Fout[ k ] = _scratchbuf[0];
                     for ( std::size_t q=1;q<p;++q ) {
                         twidx += fstride * k;
                         if (twidx>=_nfft)
                           twidx-=_nfft;
-                        Fout[ k ] += scratchbuf[q] * twiddles[twidx];
+                        Fout[ k ] += _scratchbuf[q] * twiddles[twidx];
                     }
                     k += m;
                 }
@@ -355,5 +356,6 @@ class kissfft
         std::vector<cpx_t> _twiddles;
         std::vector<std::size_t> _stageRadix;
         std::vector<std::size_t> _stageRemainder;
+        mutable std::vector<cpx_t> _scratchbuf;
 };
 #endif
