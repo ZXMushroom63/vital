@@ -55,12 +55,15 @@
                 inited = true;
                 Vial._startApplication_Classic();
                 Vial._vialSetWindowSize(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio);
-                let prevFrame = Date.now();
+                let prevFrame = performance.now();
                 function renderLoop() {
-                    const now = Date.now();
-                    document.querySelector("#fps_counter").innerText = (1000/(now - prevFrame)).toFixed(3) + " FPS";
+                    const now = performance.now();
                     Vial._vialRedraw();
+                    const post = performance.now();
+
                     setTimeout(renderLoop, 1000 / 10);
+                    document.querySelector("#fps_counter").innerText = `${(1000/(now - prevFrame)).toFixed(2)} FPS (p${(1000/(post - now)).toFixed(2)})`;
+
                     prevFrame = now;
                 }
                 renderLoop();

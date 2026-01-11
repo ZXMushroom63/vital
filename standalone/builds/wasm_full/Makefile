@@ -30,7 +30,7 @@ JUCE_ARCH_LABEL := $(shell uname -m)
 FTFLAGS = -v -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include/freetype -L/home/zxmushroom63/Documents/Code/vital/standalone/builds/wasm_full/freetype -lfreetype
 
 #kissfft, dw abt it
-FTFLAGS += -I/home/zxmushroom63/Documents/Code/vital/third_party/kissfft/include -L/home/zxmushroom63/Documents/Code/vital/third_party/kissfft/install -lkissfft
+FTFLAGS += -I/home/zxmushroom63/Documents/Code/vital/third_party/kissfft/include -L/home/zxmushroom63/Documents/Code/vital/third_party/kissfft/install
 ifeq ($(CONFIG),Debug)
   JUCE_BINDIR := build
   JUCE_LIBDIR := build
