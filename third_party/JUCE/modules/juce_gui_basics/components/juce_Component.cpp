@@ -1926,6 +1926,11 @@ void Component::paintWithinParentContext (Graphics& g)
         paintEntireComponent (g, false);
 }
 
+void Component::setCacheAnimated (bool animated)
+{
+    cacheAnimated = animated;
+}
+
 void Component::paintComponentAndChildren (Graphics& g)
 {
     auto clipBounds = g.getClipBounds();

@@ -2284,6 +2284,8 @@ public:
     */
     bool getViewportIgnoreDragFlag() const noexcept                     { return flags.viewportIgnoreDragFlag; }
 
+    void setCacheAnimated (bool animated);
+
     virtual float getPixelScaling() const { return 1.0f; }
     float getTotalPixelScaling() const {
       const Component* component = this;
@@ -2297,7 +2299,7 @@ public:
     void sendMovedResizedMessagesIfPending();
     std::unique_ptr<CachedComponentImage> cachedImage;
     static bool preventRendering;
-
+    bool cacheAnimated = false;
 private:
     //==============================================================================
     friend class ComponentPeer;

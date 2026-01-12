@@ -163,15 +163,17 @@ public:
 
     bool invalidateAll() override
     {
+        invalidated = true;
         validArea.clear();
-        triggerRepaint();
+        //triggerRepaint();
         return false;
     }
 
     bool invalidate (const Rectangle<int>& area) override
     {
+        invalidated = true;
         validArea.subtract (area.toFloat().transformedBy (transform).getSmallestIntegerContainer());
-        triggerRepaint();
+        //triggerRepaint();
         return false;
     }
 
@@ -278,8 +280,9 @@ public:
 
         if (context.renderComponents)
         {
-            if (true)
+            if (invalidated || component.cacheAnimated)
             {
+                invalidated = false;
                 paintComponent();
 
                 if (! hasInitialised)
@@ -699,6 +702,7 @@ public:
    #endif
     std::atomic<bool> hasInitialised { false }, needsUpdate { true }, destroying { false };
     uint32 lastMMLockReleaseTime = 0;
+    bool invalidated = true;
 
    #if JUCE_MAC
     struct CVDisplayLinkWrapper

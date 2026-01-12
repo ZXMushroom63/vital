@@ -99,7 +99,7 @@
                         buffer.forEach((x, i)=>buffer[i]+=(Math.random()-0.5)*0.000);
                         ev.outputBuffer.copyToChannel(buffer, 0);
                     }
-                    scriptProcessor.connect(outContext.destination);
+                    //scriptProcessor.connect(outContext.destination);
                 }, 250);
             });
             document.querySelector("#draw").addEventListener("click", () => {
