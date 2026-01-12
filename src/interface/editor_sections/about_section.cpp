@@ -36,69 +36,17 @@ AboutSection::AboutSection(const String& name) : Overlay(name), body_(Shaders::k
   logo_ = std::make_unique<AppLogo>("logo");
   addOpenGlComponent(logo_.get());
 
-  name_text_ = std::make_unique<PlainTextComponent>("plugin name", "VIAL");
+  name_text_ = std::make_unique<PlainTextComponent>("plugin name", "WebVial");
   addOpenGlComponent(name_text_.get());
   name_text_->setFontType(PlainTextComponent::kRegular);
   name_text_->setTextSize(40.0f);
 
-  version_text_ = std::make_unique<PlainTextComponent>("version", String("version  ") + ProjectInfo::versionString);
+  version_text_ = std::make_unique<PlainTextComponent>("version", String("version  ") + ProjectInfo::versionString
+   + String("\nported by zxmushroom63")
+  );
   addOpenGlComponent(version_text_.get());
   version_text_->setFontType(PlainTextComponent::kLight);
   version_text_->setTextSize(12.0f);
-
-  check_for_updates_text_ = std::make_unique<PlainTextComponent>("Check for updates", String("Check for updates"));
-  addOpenGlComponent(check_for_updates_text_.get());
-  check_for_updates_text_->setFontType(PlainTextComponent::kLight);
-  check_for_updates_text_->setTextSize(14.0f);
-  check_for_updates_text_->setJustification(Justification::centredLeft);
-
-  check_for_updates_ = std::make_unique<OpenGlToggleButton>("");
-  check_for_updates_->setToggleState(LoadSave::shouldCheckForUpdates(), NotificationType::dontSendNotification);
-  check_for_updates_->addListener(this);
-  addAndMakeVisible(check_for_updates_.get());
-  addOpenGlComponent(check_for_updates_->getGlComponent());
-
-  size_button_extra_small_ = std::make_unique<OpenGlToggleButton>(String(100 * kMultExtraSmall) + "%");
-  size_button_extra_small_->setUiButton(false);
-  addAndMakeVisible(size_button_extra_small_.get());
-  addOpenGlComponent(size_button_extra_small_->getGlComponent());
-  size_button_extra_small_->addListener(this);
-
-  size_button_small_ = std::make_unique<OpenGlToggleButton>(String(100 * kMultSmall) + "%");
-  size_button_small_->setUiButton(false);
-  addAndMakeVisible(size_button_small_.get());
-  addOpenGlComponent(size_button_small_->getGlComponent());
-  size_button_small_->addListener(this);
-
-  size_button_normal_ = std::make_unique<OpenGlToggleButton>(String("100") + "%");
-  size_button_normal_->setUiButton(false);
-  addAndMakeVisible(size_button_normal_.get());
-  addOpenGlComponent(size_button_normal_->getGlComponent());
-  size_button_normal_->addListener(this);
-
-  size_button_large_ = std::make_unique<OpenGlToggleButton>(String(100 * kMultLarge) + "%");
-  size_button_large_->setUiButton(false);
-  addAndMakeVisible(size_button_large_.get());
-  addOpenGlComponent(size_button_large_->getGlComponent());
-  size_button_large_->addListener(this);
-
-  size_button_double_ = std::make_unique<OpenGlToggleButton>(String(100 * kMultDouble) + "%");
-  size_button_double_->setUiButton(false);
-  addAndMakeVisible(size_button_double_.get());
-  addOpenGlComponent(size_button_double_->getGlComponent());
-  size_button_double_->addListener(this);
-
-  size_button_triple_ = std::make_unique<OpenGlToggleButton>(String(100 * kMultTriple) + "%");
-  size_button_triple_->setUiButton(false);
-  addAndMakeVisible(size_button_triple_.get());
-  addOpenGlComponent(size_button_triple_->getGlComponent());
-  size_button_triple_->addListener(this);
-
-  size_button_quadruple_ = std::make_unique<OpenGlToggleButton>(String(100 * kMultQuadruple) + "%");
-  size_button_quadruple_->setUiButton(false);
-  addAndMakeVisible(size_button_quadruple_.get());
-  addOpenGlComponent(size_button_quadruple_->getGlComponent());
-  size_button_quadruple_->addListener(this);
 }
 
 AboutSection::~AboutSection() = default;
@@ -113,13 +61,13 @@ void AboutSection::setLogoBounds() {
 void AboutSection::resized() {
   SynthGuiInterface* parent = findParentComponentOfClass<SynthGuiInterface>();
   if (parent && device_selector_ == nullptr) {
-    AudioDeviceManager* device_manager = parent->getAudioDeviceManager();
-    if (device_manager) {
-      device_selector_ = std::make_unique<OpenGlDeviceSelector>(
-          *device_manager, 0, 0, vital::kNumChannels, vital::kNumChannels, true, false, false, false);
-      addAndMakeVisible(device_selector_.get());
-      addOpenGlComponent(device_selector_->getImageComponent());
-    }
+    // AudioDeviceManager* device_manager = parent->getAudioDeviceManager();
+    // if (device_manager) {
+    //   device_selector_ = std::make_unique<OpenGlDeviceSelector>(
+    //       *device_manager, 0, 0, vital::kNumChannels, vital::kNumChannels, true, false, false, false);
+    //   addAndMakeVisible(device_selector_.get());
+    //   addOpenGlComponent(device_selector_->getImageComponent());
+    // }
   }
 
   Rectangle<int> info_rect = getInfoRect();
@@ -128,7 +76,6 @@ void AboutSection::resized() {
   body_.setColor(findColour(Skin::kBody, true));
   Colour body_text = findColour(Skin::kBodyText, true);
   name_text_->setColor(body_text);
-  check_for_updates_text_->setColor(body_text);
   version_text_->setColor(body_text);
   int padding_x = size_ratio_ * kPaddingX;
   int padding_y = size_ratio_ * kPaddingY;
@@ -144,63 +91,9 @@ void AboutSection::resized() {
   version_text_->setBounds(info_rect.getX() + name_x, info_rect.getY() + padding_y + 76 * size_ratio_,
                            info_rect.getWidth() - name_x - kNameRightBuffer * size_ratio_, 32 * size_ratio_);
 
-  int size_padding = 5 * size_ratio_;
-  int size_start_x = info_rect.getX() + padding_x;
-  int size_end_x = info_rect.getRight() - padding_x + size_padding;
-  std::vector<OpenGlToggleButton*> size_buttons = {
-    size_button_extra_small_.get(),
-    size_button_small_.get(),
-    size_button_normal_.get(),
-    size_button_large_.get(),
-    size_button_double_.get(),
-    size_button_triple_.get(),
-    size_button_quadruple_.get(),
-  };
-
-  float size_width = (size_end_x - size_start_x) * 1.0f / size_buttons.size() - size_padding;
-
-  int check_updates_height = button_height * 0.6f;
-  check_for_updates_->setBounds(info_rect.getX() + padding_x,
-                                info_rect.getY() + padding_y + 145.0f * size_ratio_,
-                                check_updates_height, check_updates_height);
-  int check_for_updates_width = 3 * size_width + 2 * size_padding;
-  check_for_updates_text_->setBounds(check_for_updates_->getRight() + size_padding, check_for_updates_->getY(),
-                                     check_for_updates_width, check_updates_height);
-
-  int size_y = check_for_updates_->getBottom() + padding_y;
-
-  int index = 0;
-  for (OpenGlToggleButton* size_button : size_buttons) {
-    int start_x = std::round(size_start_x + index * (size_width + size_padding));
-    size_button->setBounds(start_x, size_y, size_width, button_height);
-    index++;
-  }
-
-  if (device_selector_) {
-    int y = size_button_quadruple_->getBottom() + padding_y;
-    device_selector_->setBounds(info_rect.getX(), y,
-                                info_rect.getWidth(), info_rect.getBottom() - y);
-  }
-
-  if (device_selector_) {
-    Colour background = findColour(Skin::kPopupBackground, true); 
-    setColorRecursively(device_selector_.get(), ListBox::backgroundColourId, background);
-    setColorRecursively(device_selector_.get(), ComboBox::backgroundColourId, background);
-    setColorRecursively(device_selector_.get(), PopupMenu::backgroundColourId, background);
-    setColorRecursively(device_selector_.get(), BubbleComponent::backgroundColourId, background);
-
-    Colour text = findColour(Skin::kBodyText, true);
-    setColorRecursively(device_selector_.get(), ListBox::textColourId, text);
-    setColorRecursively(device_selector_.get(), ComboBox::textColourId, text);
-
-    setColorRecursively(device_selector_.get(), TextEditor::highlightColourId, Colours::transparentBlack);
-    setColorRecursively(device_selector_.get(), ListBox::outlineColourId, Colours::transparentBlack);
-    setColorRecursively(device_selector_.get(), ComboBox::outlineColourId, Colours::transparentBlack);
-  }
 
   name_text_->setTextSize(40.0f * size_ratio_);
   version_text_->setTextSize(12.0f * size_ratio_);
-  check_for_updates_text_->setTextSize(14.0f * size_ratio_);
 
   Overlay::resized();
 }
@@ -224,27 +117,13 @@ void AboutSection::setVisible(bool should_be_visible) {
 void AboutSection::buttonClicked(Button* clicked_button) {
   if (clicked_button == check_for_updates_.get())
     LoadSave::saveUpdateCheckConfig(check_for_updates_->getToggleState());
-  else if (clicked_button == size_button_extra_small_.get())
-    setGuiSize(kMultExtraSmall); 
-  else if (clicked_button == size_button_small_.get())
-    setGuiSize(kMultSmall);
-  else if (clicked_button == size_button_normal_.get())
-    setGuiSize(1.0);
-  else if (clicked_button == size_button_large_.get())
-    setGuiSize(kMultLarge);
-  else if (clicked_button == size_button_double_.get())
-    setGuiSize(kMultDouble);
-  else if (clicked_button == size_button_triple_.get())
-    setGuiSize(kMultTriple);
-  else if (clicked_button == size_button_quadruple_.get())
-    setGuiSize(kMultQuadruple);
 }
 
 Rectangle<int> AboutSection::getInfoRect() {
-  int info_height = kBasicInfoHeight * size_ratio_;
+  int info_height = kBasicInfoHeight * size_ratio_ + 24;
   int info_width = kInfoWidth * size_ratio_;
-  if (device_selector_)
-    info_height += device_selector_->getBounds().getHeight();
+  // if (device_selector_)
+  //   info_height += device_selector_->getBounds().getHeight();
 
   int x = (getWidth() - info_width) / 2;
   int y = (getHeight() - info_width) / 2;
