@@ -9,7 +9,7 @@
 
 <body>
     <canvas width="400" height="300" id="canvas"
-        style="padding: 2px; position: fixed; left: 0px; top: 0px; width: 100vw; height: 100vh; z-index: -1; image-rendering: pixelated; background: linear-gradient(132deg,rgba(65, 63, 110, 1) 0%, rgba(141, 138, 166, 1) 35%, rgba(128, 182, 194, 1) 100%);"></canvas>
+        style="position: fixed; left: 0px; top: 0px; width: 100vw; height: 100vh; z-index: -1; image-rendering: pixelated; background: linear-gradient(132deg,rgba(65, 63, 110, 1) 0%, rgba(141, 138, 166, 1) 35%, rgba(128, 182, 194, 1) 100%);"></canvas>
     <span id="fps_counter" style="border-radius: 4px; background-color: rgba(0, 0, 0, 0.25); position: fixed; top: 0; left: 0; color: white; pointer-events: none; z-index: 102; font-family: monospace;">NaN FPS</span>
     <br>
     <span id="webgl">Checking WebGL Availability...</span>
@@ -26,7 +26,7 @@
         }
 
         globalThis.VIAL_CHANNEL_COUNT = 1;
-        globalThis.VIAL_TARGET_SAMPLERATE = 48000;
+        globalThis.VIAL_TARGET_SAMPLERATE = 24000;
 
         createModule({
             canvas: document.querySelector("#canvas")
@@ -42,6 +42,16 @@
                 timeout = setTimeout(() => {
                     func.apply(this, args);
                 }, delay);
+            };
+        }
+
+        function ratelimit(func, mininterval) {
+            let lastSend = -1;
+            return function (...args) {
+                if ((Date.now() - lastSend) > mininterval) {
+                    func.apply(this, args);
+                    lastSend = Date.now();
+                }
             };
         }
         
@@ -63,7 +73,7 @@
                     Vial._vialRedraw();
                     const post = performance.now();
 
-                    setTimeout(renderLoop, 1000 / 10);
+                    setTimeout(renderLoop, 1000 / 30);
                     document.querySelector("#fps_counter").innerText = `${(1000/(now - prevFrame)).toFixed(2)} FPS (💻${(1000/(post - now)).toFixed(2)}) [🔊${audioTime.toFixed(1)}ms] {🔇${droppedPacketCount}}`;
 
                     prevFrame = now;
@@ -127,10 +137,11 @@
                 ev.wheel = 0;
                 ev.dbl = false;
             }
-            const queueMouseEvent = debounce(sendMouseEvent, 1000 / 60);
+            const queueMouseEvent = ratelimit(sendMouseEvent, 1000 / 60);
             const canvas = document.querySelector("#canvas");
             canvas.addEventListener("mousedown", (event) => {
                 if (event instanceof MouseEvent) {
+                    event.preventDefault();
                     switch (event.button) {
                         case 0:
                             ev.lmb = true;

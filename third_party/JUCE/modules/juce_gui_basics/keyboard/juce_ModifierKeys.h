@@ -135,9 +135,9 @@ public:
         /** Middle mouse button flag. */
         middleButtonModifier                    = 64,
 
-       #if JUCE_MAC || JUCE_IOS
+       #if JUCE_MAC || JUCE_IOS || true //EMPATCH
         /** Command key flag - on windows this is the same as the CTRL key flag. */
-        commandModifier                         = 8,
+        commandModifier                         = ctrlModifier,
 
         /** Popup menu flag - on windows this is the same as rightButtonModifier, on the
             Mac it's the same as (rightButtonModifier | ctrlModifier). */

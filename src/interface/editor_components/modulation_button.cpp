@@ -218,7 +218,7 @@ void ModulationButton::mouseDown(const MouseEvent& e) {
       options.addItem(kModulationList + i, disconnect + destination);
     }
 
-    if (connections.size() > 1)
+    if (connections.size() > 0)
       options.addItem(kDisconnect, "Disconnect all");
 
     SynthSection* parent = findParentComponentOfClass<SynthSection>();

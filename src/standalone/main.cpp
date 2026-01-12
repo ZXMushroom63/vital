@@ -625,9 +625,23 @@ extern "C" {
     Component* lastComponent;
     bool wasLeftButtonDown = false;
     Component* focusedComponent = nullptr;
+    Component* dragTarget = nullptr;
+    int contextDefocusCounter = 0;
     EMSCRIPTEN_KEEPALIVE
     void processMouseEvent(bool lmb, bool mmb, bool rmb, bool ctrlKey, bool shiftKey, bool altKey, int screenX, int screenY, bool dblOccured, float wheel)
     {
+        #if 0
+          if (lmb || mmb || rmb || dblOccured) {
+            std::cerr << "MouseEvent:\n- lmb=" << lmb << "\n"
+              << "- mmb=" << mmb << "\n"
+              << "- rmb=" << rmb << "\n"
+              << "- ctrlKey=" << ctrlKey << "\n"
+              << "- shiftKey=" << shiftKey << "\n"
+              << "- altKey=" << altKey << "\n"
+              << "- dblOccured=" << dblOccured
+              << std::endl;
+          }
+        #endif
         Component::preventRendering = true;
         EmscriptenMouseEvent emscriptenEvent;
         emscriptenEvent.leftMouseDown = lmb;
@@ -652,6 +666,15 @@ extern "C" {
         if (altKey) {
           modifier = static_cast<ModifierKeys::Flags>(static_cast<int>(modifier) | static_cast<int>(ModifierKeys::altModifier));
         }
+        if (lmb) {
+          modifier = static_cast<ModifierKeys::Flags>(static_cast<int>(modifier) | static_cast<int>(ModifierKeys::leftButtonModifier));
+        }
+        if (mmb) {
+          modifier = static_cast<ModifierKeys::Flags>(static_cast<int>(modifier) | static_cast<int>(ModifierKeys::middleButtonModifier));
+        }
+        if (rmb) {
+          modifier = static_cast<ModifierKeys::Flags>(static_cast<int>(modifier) | static_cast<int>(ModifierKeys::rightButtonModifier));
+        }
         ModifierKeys mod;
         ModifierKeys::currentModifiers = mod.withFlags(modifier);
 
@@ -663,6 +686,7 @@ extern "C" {
             bool isRightButtonDown = emscriptenEvent.rightMouseDown;
 
             Point<float> localPosition = (targetComponent->getLocalPoint(global_editor->getGui(), screenPosition)).toFloat();
+            
             MouseEvent mouseEvent(*mis, localPosition, mod.withFlags(modifier), 0, 0, 0, 0, 0, targetComponent, global_editor->getGui(), fakeTime, localPosition,
              fakeTime, 0, (wasLeftButtonDown == lmb));
 
@@ -682,16 +706,31 @@ extern "C" {
             }
             if (isLeftButtonDown && !wasLeftButtonDown) 
             {
+                if (global_editor->gui_->popup_selector_->isShowing()) {
+                  contextDefocusCounter++;
+                  if (contextDefocusCounter > 1) {
+                    global_editor->gui_->popup_selector_->focusLost(Component::FocusChangeType::focusChangedByMouseClick);
+                    contextDefocusCounter = 0;
+                  }
+                } else {
+                  contextDefocusCounter = 0;
+                }
                 targetComponent->mouseDown(mouseEvent);
                 if (focusedComponent != nullptr) {
                   focusedComponent->focusLost(Component::FocusChangeType::focusChangedByMouseClick);
                 }
                 targetComponent->focusGained(Component::FocusChangeType::focusChangedByMouseClick);
+                
                 focusedComponent = targetComponent;
+                dragTarget = targetComponent;
             }
             else if (!isLeftButtonDown && wasLeftButtonDown) 
             {
                 targetComponent->mouseUp(mouseEvent);
+                if (dragTarget != targetComponent) {
+                  dragTarget->mouseUp(mouseEvent);
+                }
+                dragTarget = nullptr;
                 if (targetComponent != lastComponent) {
                   lastComponent->mouseUp(mouseEvent);
                 }
@@ -707,9 +746,12 @@ extern "C" {
                 lastComponent = targetComponent;
             }
 
-            if (isLeftButtonDown || isMiddleButtonDown || isRightButtonDown) 
+            if ((isLeftButtonDown || isMiddleButtonDown || isRightButtonDown) && (dragTarget != nullptr)) 
             {
-                targetComponent->mouseDrag(mouseEvent);
+                Point<float> dragPosition = (dragTarget->getLocalPoint(global_editor->getGui(), screenPosition)).toFloat();
+                MouseEvent dragEvent(*mis, dragPosition, mod.withFlags(modifier), 0, 0, 0, 0, 0, dragTarget, global_editor->getGui(), fakeTime, dragPosition,
+              fakeTime, 0, (wasLeftButtonDown == lmb));
+                dragTarget->mouseDrag(dragEvent);
             }
         }
         else if (lastComponent != nullptr) 
