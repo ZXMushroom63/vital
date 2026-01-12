@@ -27,10 +27,14 @@ ifndef CONFIG
 endif
 
 JUCE_ARCH_LABEL := $(shell uname -m)
-FTFLAGS = -v -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include/freetype -L/home/zxmushroom63/Documents/Code/vital/standalone/builds/wasm_full/freetype -lfreetype
+
+FTFLAGS := -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/brotli/c/include -L/home/zxmushroom63/Documents/Code/vital/standalone/builds/wasm_full/brotli -lbrotlicommon -lbrotlidec -brotlienc
+FTFLAGS += -v -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include/freetype -L/home/zxmushroom63/Documents/Code/vital/standalone/builds/wasm_full/freetype -lfreetype
 
 #kissfft, dw abt it
 FTFLAGS += -I/home/zxmushroom63/Documents/Code/vital/third_party/kissfft/include -L/home/zxmushroom63/Documents/Code/vital/third_party/kissfft/install
+
+
 ifeq ($(CONFIG),Debug)
   JUCE_BINDIR := build
   JUCE_LIBDIR := build
@@ -117,7 +121,7 @@ $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) : $(OBJECTS_APP) $(RESOURCES)
 	-$(V_AT)mkdir -p $(JUCE_LIBDIR)
 	-$(V_AT)mkdir -p $(JUCE_OUTDIR)
 	$(V_AT)$(CXX) -o $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) $(OBJECTS_APP) $(JUCE_LDFLAGS) $(JUCE_LDFLAGS_APP) $(RESOURCES) $(TARGET_ARCH) -g3 -gseparate-dwarf
-	-$(V_AT)cp template/index.html build/index.html
+	-$(V_AT)cp template/* build/
 	-$(V_AT)mv build/vial build/vial.js
 	-$(V_AT)mkdir -p build/emsdk
 	-$(V_AT)unlink build/emsdk/emscripten

@@ -27,9 +27,21 @@
 
         globalThis.VIAL_CHANNEL_COUNT = 1;
         globalThis.VIAL_TARGET_SAMPLERATE = 24000;
+        
+        const pages = 9817; //64kb pages
+        const memSize = pages * 64 * 1024;
+
+        const SMEM = new WebAssembly.Memory({
+            initial: pages,
+            maximum: pages,
+            shared: true
+        });
+
+        const rootBuffer = SMEM.buffer;
 
         createModule({
-            canvas: document.querySelector("#canvas")
+            canvas: document.querySelector("#canvas"),
+            wasmMemory: SMEM
         }).then(Vial => {
             globalThis.Vial = Vial;
         });
