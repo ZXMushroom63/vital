@@ -27,5 +27,6 @@
         ftgl
         freetype
         emscripten
+        brotli
     ];
 }

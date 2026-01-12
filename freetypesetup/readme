@@ -1,0 +1,5 @@
+Bundle of tools for getting freetype to work
+run init.sh to (re-)create the folder and download deps
+run build.sh to build brotli and then freetype
+
+emscripten should be in your PATH already
