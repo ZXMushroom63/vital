@@ -300,6 +300,23 @@ void* audioThread(void* arg) {
     }
 
     double timerError = 0;
+    // Todo: Switch to a queuestack system, where there is a queue of 512SP packets
+    // Then, the processor node pops a packet at it's discretion, allowing for perfectly smooth audio.
+    /*
+        // DEMO IMPL IN JS
+        const smoothingPackets = 3; //increase for more stability but higher latency
+        const packets = [];
+        function audioTick() {
+            const iterations = Math.max(0, smoothingPackets - packets.length);
+            for (let i = 0; i < iterations; i++) {
+                audioCallback(bufferReference);
+                packets.push(bufferReference.copy());
+            }
+        }
+        function getNextAudioPacket() {
+            return packets.shift();
+        }
+    */
     double correctionIntensity = 0.33;
 
     while (1) {
