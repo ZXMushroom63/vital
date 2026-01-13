@@ -26,9 +26,9 @@
                 : "Failed. Your browser or device may not support WebGL.";
         }
 
-        globalThis.VIAL_CHANNEL_COUNT = 1;
+        globalThis.VIAL_CHANNEL_COUNT = 2;
         globalThis.VIAL_TARGET_SAMPLERATE = 24000;
-        
+
         const pages = 9817; //64kb pages
         const memSize = pages * 64 * 1024;
 
@@ -80,14 +80,14 @@
                 Vial._vialSetWindowSize(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio);
                 let prevFrame = performance.now();
                 let audioTime = 0;
-                let droppedPacketCount = 0;
+                let droppedPacketCountRef = 0;
                 function renderLoop() {
                     const now = performance.now();
                     Vial._vialRedraw();
                     const post = performance.now();
 
                     setTimeout(renderLoop, 1000 / 30);
-                    document.querySelector("#fps_counter").innerText = `${(1000/(now - prevFrame)).toFixed(2)} FPS (💻${(1000/(post - now)).toFixed(2)}) [🔊${audioTime.toFixed(1)}ms] {🔇${droppedPacketCount}}`;
+                    document.querySelector("#fps_counter").innerText = `${(1000/(now - prevFrame)).toFixed(2)} FPS (💻${(1000/(post - now)).toFixed(2)}) [🔊${audioTime.toFixed(1)}ms]`;
 
                     prevFrame = now;
                 }
@@ -97,18 +97,30 @@
                 setTimeout(()=>{
                     const outContext = new AudioContext({
                         sampleRate: globalThis.VIAL_TARGET_SAMPLERATE,
-                        latencyHint: "balanced"
+                        latencyHint: "interactive"
                     });
                     const scriptProcessor = outContext.createScriptProcessor(512, 0, globalThis.VIAL_CHANNEL_COUNT);
                     
-                    const fptr = Vial._setupAudioThread(1) / 4;
-                    const buffer = Vial.HEAPF32.subarray(fptr, fptr + 512);
-                    // audio render loop
-                    const intervalSize = (512 / VIAL_TARGET_SAMPLERATE) * 1000;
-                    let dropPacket = false;
+                    
+                    const bufferPtr = Vial._setupAudioThread(globalThis.VIAL_CHANNEL_COUNT); //get the most recent audio block output
+                    console.log("JS|Received master buffer: 0x" + bufferPtr.toString(16));
+                    const channelPtrs = new Uint32Array(globalThis.VIAL_CHANNEL_COUNT);
+                    const channelBuffers = [];
+
+                    for (let c = 0; c < globalThis.VIAL_CHANNEL_COUNT; c++) {
+                        channelPtrs[c] = Vial.HEAPU32[bufferPtr / 4 + c];
+                        console.log("JS|Received channel " +c+": 0x" + channelPtrs[c].toString(16));
+                        channelBuffers.push(Vial.HEAPF32.subarray(channelPtrs[c] / 4, channelPtrs[c] / 4 + 512));
+                    }
+
+                    if (globalThis.VIAL_CHANNEL_COUNT === 2) {
+                        console.log("Gap: ", (channelPtrs[1] - channelPtrs[0]) / 4);
+                    }
 
                     scriptProcessor.onaudioprocess = function (ev) {
-                        ev.outputBuffer.copyToChannel(buffer.slice(), 0);
+                        for (let c = 0; c < ev.outputBuffer.numberOfChannels; c++) {
+                            ev.outputBuffer.copyToChannel(channelBuffers[c].slice(), c);
+                        }
                     }
                     scriptProcessor.connect(outContext.destination);
                 }, 250);

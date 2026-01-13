@@ -20,9 +20,10 @@
   ==============================================================================
 */
 #include <emscripten.h>
+#include <emscripten/bind.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <time.h>
+#include <string.h>
 
 namespace juce
 {
@@ -276,97 +277,108 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EMSDKAudioIODeviceType)
 };
 
-float** outputChannelDataForCallback = (float**)malloc(sizeof(float*) * 1);
-
-EMSCRIPTEN_KEEPALIVE
-float* audioCallback(int c) {
-    if (outputChannelDataForCallback[0] != nullptr) {
-        EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
-            nullptr,
-            0,
-            outputChannelDataForCallback,
-            c,
-            512
-        );
-    } else {
-        outputChannelDataForCallback[0] = (float*)malloc(sizeof(float) * 512);
-        for (int i = 0; i < 512; i++) {
-            outputChannelDataForCallback[0][i] = 0.0f;
-        }
-    }
-    return outputChannelDataForCallback[0];
-
-    // MEANWHILE, IN PEACEFUL JAVASCRIPT LAND
-    /*
-        const ptr = Vial._audioCallback(globalThis.VIAL_CHANNEL_COUNT || 1); //get the most recent audio block output
-        if (ptr === -1) {
-            // exit early, audio system not initialised yet
-        }
-        const pcm_copy = new Float32Array(Vial.HEAPF32.buffer, ptr, 512); // copy
-        const pcm_ref = Vial.HEAPF32.subarray(ptr / 4, (ptr / 4) + 512); // reference (fast ver.)
-    */
-}
+float** outputChannelDataForCallback = nullptr;
 
 typedef struct {
     float** outputBuffers;
     int channelCount;
-    int delayMicroseconds; //1000us = 1ms = 0.001s
+    double delayMilliseconds; //1000us = 1ms = 0.001s
 } audiothread_params;
 
 void* audioThread(void* arg) {
     audiothread_params* params = (audiothread_params*)arg;
     bool fallingBehind = false;
     int c = params->channelCount;
-    int delayMicroseconds = params->delayMicroseconds;
+    double delayMilliseconds = params->delayMilliseconds;
+    std::cout << "Targ delay(ms): " << delayMilliseconds << std::endl;
     float** outputBuffers = params->outputBuffers;
+    int logIndex = 0;
+    int loggingInterval = 128;
+    std::cout << "Master Ptr: " << outputBuffers << std::endl;
+    for (int i = 0; i < c; i++) {
+        std::cout << "Channel " << i << ": " << outputBuffers[i] << std::endl;
+    }
+
+    double timerError = 0;
+    double correctionIntensity = 0.33;
 
     while (1) {
+        double start_time = emscripten_get_now();
+
         if (fallingBehind) {
-            usleep(delayMicroseconds);
+            fallingBehind = false;
+            std::cout << "Falling behind, skipping round..." << std::endl;
+        } else {
+            EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
+                nullptr,
+                0,
+                outputBuffers,
+                c,
+                512
+            );
+        }
+
+        double end_time = emscripten_get_now();
+        
+        double duration = end_time - start_time;
+        if (duration > delayMilliseconds) {
             fallingBehind = false;
         }
-        clock_t start_time = clock();
-        EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
-            nullptr,
-            0,
-            outputBuffers,
-            c,
-            512
-        );
-        clock_t end_time = clock();
-        int duration = (int)((int)(end_time - start_time) / CLOCKS_PER_SEC * 1e6);
-        if (duration > delayMicroseconds) {
-            fallingBehind = true;
+        usleep(1000*std::max(delayMilliseconds - duration - (timerError * 1.5), 0.5));
+
+
+        double actualEndTime = emscripten_get_now();
+
+        double errorValue = ((actualEndTime - start_time) - delayMilliseconds);
+        timerError = (errorValue - timerError) * correctionIntensity + timerError;
+
+        logIndex++;
+        if (logIndex >= loggingInterval) {
+            logIndex = 0;
+            std::cout << "Interval: " << (actualEndTime - start_time) << "(target=" << delayMilliseconds << "). processing=" << duration << "; errorCorrection=" << timerError << std::endl;
         }
-        //std::cerr << "f" << outputBuffers[0][0] << std::endl;
-        usleep(std::max(delayMicroseconds - duration, 500));
     }
     return NULL;
 }
 
 EMSCRIPTEN_KEEPALIVE
-float* setupAudioThread(int c) {
-    if (outputChannelDataForCallback[0] == nullptr) {
-        outputChannelDataForCallback[0] = (float*)malloc(sizeof(float) * 512);
-        for (int i = 0; i < 512; i++) {
-            outputChannelDataForCallback[0][i] = 0.0f;
+float** setupAudioThread(int c) {
+    outputChannelDataForCallback = (float**)malloc(sizeof(float*) * c);
+    std::cout << "Allocated memory for " << c << " audio channels." << std::endl;;
+    for (int i=0; i < c; i++) {
+        outputChannelDataForCallback[i] = (float*)malloc(sizeof(float) * 512);
+        for (int j = 0; j < 512; j++) {
+            outputChannelDataForCallback[i][j] = 0.0f;
         }
     }
+
     audiothread_params tparams;
     tparams.outputBuffers = outputChannelDataForCallback;
     tparams.channelCount = c;
-    tparams.delayMicroseconds = 512*1000*1000/getEmsdkSamplerate();
+    tparams.delayMilliseconds = (512.00*1000.00/((double)getEmsdkSamplerate()));
 
     pthread_t periodic_thread;
     pthread_create(&periodic_thread, NULL, audioThread, (void*)&tparams);
-    // EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
-    //     nullptr,
-    //     0,
-    //     outputChannelDataForCallback,
-    //     c,
-    //     512
-    // );
-    return outputChannelDataForCallback[0];
+    
+    return outputChannelDataForCallback;
+
+    // MEANWHILE, IN PEACEFUL JAVASCRIPT LAND
+    /*
+        let bufferPtr = -1;
+        let errorPtr = -1;
+        globalThis.VIAL_AUDIOCALLBACK_DATA = (buffers, errors) => {
+            bufferPtr = buffers;
+            errorPtr = errors;
+        };
+        Vial._setupAudioThread(globalThis.VIAL_CHANNEL_COUNT); //get the most recent audio block output
+        const channelPtrs = new Uint32Array(globalThis.VIAL_CHANNEL_COUNT);
+        const channelBuffers = [];
+
+        for (let c=0; c < globalThis.VIAL_CHANNEL_COUNT; c++) {
+            channelPtrs[c] = Vial.HEAPU32[bufferPtr / 4 + c];
+            channelBuffers.push(Vial.HEAPF32.subarray(channelPtrs[c] / 4, channelPtrs[c] / 4 + 512));
+        }
+    */
 }
 }
 
