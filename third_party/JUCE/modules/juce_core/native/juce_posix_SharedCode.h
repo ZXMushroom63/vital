@@ -824,6 +824,7 @@ extern JavaVM* androidJNIJavaVM;
 
 static void* threadEntryProc (void* userData)
 {
+    return nullptr; //empatch
     auto* myself = static_cast<Thread*> (userData);
 
     JUCE_AUTORELEASEPOOL

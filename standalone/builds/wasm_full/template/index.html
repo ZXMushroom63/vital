@@ -12,9 +12,10 @@
         style="position: fixed; left: 0px; top: 0px; width: 100vw; height: 100vh; z-index: -1; image-rendering: pixelated; background: linear-gradient(132deg,rgba(65, 63, 110, 1) 0%, rgba(141, 138, 166, 1) 35%, rgba(128, 182, 194, 1) 100%);"></canvas>
     <span id="fps_counter" style="border-radius: 4px; background-color: rgba(0, 0, 0, 0.25); position: fixed; top: 0; left: 0; color: white; pointer-events: none; z-index: 102; font-family: monospace;">NaN FPS</span>
     <br>
-    <span id="webgl">Checking WebGL Availability...</span>
     <button id="init">init</button>
     <button id="draw">draw</button>
+    <span id="webgl">Checking WebGL Availability...</span>
+    <script src="coi-sw.min.js"></script>
     <script src="vial.js"></script>
     <script>
         function detectWebGLContext() {
@@ -69,7 +70,7 @@
         
         addEventListener("load", () => {
             let inited = false;
-            document.querySelector("#webgl").innerText = detectWebGLContext();
+            document.querySelector("#webgl").innerText = detectWebGLContext() + "\n" + (crossOriginIsolated ? "Web Workers and SAB ready!" : "SAB not supported :(");
             document.querySelector("#init").addEventListener("click", () => {
                 if (inited) {
                     return;
@@ -100,28 +101,16 @@
                     });
                     const scriptProcessor = outContext.createScriptProcessor(512, 0, globalThis.VIAL_CHANNEL_COUNT);
                     
-                    const fptr = Vial._audioCallback(1) / 4;
+                    const fptr = Vial._setupAudioThread(1) / 4;
                     const buffer = Vial.HEAPF32.subarray(fptr, fptr + 512);
                     // audio render loop
                     const intervalSize = (512 / VIAL_TARGET_SAMPLERATE) * 1000;
                     let dropPacket = false;
-                    
+
                     scriptProcessor.onaudioprocess = function (ev) {
-                        if (dropPacket) {
-                            dropPacket = false;
-                            droppedPacketCount++;
-                            return;
-                        }
-                        const p = performance.now();
-                        Vial._audioCallback(1);
-                        audioTime = performance.now() - p;
-                        if (intervalSize < audioTime) {
-                            dropPacket = true;
-                        }
-                        buffer.forEach((x, i)=>buffer[i]+=(Math.random()-0.5)*0.000);
-                        ev.outputBuffer.copyToChannel(buffer, 0);
+                        ev.outputBuffer.copyToChannel(buffer.slice(), 0);
                     }
-                    //scriptProcessor.connect(outContext.destination);
+                    scriptProcessor.connect(outContext.destination);
                 }, 250);
             });
             document.querySelector("#draw").addEventListener("click", () => {

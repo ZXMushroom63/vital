@@ -20,6 +20,9 @@
   ==============================================================================
 */
 #include <emscripten.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <time.h>
 
 namespace juce
 {
@@ -147,10 +150,6 @@ public:
             internalCallback = callback;
         }
 
-        if (outBuffer == nullptr) {
-            outBuffer = new float[512];
-        }
-
         isStarted = callback != nullptr;
     }
 
@@ -166,12 +165,10 @@ public:
 
     String inputId, outputId;
     static AudioIODeviceCallback* internalCallback;
-    static float* outBuffer;
 private:
     bool isOpen_ = false, isStarted = false;
 };
 AudioIODeviceCallback* EMSDKAudioIODevice::internalCallback = nullptr;
-float* EMSDKAudioIODevice::outBuffer = nullptr;
 
 //==============================================================================
 class EMSDKAudioIODeviceType  : public AudioIODeviceType
@@ -283,16 +280,6 @@ float** outputChannelDataForCallback = (float**)malloc(sizeof(float*) * 1);
 
 EMSCRIPTEN_KEEPALIVE
 float* audioCallback(int c) {
-    float* outBuf = EMSDKAudioIODevice::outBuffer;
-    if (outBuf == nullptr) {
-        return nullptr;
-    }
-    
-    //int oldSize = outputChannelDataForCallback.size();
-    // for (int i = 0; i < oldSize; ++i) {
-    //     delete outputChannelDataForCallback[i];
-    // }
-    std::fill(outBuf, outBuf + 512, 0.0f);
     if (outputChannelDataForCallback[0] != nullptr) {
         EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
             nullptr,
@@ -301,11 +288,6 @@ float* audioCallback(int c) {
             c,
             512
         );
-        // for (int i = 0; i < 512; ++i) { //assuming 512 in length, if it isn't, we have bigger problems
-        //     if (outputChannelDataForCallback[i] != nullptr) {
-        //         outBuf[i] = *(outputChannelDataForCallback[i]);
-        //     }
-        // }
     } else {
         outputChannelDataForCallback[0] = (float*)malloc(sizeof(float) * 512);
         for (int i = 0; i < 512; i++) {
@@ -323,6 +305,68 @@ float* audioCallback(int c) {
         const pcm_copy = new Float32Array(Vial.HEAPF32.buffer, ptr, 512); // copy
         const pcm_ref = Vial.HEAPF32.subarray(ptr / 4, (ptr / 4) + 512); // reference (fast ver.)
     */
+}
+
+typedef struct {
+    float** outputBuffers;
+    int channelCount;
+    int delayMicroseconds; //1000us = 1ms = 0.001s
+} audiothread_params;
+
+void* audioThread(void* arg) {
+    audiothread_params* params = (audiothread_params*)arg;
+    bool fallingBehind = false;
+    int c = params->channelCount;
+    int delayMicroseconds = params->delayMicroseconds;
+    float** outputBuffers = params->outputBuffers;
+
+    while (1) {
+        if (fallingBehind) {
+            usleep(delayMicroseconds);
+            fallingBehind = false;
+        }
+        clock_t start_time = clock();
+        EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
+            nullptr,
+            0,
+            outputBuffers,
+            c,
+            512
+        );
+        clock_t end_time = clock();
+        int duration = (int)((int)(end_time - start_time) / CLOCKS_PER_SEC * 1e6);
+        if (duration > delayMicroseconds) {
+            fallingBehind = true;
+        }
+        //std::cerr << "f" << outputBuffers[0][0] << std::endl;
+        usleep(std::max(delayMicroseconds - duration, 500));
+    }
+    return NULL;
+}
+
+EMSCRIPTEN_KEEPALIVE
+float* setupAudioThread(int c) {
+    if (outputChannelDataForCallback[0] == nullptr) {
+        outputChannelDataForCallback[0] = (float*)malloc(sizeof(float) * 512);
+        for (int i = 0; i < 512; i++) {
+            outputChannelDataForCallback[0][i] = 0.0f;
+        }
+    }
+    audiothread_params tparams;
+    tparams.outputBuffers = outputChannelDataForCallback;
+    tparams.channelCount = c;
+    tparams.delayMicroseconds = 512*1000*1000/getEmsdkSamplerate();
+
+    pthread_t periodic_thread;
+    pthread_create(&periodic_thread, NULL, audioThread, (void*)&tparams);
+    // EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
+    //     nullptr,
+    //     0,
+    //     outputChannelDataForCallback,
+    //     c,
+    //     512
+    // );
+    return outputChannelDataForCallback[0];
 }
 }
 
