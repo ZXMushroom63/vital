@@ -27,8 +27,9 @@
         }
 
         globalThis.VIAL_CHANNEL_COUNT = 2;
-        globalThis.VIAL_TARGET_SAMPLERATE = 24000;
+        globalThis.VIAL_TARGET_SAMPLERATE = 16000;
         globalThis.VIAL_AUDIO_STACK_SIZE_SAMPLES = 2048; //4 ??x(1:2) packets
+        globalThis.VIAL_CLOCKSPEED_MULTIPLIER = 1.25; //Speed multiplier for how often the audio render loop checks if rendering is necessary
 
         const pages = 9817; //64kb pages
         const memSize = pages * 64 * 1024;
@@ -124,7 +125,7 @@
                             console.log("Buffer size: ", VIAL_BSIZE);
                             console.log(((audioStackSize*VIAL_BSIZE)/VIAL_TARGET_SAMPLERATE*1000).toFixed(1) + "ms of audio latency.");
 
-                            Vial._setupAudioThread(VIAL_CHANNEL_COUNT, audioStackSize, VIAL_BSIZE);
+                            Vial._setupAudioThread(VIAL_CHANNEL_COUNT, audioStackSize, VIAL_BSIZE, VIAL_CLOCKSPEED_MULTIPLIER);
 
                             console.log("Attempting AudioWorklet init!");
                             

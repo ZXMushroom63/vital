@@ -72,7 +72,8 @@ class VialProcessor extends AudioWorkletProcessor {
         if (!this.sharedMemory) {
             return true;
         }
-        this.Lock.acquireLock();
+        this.Lock.acquireLock(); //profiled, almost always takes less than 1ms
+
         const tOut = outputList[0];
         const HEAPU32 = this.HEAPU32;
         const HEAPF32 = this.HEAPF32;

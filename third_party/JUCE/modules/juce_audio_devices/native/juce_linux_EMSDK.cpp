@@ -368,13 +368,13 @@ void* audioThread(void* arg) {
         double end_time = emscripten_get_now();
         
         double duration = end_time - start_time;
-        usleep(1000*std::max(delayMilliseconds - duration, 0.5));
+        usleep(1000*std::max(delayMilliseconds - duration, 1.0));
     }
     return NULL;
 }
 
 EMSCRIPTEN_KEEPALIVE
-void setupAudioThread(int c, int stackSize, int bSize) {
+void setupAudioThread(int c, int stackSize, int bSize, double clockspeedMult) {
     bSizeGlobal = bSize;
     audioStack = (float***)malloc(sizeof(float**) * (stackSize * 2));
     readableStack = (float***)malloc(sizeof(float**) * (stackSize * 2));
@@ -394,7 +394,7 @@ void setupAudioThread(int c, int stackSize, int bSize) {
     tparams.audioStack = audioStack;
     tparams.channelCount = c;
     tparams.stackSize = stackSize;
-    tparams.delayMilliseconds = (((double)bSize)*1000.00/((double)getEmsdkSamplerate()));
+    tparams.delayMilliseconds = (((double)bSize)*1000.00/((double)getEmsdkSamplerate())) / clockspeedMult;
     tparams.audioLockRef = &audioLock;
     tparams.consumptionRef = &consumption;
     tparams.readableStack = readableStack;
