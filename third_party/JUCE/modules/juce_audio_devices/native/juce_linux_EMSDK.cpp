@@ -338,14 +338,12 @@ void* audioThread(void* arg) {
     uint8_t* consumption = params->consumptionRef;
     int bSize = params->bufSize;
 
-    int fillLevel = 0;
     int targetFillLevel = params->stackSize;
     int targetFillIndex = targetFillLevel - 1;
     int stackSize = targetFillLevel * 2;
 
     while (1) {
         acquire_lock(lock);
-        fillLevel = std::max(fillLevel - (int)(*consumption), 0);
         for (int con = 0; con < (*consumption); con++) {
             shiftReadableStack(readableStack, stackSize, nullptr);
             shiftReadableStack(audioStack, stackSize, audioStack[0]); //circular
@@ -354,7 +352,7 @@ void* audioThread(void* arg) {
         double start_time = emscripten_get_now();
         while (readableStack[targetFillIndex] == nullptr) {
             int writeIndex = getLowestWriteIdx(readableStack, targetFillIndex);
-            EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
+            EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback ( //hear me out... more threads.
                 nullptr,
                 0,
                 audioStack[writeIndex],

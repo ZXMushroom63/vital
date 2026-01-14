@@ -70,10 +70,16 @@
 
         function ratelimit(func, mininterval) {
             let lastSend = -1;
+            let timeout;
             return function (...args) {
+                clearTimeout(timeout);
                 if ((Date.now() - lastSend) > mininterval) {
                     func.apply(this, args);
                     lastSend = Date.now();
+                } else {
+                    timeout = setTimeout(() => {
+                        func.apply(this, args);
+                    }, mininterval * 2);
                 }
             };
         }
@@ -96,7 +102,7 @@
                     Vial._vialRedraw();
                     const post = performance.now();
 
-                    setTimeout(renderLoop, 1000 / 30);
+                    setTimeout(renderLoop, Math.max(1 / 60, 1000 / 24 - (post - now)));
                     document.querySelector("#fps_counter").innerText = `${(1000/(now - prevFrame)).toFixed(2)} FPS (💻${(1000/(post - now)).toFixed(2)}) [🔊${audioTime.toFixed(1)}ms]`;
 
                     prevFrame = now;
@@ -170,7 +176,7 @@
                 ev.wheel = 0;
                 ev.dbl = false;
             }
-            const queueMouseEvent = ratelimit(sendMouseEvent, 1000 / 60);
+            const queueMouseEvent = ratelimit(sendMouseEvent, 1000 / 120);
             const canvas = document.querySelector("#canvas");
             canvas.addEventListener("mousedown", (event) => {
                 if (event instanceof MouseEvent) {
@@ -196,6 +202,16 @@
                     ev.y = event.layerY;
                     queueMouseEvent();
                 }
+            });
+            canvas.addEventListener("mouseout", () => {
+                event.preventDefault();
+                ev.lmb = false;
+                ev.mmb = false;
+                ev.rmb = false;
+                ev.ctrlKey = false;
+                ev.altKey = false;
+                ev.shiftKey = false;
+                queueMouseEvent();
             });
             canvas.addEventListener("dblclick", () => {
                 ev.dbl = true;

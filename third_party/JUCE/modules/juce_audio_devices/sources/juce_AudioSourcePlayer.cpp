@@ -127,7 +127,7 @@ void AudioSourcePlayer::audioDeviceIOCallback (const float** inputChannelData,
             for (int i = numInputs; i < numOutputs; ++i)
             {
                 channels[numActiveChans] = outputChans[i];
-                zeromem (channels[numActiveChans], (size_t) numSamples * sizeof (float));
+                //zeromem (channels[numActiveChans], (size_t) numSamples * sizeof (float));
                 ++numActiveChans;
             }
         }
@@ -145,8 +145,9 @@ void AudioSourcePlayer::audioDeviceIOCallback (const float** inputChannelData,
     else
     {
         for (int i = 0; i < totalNumOutputChannels; ++i)
-            if (outputChannelData[i] != nullptr)
-                zeromem (outputChannelData[i], (size_t) numSamples * sizeof (float));
+            if (outputChannelData[i] != nullptr) {
+                //zeromem (outputChannelData[i], (size_t) numSamples * sizeof (float));
+            }
     }
 }
 

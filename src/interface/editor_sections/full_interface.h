@@ -162,6 +162,7 @@ class FullInterface : public SynthSection, public AuthenticationSection::Listene
     juce::OpenGLContext& getGLContext() { return open_gl_context_; }
 
     std::unique_ptr<SinglePopupSelector> popup_selector_;
+    std::unique_ptr<DualPopupSelector> dual_popup_selector_;
 
   private:
     bool wavetableEditorsInitialized() {
@@ -196,7 +197,6 @@ class FullInterface : public SynthSection, public AuthenticationSection::Listene
     std::unique_ptr<VoiceSection> voice_section_;
     std::unique_ptr<PresetBrowser> preset_browser_;
     std::unique_ptr<PopupBrowser> popup_browser_;
-    std::unique_ptr<DualPopupSelector> dual_popup_selector_;
     std::unique_ptr<PopupDisplay> popup_display_1_;
     std::unique_ptr<PopupDisplay> popup_display_2_;
     std::unique_ptr<BankExporter> bank_exporter_;

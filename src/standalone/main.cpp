@@ -706,10 +706,19 @@ extern "C" {
             }
             if (isLeftButtonDown && !wasLeftButtonDown) 
             {
-                if (global_editor->gui_->popup_selector_->isShowing()) {
+                if (
+                  global_editor->gui_->popup_selector_->isShowing() ||
+                  global_editor->gui_->dual_popup_selector_->isShowing()
+                )
+                   {
                   contextDefocusCounter++;
                   if (contextDefocusCounter > 1) {
-                    global_editor->gui_->popup_selector_->focusLost(Component::FocusChangeType::focusChangedByMouseClick);
+                    if (global_editor->gui_->popup_selector_->isShowing()) {
+                      global_editor->gui_->popup_selector_->focusLost(Component::FocusChangeType::focusChangedByMouseClick);
+                    }
+                    if (global_editor->gui_->dual_popup_selector_->isShowing()) {
+                      global_editor->gui_->dual_popup_selector_->focusLost(Component::FocusChangeType::focusChangedByMouseClick);
+                    }
                     contextDefocusCounter = 0;
                   }
                 } else {
