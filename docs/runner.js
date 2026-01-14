@@ -66,6 +66,7 @@ function ratelimit(func, mininterval) {
 }
 
 addEventListener("load", () => {
+    document.querySelector("#loading_blocker").remove();
     let inited = false;
     document.querySelector("#webgl").innerText = detectWebGLContext() + "\n" + (crossOriginIsolated ? "✓ SharedArrayBuffer supported." : "⚠︎ Error: SharedArrayBuffer not supported. (try reloading?)");
     document.querySelector("#init").addEventListener("click", () => {
