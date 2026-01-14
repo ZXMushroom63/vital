@@ -28,7 +28,7 @@
 
         globalThis.VIAL_CHANNEL_COUNT = 2;
         globalThis.VIAL_TARGET_SAMPLERATE = 24000;
-        globalThis.VIAL_AUDIO_STACK_SIZE = 4; //4 ??x(1:2) packets
+        globalThis.VIAL_AUDIO_STACK_SIZE_SAMPLES = 2048; //4 ??x(1:2) packets
 
         const pages = 9817; //64kb pages
         const memSize = pages * 64 * 1024;
@@ -120,10 +120,11 @@
                     vialNode.port.onmessage = (ev) => {
                         if (ev.data.bufferSize) {
                             globalThis.VIAL_BSIZE = ev.data.bufferSize;
+                            const audioStackSize = Math.ceil(VIAL_AUDIO_STACK_SIZE_SAMPLES / VIAL_BSIZE);
                             console.log("Buffer size: ", VIAL_BSIZE);
-                            console.log(((VIAL_AUDIO_STACK_SIZE*VIAL_BSIZE)/VIAL_TARGET_SAMPLERATE*1000).toFixed(1) + "ms of audio latency.");
+                            console.log(((audioStackSize*VIAL_BSIZE)/VIAL_TARGET_SAMPLERATE*1000).toFixed(1) + "ms of audio latency.");
 
-                            Vial._setupAudioThread(VIAL_CHANNEL_COUNT, VIAL_AUDIO_STACK_SIZE, VIAL_BSIZE);
+                            Vial._setupAudioThread(VIAL_CHANNEL_COUNT, audioStackSize, VIAL_BSIZE);
 
                             console.log("Attempting AudioWorklet init!");
                             

@@ -21,11 +21,11 @@ MACHINE := $(shell sh -c 'uname -m 2> /dev/null || echo not')
 EMXXFLAGS := -msimd128 -mavx2 -sINVOKE_RUN=0 -sSTACK_SIZE=104857600 -sALLOW_MEMORY_GROWTH=0 --cache ./emsdk_cache -sUSE_WEBGL2=1 -sFULL_ES2=1 -sFULL_ES3=1 -sMIN_WEBGL_VERSION=2 -sMODULARIZE=1 -sEXPORT_NAME='createModule' -sEXPORTED_FUNCTIONS="['_setupAudioThread','_main']" -sEXPORTED_RUNTIME_METHODS="['HEAPU8','HEAPF32','HEAPU32','HEAP32']" -sLEGACY_VM_SUPPORT=0 -sINITIAL_MEMORY=643366912 -sIMPORTED_MEMORY=1 -sSHARED_MEMORY=1 -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=2
 
 #DEBUG CONFIGS
-EMXXFLAGS += -O0 -g3 -ggdb -fvisibility=default -Wl,--keep-section=.debug_* "-DDEBUG=1" -gseparate-dwarf -gdwarf-4 -fno-split-dwarf-inlining --source-map-base http://localhost:3000/ -fdebug-prefix-map=/emsdk/=/emroot/ -sASSERTIONS=2 -sSTACK_OVERFLOW_CHECK=2
+#EMXXFLAGS += -O0 -g3 -ggdb -fvisibility=default -Wl,--keep-section=.debug_* "-DDEBUG=1" -gseparate-dwarf -gdwarf-4 -fno-split-dwarf-inlining --source-map-base http://localhost:3000/ -fdebug-prefix-map=/emsdk/=/emroot/ -sASSERTIONS=2 -sSTACK_OVERFLOW_CHECK=2
 #EMXXFLAGS += -sWASM=0 -sSEPARATE_DWARF=0
 
 #RELEASE CONFIGS
-#EMMXFLAGS += -O3 -flto -fvisibility=hidden "-DNDEBUG=1" --closure 1 -sEVAL_CTORS -fno-rtti -fno-exceptions -g0 -sSIMD=1 -sNO_EXIT_RUNTIME=1 -ftree-vectorize
+EMMXFLAGS += -O3 -flto -fvisibility=hidden "-DNDEBUG=1" --closure 1 -sEVAL_CTORS -fno-rtti -fno-exceptions -g0 -sSIMD=1 -sNO_EXIT_RUNTIME=1 -ftree-vectorize
 #EMMXFLAGS += -g3 -ggdb
 
 PROGRAM = vial

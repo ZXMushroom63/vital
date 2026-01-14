@@ -78,13 +78,17 @@ class VialProcessor extends AudioWorkletProcessor {
         const HEAPF32 = this.HEAPF32;
         const HEAPU8 = this.HEAPU8;
         try {
-            const ptr = HEAPU32[this.bufferPtr / 4];
+            const consumption = HEAPU8[this.consumptionPtr];
+            const ptr = HEAPU32[this.bufferPtr / 4 + consumption];
+            if (!ptr) {
+                return true;
+            }
             for (let c = 0; c < tOut.length; c++) {
                 const f32 = tOut[c];
                 const dataPtr = HEAPU32[ptr / 4 + c] / 4;
                 f32.set(HEAPF32.subarray(dataPtr, dataPtr + this.confirmedBufferSize));
             }
-            HEAPU8[this.consumptionPtr]++;
+            HEAPU8[this.consumptionPtr] = consumption + 1;
         } finally {
             this.Lock.releaseLock();
         }
