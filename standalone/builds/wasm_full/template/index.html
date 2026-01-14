@@ -28,9 +28,18 @@
 
         globalThis.VIAL_CHANNEL_COUNT = 2;
         globalThis.VIAL_TARGET_SAMPLERATE = 24000;
+        globalThis.VIAL_AUDIO_STACK_SIZE = 4; //4 ??x(1:2) packets
 
         const pages = 9817; //64kb pages
         const memSize = pages * 64 * 1024;
+
+        // float = 4b
+        // if stereo, each packet is 1024 instead (obvi)
+        // structure
+        // DATA STORAGE = VIAL_CHANNEL_COUNT*audioQueueSize*??*4
+        // POINTER STACK = (4byte pointer)*audioQueueSize*VIAL_CHANNEL_COUNT
+        // CONSUMPTION = 1 byte
+        // LOCK = 1 byte
 
         const SMEM = new WebAssembly.Memory({
             initial: pages,
@@ -94,35 +103,44 @@
                 renderLoop();
                 document.querySelector("#canvas").style.zIndex = 100;
 
-                setTimeout(()=>{
-                    const outContext = new AudioContext({
-                        sampleRate: globalThis.VIAL_TARGET_SAMPLERATE,
-                        latencyHint: "interactive"
+                setTimeout(async ()=>{
+                    const audioContext = new AudioContext({
+                        sampleRate: VIAL_TARGET_SAMPLERATE,
+                        latencyHint: "balanced"
                     });
-                    const scriptProcessor = outContext.createScriptProcessor(512, 0, globalThis.VIAL_CHANNEL_COUNT);
-                    
-                    
-                    const bufferPtr = Vial._setupAudioThread(globalThis.VIAL_CHANNEL_COUNT); //get the most recent audio block output
-                    console.log("JS|Received master buffer: 0x" + bufferPtr.toString(16));
-                    const channelPtrs = new Uint32Array(globalThis.VIAL_CHANNEL_COUNT);
-                    const channelBuffers = [];
+                    await audioContext.audioWorklet.addModule("worklet.js");
+                    const vialNode = new AudioWorkletNode(
+                        audioContext,
+                        "vial",
+                        {
+                            numberOfOutputs: 1, 
+                            outputChannelCount: [VIAL_CHANNEL_COUNT]
+                        }
+                    );
+                    vialNode.port.onmessage = (ev) => {
+                        if (ev.data.bufferSize) {
+                            globalThis.VIAL_BSIZE = ev.data.bufferSize;
+                            console.log("Buffer size: ", VIAL_BSIZE);
+                            console.log(((VIAL_AUDIO_STACK_SIZE*VIAL_BSIZE)/VIAL_TARGET_SAMPLERATE*1000).toFixed(1) + "ms of audio latency.");
 
-                    for (let c = 0; c < globalThis.VIAL_CHANNEL_COUNT; c++) {
-                        channelPtrs[c] = Vial.HEAPU32[bufferPtr / 4 + c];
-                        console.log("JS|Received channel " +c+": 0x" + channelPtrs[c].toString(16));
-                        channelBuffers.push(Vial.HEAPF32.subarray(channelPtrs[c] / 4, channelPtrs[c] / 4 + 512));
-                    }
+                            Vial._setupAudioThread(VIAL_CHANNEL_COUNT, VIAL_AUDIO_STACK_SIZE, VIAL_BSIZE);
 
-                    if (globalThis.VIAL_CHANNEL_COUNT === 2) {
-                        console.log("Gap: ", (channelPtrs[1] - channelPtrs[0]) / 4);
-                    }
+                            console.log("Attempting AudioWorklet init!");
+                            
+                            globalThis._dbgVialNode = vialNode;
+                            vialNode.port.postMessage({
+                                sharedArrBuf: rootBuffer,
+                                consumption: _V_AUDIO_CONSUMPTION_PTR,
+                                lockPtr: _V_AUDIO_LOCK_PTR,
+                                bufferStack: _V_AUDIO_PTRSTACK
+                            });
 
-                    scriptProcessor.onaudioprocess = function (ev) {
-                        for (let c = 0; c < ev.outputBuffer.numberOfChannels; c++) {
-                            ev.outputBuffer.copyToChannel(channelBuffers[c].slice(), c);
+                            console.log("Message posted.");
                         }
                     }
-                    scriptProcessor.connect(outContext.destination);
+                    
+                   
+                    vialNode.connect(audioContext.destination);
                 }, 250);
             });
             document.querySelector("#draw").addEventListener("click", () => {

@@ -30,6 +30,9 @@ namespace juce
 
 extern "C"
 {
+
+int bSizeGlobal = 128;
+
 EM_JS(int, getEmsdkSamplerate, (), {
   return globalThis.VIAL_TARGET_SAMPLERATE || 44100;
 });
@@ -85,11 +88,11 @@ public:
     Array<int> getAvailableBufferSizes() override
     {
         Array<int> r;
-        r.add(512);
+        r.add(bSizeGlobal);
         return r;
     }
 
-    int getDefaultBufferSize() override                      { return 512; }
+    int getDefaultBufferSize() override                      { return bSizeGlobal; }
 
     String open (const BigInteger& inputChannels,
                  const BigInteger& outputChannels,
@@ -127,14 +130,14 @@ public:
     bool isPlaying() override                        { return isStarted; }
     String getLastError() override                   { return ""; }
 
-    int getCurrentBufferSizeSamples() override       { return 512; }
+    int getCurrentBufferSizeSamples() override       { return bSizeGlobal; }
     double getCurrentSampleRate() override           { return getEmsdkSamplerate(); }
     int getCurrentBitDepth() override                { return 32; }
 
     BigInteger getActiveOutputChannels() const override    { return getEmsdkChannelCount(); }
     BigInteger getActiveInputChannels() const override     { return 0; }
 
-    int getOutputLatencyInSamples() override         { return 512; }
+    int getOutputLatencyInSamples() override         { return bSizeGlobal; }
     int getInputLatencyInSamples() override          { return 0; }
 
     int getXRunCount() const noexcept override       { return 0; } //X RUN (definition for me): either an underrun (system runs out of data to play) or an overrun (system cannot keep up with the data being queued)
@@ -277,125 +280,132 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EMSDKAudioIODeviceType)
 };
 
-float** outputChannelDataForCallback = nullptr;
+uint8_t audioLock = 0;
+uint8_t consumption = 0;
+float*** audioStack = nullptr;
+float*** readableStack = nullptr;
+
+EM_JS(void, sendAudioStack, (uint8_t* lock, uint8_t* consumption, float*** audioStack), {
+    globalThis._V_AUDIO_LOCK_PTR = lock;
+    globalThis._V_AUDIO_CONSUMPTION_PTR = consumption;
+    globalThis._V_AUDIO_PTRSTACK = audioStack;
+});
+
+void acquire_lock(uint8_t* lockRef) {
+    while (*lockRef != 0) {
+        usleep(3000); //3ms
+        // spinlock
+    }
+}
+
+void release_lock(uint8_t* lockRef) {
+    *lockRef = 0;
+}
 
 typedef struct {
-    float** outputBuffers;
+    float*** audioStack;
     int channelCount;
+    int stackSize;
     double delayMilliseconds; //1000us = 1ms = 0.001s
+    uint8_t* audioLockRef;
+    uint8_t* consumptionRef;
+    float*** readableStack;
+    int bufSize;
 } audiothread_params;
+
+void shiftReadableStack(float*** readableStack, int size, float** newEntry) {
+    for (int i = 1; i < size; ++i) {
+        readableStack[i - 1] = readableStack[i];
+    }
+    readableStack[size - 1] = newEntry;
+}
+
+int getLowestWriteIdx(float*** readableStack, int targetReadIndex) { //targetFillLevel - 1
+    int index = targetReadIndex;
+    while ((readableStack[index] == nullptr) && (index >= 0)) {
+        index--;
+    }
+    return index + 1;
+}
 
 void* audioThread(void* arg) {
     audiothread_params* params = (audiothread_params*)arg;
-    bool fallingBehind = false;
     int c = params->channelCount;
     double delayMilliseconds = params->delayMilliseconds;
-    std::cout << "Targ delay(ms): " << delayMilliseconds << std::endl;
-    float** outputBuffers = params->outputBuffers;
-    int logIndex = 0;
-    int loggingInterval = 128;
-    std::cout << "Master Ptr: " << outputBuffers << std::endl;
-    for (int i = 0; i < c; i++) {
-        std::cout << "Channel " << i << ": " << outputBuffers[i] << std::endl;
-    }
+    float*** audioStack = params->audioStack;
+    float*** readableStack = params->readableStack;
+    uint8_t* lock = params->audioLockRef;
+    uint8_t* consumption = params->consumptionRef;
+    int bSize = params->bufSize;
 
-    double timerError = 0;
-    // Todo: Switch to a queuestack system, where there is a queue of 512SP packets
-    // Then, the processor node pops a packet at it's discretion, allowing for perfectly smooth audio.
-    /*
-        // DEMO IMPL IN JS
-        const smoothingPackets = 3; //increase for more stability but higher latency
-        const packets = [];
-        function audioTick() {
-            const iterations = Math.max(0, smoothingPackets - packets.length);
-            for (let i = 0; i < iterations; i++) {
-                audioCallback(bufferReference);
-                packets.push(bufferReference.copy());
-            }
-        }
-        function getNextAudioPacket() {
-            return packets.shift();
-        }
-    */
-    double correctionIntensity = 0.33;
+    int fillLevel = 0;
+    int targetFillLevel = params->stackSize;
+    int targetFillIndex = targetFillLevel - 1;
+    int stackSize = targetFillLevel * 2;
 
     while (1) {
+        acquire_lock(lock);
+        fillLevel = std::max(fillLevel - (int)(*consumption), 0);
+        for (int con = 0; con < (*consumption); con++) {
+            shiftReadableStack(readableStack, stackSize, nullptr);
+            shiftReadableStack(audioStack, stackSize, audioStack[0]); //circular
+        }
+        *consumption = 0;
         double start_time = emscripten_get_now();
-
-        if (fallingBehind) {
-            fallingBehind = false;
-            std::cout << "Falling behind, skipping round..." << std::endl;
-        } else {
+        while (readableStack[targetFillIndex] == nullptr) {
+            int writeIndex = getLowestWriteIdx(readableStack, targetFillIndex);
             EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
                 nullptr,
                 0,
-                outputBuffers,
+                audioStack[writeIndex],
                 c,
-                512
+                bSize
             );
+            readableStack[writeIndex] = audioStack[writeIndex];
         }
+        release_lock(lock);
 
         double end_time = emscripten_get_now();
         
         double duration = end_time - start_time;
-        if (duration > delayMilliseconds) {
-            fallingBehind = false;
-        }
-        usleep(1000*std::max(delayMilliseconds - duration - (timerError * 1.5), 0.5));
-
-
-        double actualEndTime = emscripten_get_now();
-
-        double errorValue = ((actualEndTime - start_time) - delayMilliseconds);
-        timerError = (errorValue - timerError) * correctionIntensity + timerError;
-
-        logIndex++;
-        if (logIndex >= loggingInterval) {
-            logIndex = 0;
-            std::cout << "Interval: " << (actualEndTime - start_time) << "(target=" << delayMilliseconds << "). processing=" << duration << "; errorCorrection=" << timerError << std::endl;
-        }
+        usleep(1000*std::max(delayMilliseconds - duration, 0.5));
     }
     return NULL;
 }
 
 EMSCRIPTEN_KEEPALIVE
-float** setupAudioThread(int c) {
-    outputChannelDataForCallback = (float**)malloc(sizeof(float*) * c);
-    std::cout << "Allocated memory for " << c << " audio channels." << std::endl;;
-    for (int i=0; i < c; i++) {
-        outputChannelDataForCallback[i] = (float*)malloc(sizeof(float) * 512);
-        for (int j = 0; j < 512; j++) {
-            outputChannelDataForCallback[i][j] = 0.0f;
+void setupAudioThread(int c, int stackSize, int bSize) {
+    bSizeGlobal = bSize;
+    audioStack = (float***)malloc(sizeof(float**) * (stackSize * 2));
+    readableStack = (float***)malloc(sizeof(float**) * (stackSize * 2));
+
+    // that's a lot of nesting ;-;
+    for (int s = 0; s < (stackSize * 2); s++) {
+        audioStack[s] = (float**)malloc(sizeof(float*) * c);
+        for (int i=0; i < c; i++) {
+            audioStack[s][i] = (float*)malloc(sizeof(float) * bSize);
+            for (int j = 0; j < bSize; j++) {
+                audioStack[s][i][j] = 0.0f;
+            }
         }
     }
 
     audiothread_params tparams;
-    tparams.outputBuffers = outputChannelDataForCallback;
+    tparams.audioStack = audioStack;
     tparams.channelCount = c;
-    tparams.delayMilliseconds = (512.00*1000.00/((double)getEmsdkSamplerate()));
+    tparams.stackSize = stackSize;
+    tparams.delayMilliseconds = (((double)bSize)*1000.00/((double)getEmsdkSamplerate()));
+    tparams.audioLockRef = &audioLock;
+    tparams.consumptionRef = &consumption;
+    tparams.readableStack = readableStack;
+    tparams.bufSize = bSize;
 
     pthread_t periodic_thread;
     pthread_create(&periodic_thread, NULL, audioThread, (void*)&tparams);
+
+    sendAudioStack(&audioLock, &consumption, audioStack);
     
-    return outputChannelDataForCallback;
-
-    // MEANWHILE, IN PEACEFUL JAVASCRIPT LAND
-    /*
-        let bufferPtr = -1;
-        let errorPtr = -1;
-        globalThis.VIAL_AUDIOCALLBACK_DATA = (buffers, errors) => {
-            bufferPtr = buffers;
-            errorPtr = errors;
-        };
-        Vial._setupAudioThread(globalThis.VIAL_CHANNEL_COUNT); //get the most recent audio block output
-        const channelPtrs = new Uint32Array(globalThis.VIAL_CHANNEL_COUNT);
-        const channelBuffers = [];
-
-        for (let c=0; c < globalThis.VIAL_CHANNEL_COUNT; c++) {
-            channelPtrs[c] = Vial.HEAPU32[bufferPtr / 4 + c];
-            channelBuffers.push(Vial.HEAPF32.subarray(channelPtrs[c] / 4, channelPtrs[c] / 4 + 512));
-        }
-    */
+    return;
 }
 }
 
