@@ -121,21 +121,21 @@ $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) : $(OBJECTS_APP) $(RESOURCES)
 	-$(V_AT)mkdir -p $(JUCE_LIBDIR)
 	-$(V_AT)mkdir -p $(JUCE_OUTDIR)
 	$(V_AT)$(CXX) -o $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) $(OBJECTS_APP) $(JUCE_LDFLAGS) $(JUCE_LDFLAGS_APP) $(RESOURCES) $(TARGET_ARCH) $(EMMX_FLAGS)
-	@echo Finalising build...
-	-$(V_AT)rm build/*.js 2>/dev/null
-	-$(V_AT)rm build/*.html 2>/dev/null
-	-$(V_AT)rm build/*.css 2>/dev/null
-	-$(V_AT)cp template/* build/ 2>/dev/null
-	-$(V_AT)mv build/vial build/vial.js 2>/dev/null
-	-$(V_AT)mkdir -p build/emsdk 2>/dev/null
-	-$(V_AT)unlink build/emsdk/emscripten 2>/dev/null
-	-$(V_AT)unlink build/emsdk_cache 2>/dev/null
-	-$(V_AT)unlink build/third_party 2>/dev/null
-	-$(V_AT)unlink build/src 2>/dev/null
-	-$(V_AT)ln -s /nix/store/*-emscripten-*/share/emscripten build/emsdk/emscripten 2>/dev/null
-	-$(V_AT)ln -s ../emsdk_cache/ build/emsdk_cache 2>/dev/null
-	-$(V_AT)ln -s ../../../../third_party build/third_party 2>/dev/null
-	-$(V_AT)ln -s ../../../../src build/src 2>/dev/null
+	@echo Finalising build... (ignore any errors)
+	-$(V_AT)rm build/*.js  > /dev/null 2>&1
+	-$(V_AT)rm build/*.html  > /dev/null 2>&1
+	-$(V_AT)rm build/*.css  > /dev/null 2>&1
+	-$(V_AT)cp template/* build/  > /dev/null 2>&1
+	-$(V_AT)mv build/vial build/vial.js  > /dev/null 2>&1
+	-$(V_AT)mkdir -p build/emsdk  > /dev/null 2>&1
+	-$(V_AT)unlink build/emsdk/emscripten  > /dev/null 2>&1
+	-$(V_AT)unlink build/emsdk_cache  > /dev/null 2>&1
+	-$(V_AT)unlink build/third_party  > /dev/null 2>&1
+	-$(V_AT)unlink build/src  > /dev/null 2>&1
+	-$(V_AT)ln -s /nix/store/*-emscripten-*/share/emscripten build/emsdk/emscripten  > /dev/null 2>&1
+	-$(V_AT)ln -s ../emsdk_cache/ build/emsdk_cache  > /dev/null 2>&1
+	-$(V_AT)ln -s ../../../../third_party build/third_party  > /dev/null 2>&1
+	-$(V_AT)ln -s ../../../../src build/src  > /dev/null 2>&1
 	-$(V_AT)rm -rf ../../../docs/*
 	-$(V_AT)cp build/*.* ../../../docs/
 	@echo Build succeeded!
