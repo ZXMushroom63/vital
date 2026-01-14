@@ -336,7 +336,7 @@ namespace vital {
       ValueDetails::kIndexed, false, "", "Voice Priority", strings::kVoicePriorityNames },
     { "voice_override", 0x000700, 0.0, VoiceHandler::kNumVoiceOverrides - 1, VoiceHandler::kKill, 0.0, 1.0,
       ValueDetails::kIndexed, false, "", "Voice Override", strings::kVoiceOverrideNames },
-    { "oversampling", 0x000000, 0.0, 3.0, 1.0, 0.0, 1.0,
+    { "oversampling", 0x000000, 0.0, 3.0, 0.0, 0.0, 1.0,
       ValueDetails::kIndexed, false, "", "Oversampling", strings::kOversamplingNames },
     { "pitch_wheel", 0x000400, -1.0, 1.0, 0.0, 0.0, 1.0,
       ValueDetails::kLinear, false, "", "Pitch Wheel", nullptr },

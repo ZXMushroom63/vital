@@ -10,7 +10,7 @@
 <body>
     <canvas width="400" height="300" id="canvas"
         style="position: fixed; left: 0px; top: 0px; width: 100vw; height: 100vh; z-index: -1; image-rendering: pixelated; background: linear-gradient(132deg,rgba(65, 63, 110, 1) 0%, rgba(141, 138, 166, 1) 35%, rgba(128, 182, 194, 1) 100%);"></canvas>
-    <span id="fps_counter" style="border-radius: 4px; background-color: rgba(0, 0, 0, 0.25); position: fixed; top: 0; left: 0; color: white; pointer-events: none; z-index: 102; font-family: monospace;">NaN FPS</span>
+    <span id="fps_counter" style="border-radius: 4px; background-color: rgba(0, 0, 0, 0.25); position: fixed; left: 0; bottom: 0; color: white; pointer-events: none; z-index: 102; font-family: monospace;">NaN FPS</span>
     <br>
     <button id="init">init</button>
     <button id="draw">draw</button>
@@ -27,9 +27,10 @@
         }
 
         globalThis.VIAL_CHANNEL_COUNT = 2;
-        globalThis.VIAL_TARGET_SAMPLERATE = 16000;
-        globalThis.VIAL_AUDIO_STACK_SIZE_SAMPLES = 2048; //4 ??x(1:2) packets
+        globalThis.VIAL_TARGET_SAMPLERATE = 24000;
+        globalThis.VIAL_AUDIO_STACK_SIZE_SAMPLES = 2048; //How much buffer to smooth over timing inconsistencies
         globalThis.VIAL_CLOCKSPEED_MULTIPLIER = 1.25; //Speed multiplier for how often the audio render loop checks if rendering is necessary
+        globalThis.VIAL_BSIZE = 0; //is initialised automatically
 
         const pages = 9817; //64kb pages
         const memSize = pages * 64 * 1024;
@@ -95,7 +96,7 @@
                 Vial._startApplication_Classic();
                 Vial._vialSetWindowSize(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio);
                 let prevFrame = performance.now();
-                let audioTime = 0;
+                let audioTimeRef = -1;
                 let droppedPacketCountRef = 0;
                 function renderLoop() {
                     const now = performance.now();
@@ -103,7 +104,8 @@
                     const post = performance.now();
 
                     setTimeout(renderLoop, Math.max(1 / 60, 1000 / 24 - (post - now)));
-                    document.querySelector("#fps_counter").innerText = `${(1000/(now - prevFrame)).toFixed(2)} FPS (💻${(1000/(post - now)).toFixed(2)}) [🔊${audioTime.toFixed(1)}ms]`;
+                    const audioResponseTime = (VIAL_BSIZE / VIAL_TARGET_SAMPLERATE * 1000).toFixed(1);
+                    document.querySelector("#fps_counter").innerText = `${(1000/(now - prevFrame)).toFixed(2)} FPS [💻${(1000/(post - now)).toFixed(2)}] [🔊${(Vial.HEAPF64[audioTimeRef] || 0).toFixed(1)}ms / ${audioResponseTime}ms] [📦${VIAL_BSIZE}/${VIAL_TARGET_SAMPLERATE} : ${["MONO", "STEREO"][VIAL_CHANNEL_COUNT - 1] || "OTHER" }]`;
 
                     prevFrame = now;
                 }
@@ -113,7 +115,7 @@
                 setTimeout(async ()=>{
                     const audioContext = new AudioContext({
                         sampleRate: VIAL_TARGET_SAMPLERATE,
-                        latencyHint: "balanced"
+                        latencyHint: "playback"
                     });
                     await audioContext.audioWorklet.addModule("worklet.js");
                     const vialNode = new AudioWorkletNode(
@@ -131,7 +133,7 @@
                             console.log("Buffer size: ", VIAL_BSIZE);
                             console.log(((audioStackSize*VIAL_BSIZE)/VIAL_TARGET_SAMPLERATE*1000).toFixed(1) + "ms of audio latency.");
 
-                            Vial._setupAudioThread(VIAL_CHANNEL_COUNT, audioStackSize, VIAL_BSIZE, VIAL_CLOCKSPEED_MULTIPLIER);
+                            audioTimeRef = Vial._setupAudioThread(VIAL_CHANNEL_COUNT, audioStackSize, VIAL_BSIZE, VIAL_CLOCKSPEED_MULTIPLIER) / 8;
 
                             console.log("Attempting AudioWorklet init!");
                             

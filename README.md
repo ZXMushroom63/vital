@@ -1,4 +1,4 @@
-# Vital
+# WebVial
 Vital is a spectral warping wavetable synthesizer. This is the source.
 
 This repository is updated on a delay after binary releases.

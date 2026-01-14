@@ -284,6 +284,7 @@ uint8_t audioLock = 0;
 uint8_t consumption = 0;
 float*** audioStack = nullptr;
 float*** readableStack = nullptr;
+double audioPerfTime = 0.0;
 
 EM_JS(void, sendAudioStack, (uint8_t* lock, uint8_t* consumption, float*** audioStack), {
     globalThis._V_AUDIO_LOCK_PTR = lock;
@@ -311,6 +312,7 @@ typedef struct {
     uint8_t* consumptionRef;
     float*** readableStack;
     int bufSize;
+    double* audioPerf;
 } audiothread_params;
 
 void shiftReadableStack(float*** readableStack, int size, float** newEntry) {
@@ -336,6 +338,7 @@ void* audioThread(void* arg) {
     float*** readableStack = params->readableStack;
     uint8_t* lock = params->audioLockRef;
     uint8_t* consumption = params->consumptionRef;
+    double* audioPerf = params->audioPerf;
     int bSize = params->bufSize;
 
     int targetFillLevel = params->stackSize;
@@ -350,6 +353,7 @@ void* audioThread(void* arg) {
         }
         *consumption = 0;
         double start_time = emscripten_get_now();
+        double workload = 0;
         while (readableStack[targetFillIndex] == nullptr) {
             int writeIndex = getLowestWriteIdx(readableStack, targetFillIndex);
             EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback ( //hear me out... more threads.
@@ -360,19 +364,23 @@ void* audioThread(void* arg) {
                 bSize
             );
             readableStack[writeIndex] = audioStack[writeIndex];
+            workload += 1.0;
         }
         release_lock(lock);
 
         double end_time = emscripten_get_now();
         
         double duration = end_time - start_time;
+        if (workload > 0.0) {
+            *audioPerf = duration / workload;
+        }
         usleep(1000*std::max(delayMilliseconds - duration, 1.0));
     }
     return NULL;
 }
 
 EMSCRIPTEN_KEEPALIVE
-void setupAudioThread(int c, int stackSize, int bSize, double clockspeedMult) {
+double* setupAudioThread(int c, int stackSize, int bSize, double clockspeedMult) {
     bSizeGlobal = bSize;
     audioStack = (float***)malloc(sizeof(float**) * (stackSize * 2));
     readableStack = (float***)malloc(sizeof(float**) * (stackSize * 2));
@@ -397,13 +405,14 @@ void setupAudioThread(int c, int stackSize, int bSize, double clockspeedMult) {
     tparams.consumptionRef = &consumption;
     tparams.readableStack = readableStack;
     tparams.bufSize = bSize;
+    tparams.audioPerf = &audioPerfTime;
 
     pthread_t periodic_thread;
     pthread_create(&periodic_thread, NULL, audioThread, (void*)&tparams);
 
     sendAudioStack(&audioLock, &consumption, audioStack);
     
-    return;
+    return &audioPerfTime;
 }
 }
 
