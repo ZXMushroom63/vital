@@ -1,27 +1,37 @@
 # WebVial
-Vital is a spectral warping wavetable synthesizer. This is the source.
+<img src=webvial.webp width=400>
 
-This repository is updated on a delay after binary releases.
+WebVial is a WIP web port of the Vital source release.\
+Try it here: [https://zxmushroom63.github.io/vital](https://zxmushroom63.github.io/vital)
 
-## Code Licensing
-If you are making a proprietary or closed source app and would like to use Vital's source code, contact licensing@vital.audio for non GPLv3 licensing options.
 
-## Installing
-Create an account and download Vital at [vital.audio](https://vital.audio)
 
-## Issues
-Report bugs (e.g.non-code and non-compiling issues) to https://forum.vital.audio
-
-Feel free to report issues on building/compiling here but note that I'm not prioritizing them.
-
-## Pull requests
-I will not take any pull requests.
-
-## What can you do with the source
-The source code is licensed under the GPLv3. If you download the source or create builds you must comply with that license.
-
-### Things you can't do with this source
- - Do not create an app and distribute it on the iOS app store. The app store is not comptabile with GPLv3 and you'll only get an exception for this if you're paying for a GPLv3 exception for Vital's source (see Code Licensing above).
- - Do not use the name "Vital", "Vital Audio", "Tytel" or "Matt Tytel" for marketing or to name any distribution of binaries built with this source. This source code does not give you rights to infringe on trademarks.
- - Do not connect to any web service at https://vital.audio, https://account.vital.audio or https://store.vital.audio from your own builds. This is against the terms of using those sites.
- - Do not distribute the presets that come with the free version of Vital. They're under a separate license that does not allow redistribution.
+### Compiling & Testing
+This guide is for NixOS, it makes dependency management very easy. See [shell.nix](shell.nix) for a list of required packages. Also ensure you have a mainstream web browser available. (chromium or firefox is fine)
+1. `git clone --depth=1 https://github.com/ZXMushroom63/vital.git`
+    - Clone the repository locally
+2. `cd vital`
+    - Enter the repository directory
+3. `nix-shell`
+    - Setup the environment. This installs required packages and adds Emscripten to your $PATH.
+4. `cd freetypesetup`
+    - Enter the `freetypesetup` directory, where we will cross compile freetype2 to WASM
+5. `./init.sh`
+    - Clone the freetype-wasm repo and download dependencies
+6. `./build.sh`
+    - Build brotli, then freetype, and move their binaries to the correct locations
+7. `cd ..`
+    - Go back to the main directory, `vital`
+8. `make wasm_full`
+    - Build the .wasm and .js files, and combine with templates. This will output to `docs/` directory (naming scheme for gh pages)
+9. `cd docs`
+    - Enter the `docs` directory
+10. `(&>/dev/null python -m http.server 3000 &)`
+    - Start a HTTP server in the background
+11. `firefox --new-window "http://localhost:3000"`
+    - This will open the WebVial launcher in the browser
+    - For chromium: `chromium --new-window "http://localhost:3000"`
+    - For chrome: `chrome --new-window "http://localhost:3000"`
+12. Leave the default settings, and click the start button
+    - <img src=startbtn.png height=24 alt="screenshot of start button">
+13. After a bit of lag (up to 30s), the synth should start! Click around a bit i guess

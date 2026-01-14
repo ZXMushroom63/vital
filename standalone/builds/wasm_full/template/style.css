@@ -28,7 +28,7 @@
     height: calc(90vh - 32px - 2px);
     position: fixed;
     display: block;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.7);
     z-index: 6;
     color: white;
     font-family: monospace;

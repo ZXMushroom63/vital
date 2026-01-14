@@ -28,5 +28,6 @@
         freetype
         emscripten
         brotli
+        python314
     ];
 }
