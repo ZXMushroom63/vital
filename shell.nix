@@ -15,6 +15,7 @@
         xorg.libXcursor
         pkg-config
         glib
+        glibc
         libsecret
         meson
         ninja
