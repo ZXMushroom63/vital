@@ -136,6 +136,8 @@ $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) : $(OBJECTS_APP) $(RESOURCES)
 	-$(V_AT)ln -s ../emsdk_cache/ build/emsdk_cache 2>/dev/null
 	-$(V_AT)ln -s ../../../../third_party build/third_party 2>/dev/null
 	-$(V_AT)ln -s ../../../../src build/src 2>/dev/null
+	-$(V_AT)rm -rf ../../../docs/*
+	-$(V_AT)cp build/*.* ../../../docs/
 	@echo Build succeeded!
 
 $(JUCE_OBJDIR)/common_24cbed85.o: ../../../src/unity_build/common.cpp

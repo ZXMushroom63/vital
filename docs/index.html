@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VialTemplate</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <video src="background.mp4" id="bgvideo" muted autoplay loop playbackRate="0.5"></video>
+    <canvas width="400" height="300" id="canvas"></canvas>
+    <span id="fps_counter">Stats will appear here after initialisation.</span>
+    <br>
+    <section id="init_panel">
+        <h1>
+            WebVial
+        </h1>
+        Ported by <a href="https://github.com/ZXMushroom63" target="_blank">@ZXMushroom63</a>
+        <br><br>
+        <span id="webgl">Checking WebGL Availability...</span>
+        <br><br>
+        Samplerate:<br>
+        <button data-value="12000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+        <button data-value="16000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+        <button data-value="24000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+        <button data-value="32000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+        <button data-value="44100" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+        <button data-value="48000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+        <br><br>Stereo:<br>
+        <button data-value="1" data-target="VIAL_CHANNEL_COUNT">MONO</button>
+        <button data-value="2" data-target="VIAL_CHANNEL_COUNT">STEREO</button>
+        <br><br><span title="buffer to smooth over timing inconsistencies">Buffer Size:</span><br>
+        <button data-value="512" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+        <button data-value="1024" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+        <button data-value="2048" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+        <button data-value="4096" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+        <button data-value="8192" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+        <br><br><span title="multiplier for the speed that the audio thread checks for processing">ACM:</span><br>
+        <button data-value="1" data-target="VIAL_CLOCKSPEED_MULTIPLIER" data-suffix="x"></button>
+        <button data-value="1.25" data-target="VIAL_CLOCKSPEED_MULTIPLIER" data-suffix="x"></button>
+        <button data-value="1.5" data-target="VIAL_CLOCKSPEED_MULTIPLIER" data-suffix="x"></button>
+        <br><br>
+        <button id="init" style="border: none; text-decoration: none; font-size: 1.25rem;">
+            _______<br>
+            |start|<br>
+            ‾‾‾‾‾‾‾
+        </button>
+    </section>
+    <script src="coi-sw.min.js"></script>
+    <script src="vial.js"></script>
+    <script src="runner.js"></script>
+    <script src="gui.js"></script>
+</body>
+
+</html>

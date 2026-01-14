@@ -34,3 +34,4 @@ Debug
 Profile
 Release
 emsdk_cache
+*.debug.wasm
