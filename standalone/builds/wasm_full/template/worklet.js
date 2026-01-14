@@ -41,6 +41,7 @@ class VialProcessor extends AudioWorkletProcessor {
         this.bufferPtr = bufferStack;
         this.lockPtr = lockPtr;
         const self = this;
+        
         this.Lock.acquireLock = function () {
             while (Atomics.compareExchange(self.HEAPU8, lockPtr, 0, 1) !== 0) {
                 // spinlock

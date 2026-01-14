@@ -5,16 +5,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VialTemplate</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <canvas width="400" height="300" id="canvas"
-        style="position: fixed; left: 0px; top: 0px; width: 100vw; height: 100vh; z-index: -1; image-rendering: pixelated; background: linear-gradient(132deg,rgba(65, 63, 110, 1) 0%, rgba(141, 138, 166, 1) 35%, rgba(128, 182, 194, 1) 100%);"></canvas>
-    <span id="fps_counter" style="border-radius: 4px; background-color: rgba(0, 0, 0, 0.25); position: fixed; left: 0; bottom: 0; color: white; pointer-events: none; z-index: 102; font-family: monospace;">NaN FPS</span>
+    <video src="background.mp4" id="bgvideo" muted autoplay loop playbackRate="0.5"></video>
+    <canvas width="400" height="300" id="canvas"></canvas>
+    <span id="fps_counter">Stats will appear here after initialisation.</span>
     <br>
-    <button id="init">init</button>
-    <button id="draw">draw</button>
-    <span id="webgl">Checking WebGL Availability...</span>
+    <section id="init_panel">
+        <h1>
+            WebVial
+        </h1>
+        Ported by <a href="https://github.com/ZXMushroom63" target="_blank">@ZXMushroom63</a>
+        <br><br>
+        <span id="webgl">Checking WebGL Availability...</span>
+        <br><br>
+        Samplerate:<br>
+        <button data-value="12000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+        <button data-value="16000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+        <button data-value="24000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+        <button data-value="32000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+        <button data-value="44100" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+        <button data-value="48000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+        <br><br>Stereo:<br>
+        <button data-value="1" data-target="VIAL_CHANNEL_COUNT">MONO</button>
+        <button data-value="2" data-target="VIAL_CHANNEL_COUNT">STEREO</button>
+        <br><br><span title="buffer to smooth over timing inconsistencies">Buffer Size:</span><br>
+        <button data-value="512" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+        <button data-value="1024" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+        <button data-value="2048" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+        <button data-value="4096" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+        <button data-value="8192" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+        <br><br><span title="multiplier for the speed that the audio thread checks for processing">ACM:</span><br>
+        <button data-value="1" data-target="VIAL_CLOCKSPEED_MULTIPLIER" data-suffix="x"></button>
+        <button data-value="1.25" data-target="VIAL_CLOCKSPEED_MULTIPLIER" data-suffix="x"></button>
+        <button data-value="1.5" data-target="VIAL_CLOCKSPEED_MULTIPLIER" data-suffix="x"></button>
+        <br><br>
+        <button id="init" style="border: none; text-decoration: none; font-size: 1.25rem;">
+            _______<br>
+            |start|<br>
+            ‾‾‾‾‾‾‾
+        </button>
+    </section>
     <script src="coi-sw.min.js"></script>
     <script src="vial.js"></script>
     <script>
@@ -22,8 +55,8 @@
             const canvas = document.createElement("canvas");
             const gl = canvas.getContext("webgl");
             return (gl instanceof WebGLRenderingContext)
-                ? "Congratulations! Your browser supports WebGL."
-                : "Failed. Your browser or device may not support WebGL.";
+                ? "✓ Browser supports WebGL."
+                : "⚠︎ Error: Browser / device does not support WebGL.";
         }
 
         globalThis.VIAL_CHANNEL_COUNT = 2;
@@ -51,7 +84,7 @@
 
         const rootBuffer = SMEM.buffer;
 
-        createModule({
+        createVial({
             canvas: document.querySelector("#canvas"),
             wasmMemory: SMEM
         }).then(Vial => {
@@ -87,9 +120,9 @@
         
         addEventListener("load", () => {
             let inited = false;
-            document.querySelector("#webgl").innerText = detectWebGLContext() + "\n" + (crossOriginIsolated ? "Web Workers and SAB ready!" : "SAB not supported :(");
+            document.querySelector("#webgl").innerText = detectWebGLContext() + "\n" + (crossOriginIsolated ? "✓ SharedArrayBuffer supported." : "⚠︎ Error: SharedArrayBuffer not supported. (try reloading?)");
             document.querySelector("#init").addEventListener("click", () => {
-                if (inited) {
+                if (inited || !Vial) {
                     return;
                 }
                 inited = true;
@@ -98,6 +131,8 @@
                 let prevFrame = performance.now();
                 let audioTimeRef = -1;
                 let droppedPacketCountRef = 0;
+                document.querySelector("#bgvideo").remove();
+                document.querySelector("#init_panel").remove();
                 function renderLoop() {
                     const now = performance.now();
                     Vial._vialRedraw();
@@ -153,9 +188,6 @@
                     vialNode.connect(audioContext.destination);
                 }, 250);
             });
-            document.querySelector("#draw").addEventListener("click", () => {
-                Vial._vialRedraw();
-            });
             const ev = {
                 lmb: false,
                 mmb: false,
@@ -179,6 +211,8 @@
                 ev.dbl = false;
             }
             const queueMouseEvent = ratelimit(sendMouseEvent, 1000 / 120);
+            
+            console.log("Resistering input handlers.");
             const canvas = document.querySelector("#canvas");
             canvas.addEventListener("mousedown", (event) => {
                 if (event instanceof MouseEvent) {
@@ -278,6 +312,7 @@
             };
         }
     </script>
+    <script src="gui.js"></script>
 </body>
 
 </html>

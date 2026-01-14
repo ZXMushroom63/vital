@@ -293,10 +293,11 @@ EM_JS(void, sendAudioStack, (uint8_t* lock, uint8_t* consumption, float*** audio
 });
 
 void acquire_lock(uint8_t* lockRef) {
-    while (*lockRef != 0) {
+    while (*lockRef == 1) {
         usleep(3000); //3ms
         // spinlock
     }
+    *lockRef = 1;
 }
 
 void release_lock(uint8_t* lockRef) {
