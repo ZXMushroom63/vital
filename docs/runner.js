@@ -12,7 +12,7 @@ globalThis.VIAL_AUDIO_STACK_SIZE_SAMPLES = 2048; //How much buffer to smooth ove
 globalThis.VIAL_CLOCKSPEED_MULTIPLIER = 1.25; //Speed multiplier for how often the audio render loop checks if rendering is necessary
 globalThis.VIAL_BSIZE = 0; //is initialised automatically
 
-const pages = 9817; //64kb pages
+const pages = 10400; //64kb pages
 const memSize = pages * 64 * 1024;
 
 // float = 4b

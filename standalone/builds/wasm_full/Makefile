@@ -121,7 +121,7 @@ $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) : $(OBJECTS_APP) $(RESOURCES)
 	-$(V_AT)mkdir -p $(JUCE_LIBDIR)
 	-$(V_AT)mkdir -p $(JUCE_OUTDIR)
 	$(V_AT)$(CXX) -o $(JUCE_OUTDIR)/$(JUCE_TARGET_APP) $(OBJECTS_APP) $(JUCE_LDFLAGS) $(JUCE_LDFLAGS_APP) $(RESOURCES) $(TARGET_ARCH) $(EMMX_FLAGS)
-	@echo Finalising build... (ignore any errors)
+	@echo Finalising build... ignore any errors
 	-$(V_AT)rm build/*.js  > /dev/null 2>&1
 	-$(V_AT)rm build/*.html  > /dev/null 2>&1
 	-$(V_AT)rm build/*.css  > /dev/null 2>&1
