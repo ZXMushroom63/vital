@@ -55,7 +55,7 @@ html, body {
     height: 100vh;
     image-rendering: pixelated;
     z-index: 2;
-    object-fit: fill;
+    object-fit: cover;
     opacity: 0.5;
     pointer-events: none;
 }
