@@ -14,24 +14,26 @@ This guide is for NixOS, it makes dependency management very easy. See [shell.ni
     - Enter the repository directory
 3. `nix-shell`
     - Setup the environment. This installs required packages and adds Emscripten to your $PATH.
-4. `cd freetypesetup`
+4. `./update_kissfft.sh`
+    - Download and compile kissfft
+5. `cd freetypesetup`
     - Enter the `freetypesetup` directory, where we will cross compile freetype2 to WASM
-5. `./init.sh`
+6. `./init.sh`
     - Clone the freetype-wasm repo and download dependencies
-6. `./build.sh`
+7. `./build.sh`
     - Build brotli, then freetype, and move their binaries to the correct locations
-7. `cd ..`
+8. `cd ..`
     - Go back to the main directory, `vital`
-8. `make wasm_full`
+9. `make wasm_full`
     - Build the .wasm and .js files, and combine with templates. This will output to `docs/` directory (naming scheme for gh pages)
-9. `cd docs`
+10. `cd docs`
     - Enter the `docs` directory
-10. `(&>/dev/null python -m http.server 3000 &)`
+11. `(&>/dev/null python -m http.server 3000 &)`
     - Start a HTTP server in the background
-11. `firefox --new-window "http://localhost:3000"`
+12. `firefox --new-window "http://localhost:3000"`
     - This will open the WebVial launcher in the browser
     - For chromium: `chromium --new-window "http://localhost:3000"`
     - For chrome: `chrome --new-window "http://localhost:3000"`
-12. Leave the default settings, and click the start button
+13. Leave the default settings, and click the start button
     - <img src=startbtn.png height=24 alt="screenshot of start button">
-13. After a bit of lag (up to 30s), the synth should start! Click around a bit i guess
+14. After a bit of lag (up to 30s), the synth should start! Click around a bit i guess
