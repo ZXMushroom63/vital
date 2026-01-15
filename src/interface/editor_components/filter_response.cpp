@@ -22,6 +22,7 @@
 #include "shaders.h"
 #include "synth_slider.h"
 #include "utils.h"
+#include "unshade.h"
 
 namespace {
   FilterResponse::FilterShader getShaderForModel(vital::constants::FilterModel model, int style) {
@@ -583,7 +584,7 @@ void FilterResponse::drawFilterResponse(OpenGlWrapper& open_gl) {
     if (new_response) {
       bind(shader, open_gl.context);
       loadShader(shader, model, 1);
-      renderLineResponse(open_gl);
+      renderLineResponse(open_gl, model, shader);
     }
 
     setFillColors(color_fill_from, color_fill_to);
@@ -602,7 +603,7 @@ void FilterResponse::drawFilterResponse(OpenGlWrapper& open_gl) {
   if (new_response) {
     bind(shader, open_gl.context);
     loadShader(shader, model, 0);
-    renderLineResponse(open_gl);
+    renderLineResponse(open_gl, model, shader);
   }
 
   setFillColors(color_fill_from, color_fill_to);
@@ -618,44 +619,83 @@ void FilterResponse::drawFilterResponse(OpenGlWrapper& open_gl) {
   //checkGlError();
 }
 
-void FilterResponse::renderLineResponse(OpenGlWrapper& open_gl) {
-  // Currently broken
-  return;
-  glEnable(GL_BLEND);
+FilterUniforms getFilterUniform(FilterResponseShader* shaderPack) {
+  FilterUniforms uniform;
+  uniform.midi_cutoff = shaderPack->midi_cutoff->vector4storage[0];
+  uniform.resonance = shaderPack->resonance->vector4storage[0];
+  uniform.drive = shaderPack->drive->vector4storage[0];
+  uniform.mix = shaderPack->mix->vector4storage[0];
+  uniform.db24 = shaderPack->db24->vector4storage[0];
+  uniform.stage0 = shaderPack->stages[0]->vector4storage[0];
+  uniform.stage1 = shaderPack->stages[1]->vector4storage[0];
+  uniform.stage2 = shaderPack->stages[2]->vector4storage[0];
+  uniform.stage3 = shaderPack->stages[3]->vector4storage[0];
+  uniform.stage4 = shaderPack->stages[4]->vector4storage[0];
+  return uniform;
+}
 
-  GLuint fbo;
-  glGenFramebuffers(1, &fbo);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+FormantUniforms getFormantUniform(FilterResponseShader* shaderPack) {
+  FormantUniforms uniform;
+  uniform.mix = shaderPack->mix->vector4storage[0];
+  uniform.low = shaderPack->formant_low->vector4storage;
+  uniform.band = shaderPack->formant_band->vector4storage;
+  uniform.high = shaderPack->formant_high->vector4storage;
+  uniform.formant_cutoff = shaderPack->formant_cutoff->vector4storage;
+  uniform.formant_resonance = shaderPack->formant_resonance->vector4storage;
+  return uniform;
+}
 
-  GLuint texture;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, kResolution, 1, 0, GL_RGBA, GL_FLOAT, nullptr);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+void FilterResponse::renderLineResponse(OpenGlWrapper& open_gl, vital::constants::FilterModel model, FilterShader shader) {
+  /*
+  enum FilterModel {
+    kAnalog,
+    kDirty,
+    kLadder,
+    kDigital,
+    kDiode,
+    kFormant,
+    kComb,
+    kPhase,
+    kNumFilterModels
+  };
+  */
+  FilterResponseShader* shaderPack = &shaders_[model];
 
-  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    return;
+  std::vector<float> response_data(kResolution);
+  float* buffer = response_data.data();
+
+  if (model == vital::constants::FilterModel::kAnalog) {
+    UnshadedFilterResponses::fillAnalog(buffer, kResolution, getFilterUniform(shaderPack));
   }
-
-  glBeginTransformFeedback(GL_POINTS);
-  glDrawArrays(GL_POINTS, 0, kResolution);
-  glEndTransformFeedback();
-
-  std::vector<float> response_data(kResolution * 4);
-  glReadPixels(0, 0, kResolution, 1, GL_RGBA, GL_FLOAT, response_data.data());
-
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  if (model == vital::constants::FilterModel::kComb) {
+    UnshadedFilterResponses::fillComb(buffer, kResolution, getFilterUniform(shaderPack));
+  }
+  if (model == vital::constants::FilterModel::kDigital) {
+    UnshadedFilterResponses::fillDigital(buffer, kResolution, getFilterUniform(shaderPack));
+  }
+  if (model == vital::constants::FilterModel::kDiode) {
+    UnshadedFilterResponses::fillDiode(buffer, kResolution, getFilterUniform(shaderPack));
+  }
+  if (model == vital::constants::FilterModel::kDirty) {
+    UnshadedFilterResponses::fillDirty(buffer, kResolution, getFilterUniform(shaderPack));
+  }
+  if (model == vital::constants::FilterModel::kFormant) {
+    UnshadedFilterResponses::fillFormant(buffer, kResolution, getFormantUniform(shaderPack));
+  }
+  if (model == vital::constants::FilterModel::kLadder) {
+    UnshadedFilterResponses::fillLadder(buffer, kResolution, getFilterUniform(shaderPack));
+  }
+  if (model == vital::constants::FilterModel::kPhase) {
+    UnshadedFilterResponses::fillPhaser(buffer, kResolution, getFilterUniform(shaderPack));
+  }
 
   float width = getWidth();
   float y_adjust = getHeight() / 2.0f;
   for (int i = 0; i < kResolution; ++i) {
-    float response_value = response_data[i * 4];
+    float response_value = buffer[i];
     setXAt(i, width * i / (kResolution - 1.0f));
     setYAt(i, y_adjust * (1.0f - response_value));
   }
 
-  glDeleteFramebuffers(1, &fbo);
-  glDeleteTextures(1, &texture);
 
-  glDisable(GL_BLEND);
 }

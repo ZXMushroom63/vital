@@ -29,6 +29,26 @@
 #include "sallen_key_filter.h"
 #include "synth_types.h"
 
+struct FilterResponseShader {
+  static constexpr int kMaxStages = 5;
+  OpenGLShaderProgram* shader;
+  std::unique_ptr<OpenGLShaderProgram::Attribute> position;
+
+  std::unique_ptr<OpenGLShaderProgram::Uniform> mix;
+  std::unique_ptr<OpenGLShaderProgram::Uniform> midi_cutoff;
+  std::unique_ptr<OpenGLShaderProgram::Uniform> resonance;
+  std::unique_ptr<OpenGLShaderProgram::Uniform> drive;
+  std::unique_ptr<OpenGLShaderProgram::Uniform> db24;
+  std::unique_ptr<OpenGLShaderProgram::Uniform> stages[kMaxStages];
+
+  std::unique_ptr<OpenGLShaderProgram::Uniform> formant_cutoff;
+  std::unique_ptr<OpenGLShaderProgram::Uniform> formant_resonance;
+  std::unique_ptr<OpenGLShaderProgram::Uniform> formant_spread;
+  std::unique_ptr<OpenGLShaderProgram::Uniform> formant_low;
+  std::unique_ptr<OpenGLShaderProgram::Uniform> formant_band;
+  std::unique_ptr<OpenGLShaderProgram::Uniform> formant_high;
+};
+
 class SynthSlider;
 
 class FilterResponse : public OpenGlLineRenderer {
@@ -84,25 +104,6 @@ class FilterResponse : public OpenGlLineRenderer {
     void setStyle(int style) { filter_state_.style = style; }
 
   private:
-    struct FilterResponseShader {
-      static constexpr int kMaxStages = 5;
-      OpenGLShaderProgram* shader;
-      std::unique_ptr<OpenGLShaderProgram::Attribute> position;
-
-      std::unique_ptr<OpenGLShaderProgram::Uniform> mix;
-      std::unique_ptr<OpenGLShaderProgram::Uniform> midi_cutoff;
-      std::unique_ptr<OpenGLShaderProgram::Uniform> resonance;
-      std::unique_ptr<OpenGLShaderProgram::Uniform> drive;
-      std::unique_ptr<OpenGLShaderProgram::Uniform> db24;
-      std::unique_ptr<OpenGLShaderProgram::Uniform> stages[kMaxStages];
-
-      std::unique_ptr<OpenGLShaderProgram::Uniform> formant_cutoff;
-      std::unique_ptr<OpenGLShaderProgram::Uniform> formant_resonance;
-      std::unique_ptr<OpenGLShaderProgram::Uniform> formant_spread;
-      std::unique_ptr<OpenGLShaderProgram::Uniform> formant_low;
-      std::unique_ptr<OpenGLShaderProgram::Uniform> formant_band;
-      std::unique_ptr<OpenGLShaderProgram::Uniform> formant_high;
-    };
 
     FilterResponse();
 
@@ -117,7 +118,7 @@ class FilterResponse : public OpenGlLineRenderer {
     void loadShader(FilterShader shader, vital::constants::FilterModel model, int index);
     void bind(FilterShader shader, OpenGLContext& open_gl_context);
     void unbind(FilterShader shader, OpenGLContext& open_gl_context);
-    void renderLineResponse(OpenGlWrapper& open_gl);
+    void renderLineResponse(OpenGlWrapper& open_gl, vital::constants::FilterModel model, FilterShader shader);
 
     bool active_;
     bool animate_;

@@ -198,13 +198,66 @@ OpenGLShaderProgram::Uniform::Uniform (const OpenGLShaderProgram& program, const
    #endif
 }
 
-void OpenGLShaderProgram::Uniform::set (GLfloat n1) const noexcept                                    { context.extensions.glUniform1f (uniformID, n1); }
-void OpenGLShaderProgram::Uniform::set (GLint n1) const noexcept                                      { context.extensions.glUniform1i (uniformID, n1); }
-void OpenGLShaderProgram::Uniform::set (GLfloat n1, GLfloat n2) const noexcept                        { context.extensions.glUniform2f (uniformID, n1, n2); }
-void OpenGLShaderProgram::Uniform::set (GLfloat n1, GLfloat n2, GLfloat n3) const noexcept            { context.extensions.glUniform3f (uniformID, n1, n2, n3); }
-void OpenGLShaderProgram::Uniform::set (GLfloat n1, GLfloat n2, GLfloat n3, GLfloat n4) const noexcept  { context.extensions.glUniform4f (uniformID, n1, n2, n3, n4); }
-void OpenGLShaderProgram::Uniform::set (GLint n1, GLint n2, GLint n3, GLint n4) const noexcept        { context.extensions.glUniform4i (uniformID, n1, n2, n3, n4); }
-void OpenGLShaderProgram::Uniform::set (const GLfloat* values, GLsizei numValues) const noexcept      { context.extensions.glUniform1fv (uniformID, numValues, values); }
+void OpenGLShaderProgram::Uniform::set (GLfloat n1) const noexcept {
+    int* sizePtr = const_cast<int*>(&vectorSize);
+    float* storagePtr = const_cast<float*>(&vector4storage[0]);
+    *sizePtr = 1;
+    storagePtr[0] = static_cast<float>(n1);
+    context.extensions.glUniform1f (uniformID, n1);
+}
+void OpenGLShaderProgram::Uniform::set (GLint n1) const noexcept {
+    int* sizePtr = const_cast<int*>(&vectorSize);
+    float* storagePtr = const_cast<float*>(&vector4storage[0]);
+    *sizePtr = 1;
+    storagePtr[0] = static_cast<float>(n1);
+    context.extensions.glUniform1i (uniformID, n1);
+}
+void OpenGLShaderProgram::Uniform::set (GLfloat n1, GLfloat n2) const noexcept {
+    int* sizePtr = const_cast<int*>(&vectorSize);
+    float* storagePtr = const_cast<float*>(&vector4storage[0]);
+    *sizePtr = 2;
+    storagePtr[0] = static_cast<float>(n1);
+    storagePtr[1] = static_cast<float>(n2);
+    context.extensions.glUniform2f (uniformID, n1, n2);
+}
+void OpenGLShaderProgram::Uniform::set (GLfloat n1, GLfloat n2, GLfloat n3) const noexcept {
+    int* sizePtr = const_cast<int*>(&vectorSize);
+    float* storagePtr = const_cast<float*>(&vector4storage[0]);
+    *sizePtr = 3;
+    storagePtr[0] = static_cast<float>(n1);
+    storagePtr[1] = static_cast<float>(n2);
+    storagePtr[2] = static_cast<float>(n3);
+    context.extensions.glUniform3f (uniformID, n1, n2, n3);
+}
+void OpenGLShaderProgram::Uniform::set (GLfloat n1, GLfloat n2, GLfloat n3, GLfloat n4) const noexcept {
+    int* sizePtr = const_cast<int*>(&vectorSize);
+    float* storagePtr = const_cast<float*>(&vector4storage[0]);
+    *sizePtr = 4;
+    storagePtr[0] = static_cast<float>(n1);
+    storagePtr[1] = static_cast<float>(n2);
+    storagePtr[2] = static_cast<float>(n3);
+    storagePtr[3] = static_cast<float>(n4);
+    context.extensions.glUniform4f (uniformID, n1, n2, n3, n4);
+}
+void OpenGLShaderProgram::Uniform::set (GLint n1, GLint n2, GLint n3, GLint n4) const noexcept {
+    int* sizePtr = const_cast<int*>(&vectorSize);
+    float* storagePtr = const_cast<float*>(&vector4storage[0]);
+    *sizePtr = 4;
+    storagePtr[0] = static_cast<float>(n1);
+    storagePtr[1] = static_cast<float>(n2);
+    storagePtr[2] = static_cast<float>(n3);
+    storagePtr[3] = static_cast<float>(n4);
+    context.extensions.glUniform4i (uniformID, n1, n2, n3, n4);
+}
+void OpenGLShaderProgram::Uniform::set (const GLfloat* values, GLsizei numValues) const noexcept {
+    int* sizePtr = const_cast<int*>(&vectorSize);
+    float* storagePtr = const_cast<float*>(&vector4storage[0]);
+    *sizePtr = static_cast<int>(numValues);
+    for (int n = 0; ((n < vectorSize) || (n < 4)); n++) {
+        storagePtr[n] = static_cast<float>(values[n]);
+    }
+    context.extensions.glUniform1fv (uniformID, numValues, values);
+}
 
 void OpenGLShaderProgram::Uniform::setMatrix2 (const GLfloat* v, GLint num, GLboolean trns) const noexcept { context.extensions.glUniformMatrix2fv (uniformID, num, trns, v); }
 void OpenGLShaderProgram::Uniform::setMatrix3 (const GLfloat* v, GLint num, GLboolean trns) const noexcept { context.extensions.glUniformMatrix3fv (uniformID, num, trns, v); }

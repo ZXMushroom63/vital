@@ -40,6 +40,7 @@
 #include "peak_meter_viewer.cpp"
 #include "compressor_editor.cpp"
 #include "filter_response.cpp"
+#include "unshade.cpp"
 #include "sample_viewer.cpp"
 #include "text_selector.cpp"
 #include "modulation_meter.cpp"

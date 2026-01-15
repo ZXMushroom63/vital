@@ -164,10 +164,11 @@ public:
             If the uniform couldn't be found, this value will be < 0.
         */
         GLint uniformID;
-
-    private:
+        int vectorSize = 0;
+        std::array<float,4> vector4storage;
         const OpenGLContext& context;
 
+    private:
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Uniform)
     };
 

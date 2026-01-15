@@ -19,6 +19,7 @@
 #include "skin.h"
 #include "digital_svf.h"
 #include "filter_response.h"
+#include "unshade.h"
 #include "preset_selector.h"
 #include "fonts.h"
 #include "synth_button.h"
