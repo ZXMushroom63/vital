@@ -48,6 +48,7 @@ bool SynthComputerKeyboard::keyPressed(const KeyPress &key, Component *origin) {
 }
 
 bool SynthComputerKeyboard::keyStateChanged(bool isKeyDown, Component *origin) {
+  std::cout << "synth keyb detected summ" << std::endl;
   bool consumed = false;
   for (int i = 0; i < layout_.length(); ++i) {
     int note = computer_keyboard_offset_ + i;

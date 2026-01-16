@@ -264,6 +264,7 @@ public:
     static const int stopKey;        /**< key-code for a multimedia 'stop' key, (not all keyboards will have one) */
     static const int fastForwardKey; /**< key-code for a multimedia 'fast-forward' key, (not all keyboards will have one) */
     static const int rewindKey;      /**< key-code for a multimedia 'rewind' key, (not all keyboards will have one) */
+    static bool* keyCodeMap;
 
 private:
     //==============================================================================

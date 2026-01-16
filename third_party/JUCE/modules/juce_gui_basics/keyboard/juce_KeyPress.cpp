@@ -55,9 +55,13 @@ bool KeyPress::operator== (const KeyPress& other) const noexcept
 
 bool KeyPress::operator!= (const KeyPress& other) const noexcept    { return ! operator== (other); }
 bool KeyPress::operator!= (int otherKeyCode) const noexcept         { return ! operator== (otherKeyCode); }
+bool* KeyPress::keyCodeMap = nullptr;
 
 bool KeyPress::isCurrentlyDown() const
 {
+    if (KeyPress::keyCodeMap != nullptr) {
+        return KeyPress::keyCodeMap[keyCode & 0xFF];
+    }
     return isKeyCurrentlyDown (keyCode)
             && (ModifierKeys::currentModifiers.getRawFlags() & ModifierKeys::allKeyboardModifiers)
                   == (mods.getRawFlags() & ModifierKeys::allKeyboardModifiers);

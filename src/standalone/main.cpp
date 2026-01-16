@@ -629,6 +629,7 @@ extern "C" {
     int contextDefocusCounter = 0;
     int prevX = 0;
     int prevY = 0;
+
     EMSCRIPTEN_KEEPALIVE
     void processMouseEvent(bool lmb, bool mmb, bool rmb, bool ctrlKey, bool shiftKey, bool altKey, int screenX, int screenY, bool dblOccured, float wheel)
     {
@@ -788,36 +789,36 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE
-    void processKeyboardKey(int keyCode, int charCode) {
-      //Component* target = global_editor->gui_.get();
+    void processKeyboardKey(int keyCode, int charCode, bool pressEvent) {
+      Component* target = global_editor->gui_.get();
       //Component* focusTarget = global_editor->gui_->getCurrentlyFocusedComponent();
       //if (focusTarget != nullptr) {
       //  target = focusTarget;
       //}
-      if (charCode > 0) {
-        juce::juce_wchar ch = static_cast<juce::juce_wchar>(charCode);
-        juce::KeyPress kp(keyCode, ModifierKeys::currentModifiers, ch);
-        if (focusedComponent != nullptr) {
-          focusedComponent->keyPressed(kp);
+      if (focusedComponent != nullptr) {
+        target = focusedComponent;
+      }
+      if (pressEvent) {
+        if (charCode > 0) {
+          juce::juce_wchar ch = static_cast<juce::juce_wchar>(charCode);
+          juce::KeyPress kp(keyCode, ModifierKeys::currentModifiers, ch);
+          target->keyPressed(kp);
         } else {
-          global_editor->gui_->keyPressed(kp);
-        }
-      } else {
-        juce::KeyPress kp(keyCode);
-        if (focusedComponent != nullptr) {
-          focusedComponent->keyPressed(kp);
-        } else {
-          global_editor->gui_->keyPressed(kp);
+          juce::KeyPress kp(keyCode);
+          target->keyPressed(kp);
         }
       }
+      target->keyStateChanged(pressEvent);
     }
 
     EMSCRIPTEN_KEEPALIVE
-    void setupFS() {
+    bool* preinit() {
+      KeyPress::keyCodeMap = (bool*)malloc(256 * sizeof(bool));
       EM_ASM(
         globalThis.vIDBFS = IDBFS;
         globalThis.vMEMFS = MEMFS;
       );
+      return KeyPress::keyCodeMap;
     }
 
     
@@ -829,7 +830,7 @@ extern "C" {
         startApplication_Advanced();
         dispatchSystemMessage(false);
         processMouseEvent(false, false, false, false, false, false, 0, 0, false, 0.0);
-        processKeyboardKey(0, 0);
+        processKeyboardKey(0, 0, false);
         return 0;
     }
 }

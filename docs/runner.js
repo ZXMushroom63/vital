@@ -70,12 +70,13 @@ function getFSChecksum() {
     });
     return checksum;
 }
+globalThis._V_KMAP_PTR = null;
 createVial({
     canvas: document.querySelector("#canvas"),
     wasmMemory: SMEM
 }).then(Vial => {
     globalThis.Vial = Vial;
-    Vial._setupFS();
+    globalThis._V_KMAP_PTR = Vial._preinit();
     //Vial.FS.mkdir('/home/web_user');
     //vIDBFS.mkdir("/home/web_user");
     Vial.FS.mount(vIDBFS, {}, '/home/web_user');
@@ -267,9 +268,19 @@ addEventListener("load", () => {
         }
     });
     addEventListener("keydown", (e) => {
-        if (!e.altKey && !e.ctrlKey && !e.metaKey && inited) {
-            Vial._processKeyboardKey(e.keyCode, e.key.length > 1 ? 0 : e.key.charCodeAt(0));
+        if (!e.altKey && !e.ctrlKey && !e.metaKey && inited && !e.repeat) {
+            const charCode = e.key.length > 1 ? 0 : e.key.charCodeAt(0);
+            Vial.HEAPU8[globalThis._V_KMAP_PTR + charCode] = 1;
+            Vial._processKeyboardKey(e.keyCode, charCode, true);
         }
+    });
+    addEventListener("keyup", (e) => {
+        if (e.repeat || !inited) {
+            return;
+        }
+        const charCode = e.key.length > 1 ? 0 : e.key.charCodeAt(0);
+        Vial.HEAPU8[globalThis._V_KMAP_PTR + charCode] = 0;
+        Vial._processKeyboardKey(e.keyCode, charCode, false);
     });
     canvas.addEventListener("mouseout", () => {
         event.preventDefault();
