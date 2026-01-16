@@ -3042,4 +3042,24 @@ bool Component::BailOutChecker::shouldBailOut() const noexcept
     return safePointer == nullptr;
 }
 
+// check if a component is or is a child of a parent component
+bool Component::isChildOf (Component* parent) const {
+    if (parent == nullptr)
+        return false;
+
+    if (this == parent)
+        return true;
+
+    Component* current = getParentComponent();
+    
+    while (current != nullptr)
+    {
+        if (current == parent)
+            return true;
+        current = current->getParentComponent();
+    }
+    
+    return false;
+}
+
 } // namespace juce

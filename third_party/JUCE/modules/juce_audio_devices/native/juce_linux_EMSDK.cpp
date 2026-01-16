@@ -346,6 +346,8 @@ void* audioThread(void* arg) {
     int targetFillIndex = targetFillLevel - 1;
     int stackSize = targetFillLevel * 2;
 
+    std::cout << "Audio Thread Beginning Processing!" << std::endl;
+
     while (1) {
         acquire_lock(lock);
         for (int con = 0; con < (*consumption); con++) {

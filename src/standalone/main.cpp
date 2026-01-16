@@ -711,7 +711,11 @@ extern "C" {
                   global_editor->gui_->dual_popup_selector_->isShowing()
                 )
                    {
-                  contextDefocusCounter++;
+                  if (!(
+                        targetComponent->isChildOf(global_editor->gui_->popup_selector_.get())
+                        || targetComponent->isChildOf(global_editor->gui_->dual_popup_selector_.get()) )) {
+                    contextDefocusCounter++;
+                  }
                   if (contextDefocusCounter > 1) {
                     if (global_editor->gui_->popup_selector_->isShowing()) {
                       global_editor->gui_->popup_selector_->focusLost(Component::FocusChangeType::focusChangedByMouseClick);

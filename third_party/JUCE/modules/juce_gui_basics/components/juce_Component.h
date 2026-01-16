@@ -2300,6 +2300,7 @@ public:
     std::unique_ptr<CachedComponentImage> cachedImage;
     static bool preventRendering;
     bool cacheAnimated = false;
+    bool isChildOf (Component* parent) const;
 private:
     //==============================================================================
     friend class ComponentPeer;
