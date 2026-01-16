@@ -357,8 +357,18 @@ void* audioThread(void* arg) {
         *consumption = 0;
         double start_time = emscripten_get_now();
         double workload = 0;
+        if (targetFillIndex < 0 || targetFillIndex >= stackSize) {
+            std::cerr << "Error: targetFillIndex out of bounds: " << targetFillIndex << " in " << stackSize << std::endl;
+        }
         while (readableStack[targetFillIndex] == nullptr) {
             int writeIndex = getLowestWriteIdx(readableStack, targetFillIndex);
+
+            if (writeIndex < 0 || writeIndex >= stackSize) {
+                std::cerr << "Error: writeIndex out of bounds: " << writeIndex << " in " << stackSize << std::endl;
+                break;
+            }
+
+
             EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback ( //hear me out... more threads.
                 nullptr,
                 0,
@@ -366,6 +376,9 @@ void* audioThread(void* arg) {
                 c,
                 bSize
             );
+            if (audioStack[writeIndex] == nullptr) {
+                std::cerr << "Error: audioStack at writeIndex is null (should not be possible): " << writeIndex << std::endl;
+            }
             readableStack[writeIndex] = audioStack[writeIndex];
             workload += 1.0;
         }
@@ -387,6 +400,11 @@ double* setupAudioThread(int c, int stackSize, int bSize, double clockspeedMult)
     bSizeGlobal = bSize;
     audioStack = (float***)malloc(sizeof(float**) * (stackSize * 2));
     readableStack = (float***)malloc(sizeof(float**) * (stackSize * 2));
+    
+    std::cout << "[EMAUDIO] Target Fill Index: " << (stackSize-1) << std::endl;
+    std::cout << "[EMAUDIO] Max Stack Size: " << (stackSize*2) << std::endl;
+    std::cout << "[EMAUDIO] Channel Count: " << c << std::endl;
+    std::cout << "[EMAUDIO] Buffer Size: " << bSize << std::endl;
 
     // that's a lot of nesting ;-;
     for (int s = 0; s < (stackSize * 2); s++) {
