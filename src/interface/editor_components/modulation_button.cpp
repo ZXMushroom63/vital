@@ -234,6 +234,7 @@ void ModulationButton::mouseDown(const MouseEvent& e) {
 }
 
 void ModulationButton::mouseDrag(const MouseEvent& e) {
+  
   if (e.mods.isRightButtonDown())
     return;
 

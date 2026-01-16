@@ -729,10 +729,12 @@ extern "C" {
                   contextDefocusCounter = 0;
                 }
                 targetComponent->mouseDown(mouseEvent);
-                if (focusedComponent != nullptr) {
+                if ((focusedComponent != nullptr) && (focusedComponent != targetComponent)) {
                   focusedComponent->focusLost(Component::FocusChangeType::focusChangedByMouseClick);
                 }
-                targetComponent->focusGained(Component::FocusChangeType::focusChangedByMouseClick);
+                if (focusedComponent != targetComponent) {
+                  targetComponent->focusGained(Component::FocusChangeType::focusChangedByMouseClick);
+                }
                 
                 focusedComponent = targetComponent;
                 dragTarget = targetComponent;
@@ -742,6 +744,7 @@ extern "C" {
                 targetComponent->mouseUp(mouseEvent);
                 if (dragTarget != targetComponent) {
                   dragTarget->mouseUp(mouseEvent);
+                  dragTarget->focusLost(Component::FocusChangeType::focusChangedByMouseClick);
                 }
                 dragTarget = nullptr;
                 if (targetComponent != lastComponent) {

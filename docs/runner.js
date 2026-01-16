@@ -165,6 +165,11 @@ addEventListener("load", () => {
     canvas.addEventListener("mousedown", (event) => {
         if (event instanceof MouseEvent) {
             event.preventDefault();
+            ev.ctrlKey = event.ctrlKey;
+            ev.altKey = event.altKey;
+            ev.shiftKey = event.shiftKey;
+            ev.x = event.layerX;
+            ev.y = event.layerY;
             switch (event.button) {
                 case 0:
                     ev.lmb = true;
@@ -173,17 +178,15 @@ addEventListener("load", () => {
                     ev.mmb = true;
                     break;
                 case 2:
-                    ev.rmb = true;
+                    //ev.rmb = true;
+                    // emulate macos control scheme
+                    ev.lmb = true;
+                    ev.ctrlKey = true;
                     break;
 
                 default:
                     break;
             }
-            ev.ctrlKey = event.ctrlKey;
-            ev.altKey = event.altKey;
-            ev.shiftKey = event.shiftKey;
-            ev.x = event.layerX;
-            ev.y = event.layerY;
             queueMouseEvent();
         }
     });
@@ -216,6 +219,8 @@ addEventListener("load", () => {
                     break;
                 case 2:
                     ev.rmb = false;
+                    // emulate macos control scheme
+                    ev.lmb = false;
                     break;
 
                 default:
