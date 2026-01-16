@@ -3,7 +3,7 @@ function detectWebGLContext() {
     const gl = canvas.getContext("webgl");
     return (gl instanceof WebGLRenderingContext)
         ? "✓ Browser supports WebGL."
-        : "⚠︎ Error: Browser / device does not support WebGL.";
+        : `<span style="color: red">⚠︎ Error: Browser / device does not support WebGL.</span>`;
 }
 
 globalThis.VIAL_CHANNEL_COUNT = 2;
@@ -69,9 +69,16 @@ function ratelimit(func, mininterval) {
 addEventListener("load", () => {
     document.querySelector("#loading_blocker").remove();
     let inited = false;
-    document.querySelector("#webgl").innerText = detectWebGLContext() + "\n" + (crossOriginIsolated ? "✓ SharedArrayBuffer supported." : "⚠︎ Error: SharedArrayBuffer not supported. (try reloading?)");
+    let launchingDisabled = false;
+    document.querySelector("#webgl").innerHTML = detectWebGLContext() + "<br>" + (crossOriginIsolated ? "✓ SharedArrayBuffer supported." : `<span style="color:red">⚠︎ Error: SharedArrayBuffer not supported. (try reloading?)</span>`);
+    if (document.querySelector("#webgl").innerText.toLowerCase().includes("error")) {
+        launchingDisabled = true;
+    }
     document.querySelector("#init").addEventListener("click", () => {
-        if (inited || !Vial) {
+        if (!crossOriginIsolated && (location.protocol === "https:" || location.hostname === "localhost")) {
+            return location.reload();
+        }
+        if (inited || !Vial || launchingDisabled) {
             return;
         }
         inited = true;
