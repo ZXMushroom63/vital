@@ -11,6 +11,7 @@ globalThis.VIAL_TARGET_SAMPLERATE = 24000;
 globalThis.VIAL_AUDIO_STACK_SIZE_SAMPLES = 2048; //How much buffer to smooth over timing inconsistencies
 globalThis.VIAL_CLOCKSPEED_MULTIPLIER = 1.25; //Speed multiplier for how often the audio render loop checks if rendering is necessary
 globalThis.VIAL_BSIZE = 0; //is initialised automatically
+globalThis.VIAL_TARGET_FPS = 24;
 
 const pages = 10400; //64kb pages
 const memSize = pages * 64 * 1024;
@@ -78,7 +79,6 @@ addEventListener("load", () => {
         Vial._vialSetWindowSize(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio);
         let prevFrame = performance.now();
         let audioTimeRef = -1;
-        let droppedPacketCountRef = 0;
         document.querySelector("#bgvideo").remove();
         document.querySelector("#init_panel").remove();
         function renderLoop() {
@@ -86,7 +86,7 @@ addEventListener("load", () => {
             Vial._vialRedraw();
             const post = performance.now();
 
-            setTimeout(renderLoop, Math.max(1 / 60, 1000 / 24 - (post - now)));
+            setTimeout(renderLoop, Math.max(1000 / (VIAL_TARGET_FPS) - (post - now), 1));
             const audioResponseTime = (VIAL_BSIZE / VIAL_TARGET_SAMPLERATE * 1000).toFixed(1);
             document.querySelector("#fps_counter").innerText = `${(1000 / (now - prevFrame)).toFixed(2)} FPS [💻${(1000 / (post - now)).toFixed(2)}] [🔊${(Vial.HEAPF64[audioTimeRef] || 0).toFixed(1)}ms / ${audioResponseTime}ms] [📦${VIAL_BSIZE}/${VIAL_TARGET_SAMPLERATE} : ${["MONO", "STEREO"][VIAL_CHANNEL_COUNT - 1] || "OTHER"}]`;
 
