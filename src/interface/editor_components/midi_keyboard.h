@@ -62,27 +62,32 @@ class MidiKeyboard : public OpenGlComponent {
     }
 
     void mouseDown(const MouseEvent& e) override {
+      //std::cout << "down " << hover_note_ << std::endl;
       hover_note_ = getNoteAtPosition(e.position);
       state_.noteOn(midi_channel_, hover_note_, getVelocityForNote(hover_note_, e.position));
     }
 
     void mouseUp(const MouseEvent& e) override {
+      //std::cout << "up " << hover_note_ << std::endl;
       state_.noteOff(midi_channel_, hover_note_, 0.0f);
       hover_note_ = getNoteAtPosition(e.position);
     }
 
     void mouseEnter(const MouseEvent& e) override {
-      hover_note_ = getNoteAtPosition(e.position);
+      //std::cout << "enter " << hover_note_ << std::endl;
+      //hover_note_ = getNoteAtPosition(e.position);
     }
 
     void mouseExit(const MouseEvent& e) override {
+      //std::cout << "exit " << hover_note_ << std::endl;
+      state_.noteOff(midi_channel_, hover_note_, 0.0f);
       hover_note_ = -1;
     }
 
     void mouseDrag(const MouseEvent& e) override {
       int note = getNoteAtPosition(e.position);
-      if (note == hover_note_)
-        return;
+      if (note == hover_note_) {return;}
+      //std::cout << "drag " << hover_note_ << "to" << note << std::endl;
 
       state_.noteOff(midi_channel_, hover_note_, 0.0f);
       state_.noteOn(midi_channel_, note, getVelocityForNote(note, e.position));
@@ -90,6 +95,7 @@ class MidiKeyboard : public OpenGlComponent {
     }
 
     void mouseMove(const MouseEvent& e) override {
+      //std::cout << "move " << hover_note_ << std::endl;
       hover_note_ = getNoteAtPosition(e.position);
     }
 

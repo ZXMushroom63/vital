@@ -13,7 +13,7 @@ addEventListener("load", ()=>{
         if (value === globalThis[targetProp]) {
             node.classList.add("selected");
         }
-        node.addEventListener("click", ()=>{
+        node.addEventListener("mousedown", ()=>{
             document.querySelectorAll(`[data-target=${targetProp}]`).forEach(x => x.classList.remove("selected"));
             node.classList.add("selected");
             globalThis[targetProp] = value;

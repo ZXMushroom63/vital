@@ -34,6 +34,26 @@ const SMEM = new WebAssembly.Memory({
 });
 
 const rootBuffer = SMEM.buffer;
+function lookupFSPath(path) {
+    let currNode = Vial.FS.root;
+    path.split("/").flat().filter(x => !!x).forEach(e => {
+        if (currNode?.mounted?.root) {
+            currNode = currNode?.mounted?.root;
+        }
+        currNode = currNode?.contents?.[e];
+    });
+    return currNode;
+}
+function buf2str(buf) {
+    let str = "";
+    for (let i = 0; i < buf.length; i++) {
+        str += String.fromCharCode(buf[i]);
+    }
+    return str;
+}
+function getVialConfig() {
+    return buf2str(lookupFSPath("/home/web_user/.vial/Vial.config").contents);
+}
 function getFSChecksum() {
     let checksum = 0;
     const targets = Vial.FS.root.contents.home.contents?.web_user?.mounted?.root?.contents?.[".local"]?.contents?.share?.contents?.vital?.contents?.User?.contents?.Presets?.contents;
@@ -214,7 +234,7 @@ addEventListener("load", () => {
         ev.wheel = 0;
         ev.dbl = false;
     }
-    const queueMouseEvent = ratelimit(sendMouseEvent, 1000 / 120);
+    const queueMouseEvent = ratelimit(sendMouseEvent, 1000 / Math.max(VIAL_TARGET_FPS * 2, 120));
 
     console.log("Resistering input handlers.");
     const canvas = document.querySelector("#canvas");

@@ -627,6 +627,8 @@ extern "C" {
     Component* focusedComponent = nullptr;
     Component* dragTarget = nullptr;
     int contextDefocusCounter = 0;
+    int prevX = 0;
+    int prevY = 0;
     EMSCRIPTEN_KEEPALIVE
     void processMouseEvent(bool lmb, bool mmb, bool rmb, bool ctrlKey, bool shiftKey, bool altKey, int screenX, int screenY, bool dblOccured, float wheel)
     {
@@ -682,13 +684,13 @@ extern "C" {
 
         Time fakeTime;
         bool isLeftButtonDown = emscriptenEvent.leftMouseDown;
-            bool isMiddleButtonDown = emscriptenEvent.middleMouseDown;
-            bool isRightButtonDown = emscriptenEvent.rightMouseDown;
+        bool isMiddleButtonDown = emscriptenEvent.middleMouseDown;
+        bool isRightButtonDown = emscriptenEvent.rightMouseDown;
 
-            Point<float> localPosition = (targetComponent->getLocalPoint(global_editor->getGui(), screenPosition)).toFloat();
-            
-            MouseEvent mouseEvent(*mis, localPosition, mod.withFlags(modifier), 0, 0, 0, 0, 0, targetComponent, global_editor->getGui(), fakeTime, localPosition,
-             fakeTime, 0, (wasLeftButtonDown == lmb));
+        Point<float> localPosition = (targetComponent->getLocalPoint(global_editor->getGui(), screenPosition)).toFloat();
+        
+        MouseEvent mouseEvent(*mis, localPosition, mod.withFlags(modifier), 0, 0, 0, 0, 0, targetComponent, global_editor->getGui(), fakeTime, localPosition,
+          fakeTime, 0, (wasLeftButtonDown == lmb));
 
         if (targetComponent != nullptr)
         {
@@ -769,6 +771,9 @@ extern "C" {
               fakeTime, 0, (wasLeftButtonDown == lmb));
                 dragTarget->mouseDrag(dragEvent);
             }
+            if ((prevX != screenX || prevY != screenY || targetComponent != lastComponent) && !(lmb || mmb || rmb)) {
+              targetComponent->mouseMove(mouseEvent);
+            }
         }
         else if (lastComponent != nullptr) 
         {
@@ -777,6 +782,8 @@ extern "C" {
         }
 
         wasLeftButtonDown = lmb;
+        prevX = screenX;
+        prevY = screenY;
         Component::preventRendering = false;
     }
 
