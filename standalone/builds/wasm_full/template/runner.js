@@ -13,8 +13,11 @@ globalThis.VIAL_CLOCKSPEED_MULTIPLIER = 1.25; //Speed multiplier for how often t
 globalThis.VIAL_BSIZE = 0; //is initialised automatically
 globalThis.VIAL_TARGET_FPS = 24;
 
-const pages = 10400; //64kb pages
+const pages = 12000; //64kb pages
 const memSize = pages * 64 * 1024;
+console.log("Memory Budget: " + memSize + "b");
+console.log(" - Megabytes: " + memSize / 1024 / 1024 + "MiB");
+console.log(" - Gigabytes: " + memSize / 1024 / 1024 / 1024 + "GiB");
 
 // float = 4b
 // if stereo, each packet is 1024 instead (obvi)
@@ -38,12 +41,12 @@ function getFSChecksum() {
         return -1;
     }
     Object.values(targets).map(file => {
-        for (let i=0; i < file.name.length; i++) {
+        for (let i = 0; i < file.name.length; i++) {
             checksum += file.name.charCodeAt(i);
         }
-        checksum %= 2**31;
+        checksum %= 2 ** 31;
         checksum += file.mtime.getTime();
-        checksum %= 2**31;
+        checksum %= 2 ** 31;
     });
     return checksum;
 }
@@ -56,7 +59,7 @@ createVial({
     //Vial.FS.mkdir('/home/web_user');
     //vIDBFS.mkdir("/home/web_user");
     Vial.FS.mount(vIDBFS, {}, '/home/web_user');
-    Vial.FS.syncfs(true, (err)=>{
+    Vial.FS.syncfs(true, (err) => {
         if (err) {
             console.error("Failed to restore filesystem state! ", err);
         } else {
@@ -68,7 +71,7 @@ createVial({
             let newSum = getFSChecksum();
             if (newSum !== lastSum) {
                 lastSum = newSum;
-                Vial.FS.syncfs(false, (err)=>{
+                Vial.FS.syncfs(false, (err) => {
                     if (err) {
                         console.error("Failed to record filesystem state! ", err);
                     } else {
@@ -82,7 +85,7 @@ createVial({
         }
         setTimeout(trySave, SAVE_INTERVAL);
     });
-    
+
 });
 
 addEventListener("contextmenu", (e) => { e.preventDefault(); });
@@ -243,7 +246,7 @@ addEventListener("load", () => {
             queueMouseEvent();
         }
     });
-    addEventListener("keydown", (e)=>{
+    addEventListener("keydown", (e) => {
         if (!e.altKey && !e.ctrlKey && !e.metaKey && inited) {
             Vial._processKeyboardKey(e.keyCode, e.key.length > 1 ? 0 : e.key.charCodeAt(0));
         }

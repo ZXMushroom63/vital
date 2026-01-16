@@ -673,9 +673,9 @@ function initMemory() {
     wasmMemory = Module['wasmMemory'];
   } else
   {
-    var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 681574400;
+    var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 786432000;
 
-    assert(INITIAL_MEMORY >= 104857600, 'INITIAL_MEMORY should be larger than STACK_SIZE, was ' + INITIAL_MEMORY + '! (STACK_SIZE=' + 104857600 + ')');
+    assert(INITIAL_MEMORY >= 134217728, 'INITIAL_MEMORY should be larger than STACK_SIZE, was ' + INITIAL_MEMORY + '! (STACK_SIZE=' + 134217728 + ')');
     /** @suppress {checkTypes} */
     wasmMemory = new WebAssembly.Memory({
       'initial': INITIAL_MEMORY / 65536,
@@ -6775,7 +6775,7 @@ async function createWasm() {
         /*is_main=*/!ENVIRONMENT_IS_WORKER,
         /*is_runtime=*/1,
         /*can_block=*/!ENVIRONMENT_IS_WEB,
-        /*default_stacksize=*/104857600,
+        /*default_stacksize=*/134217728,
         /*start_profiling=*/false,
       );
       PThread.threadInitTLS();
@@ -6793,7 +6793,7 @@ async function createWasm() {
       checkStackCookie();
       if (e instanceof WebAssembly.RuntimeError) {
         if (_emscripten_stack_get_current() <= 0) {
-          err('Stack overflow detected.  You can try increasing -sSTACK_SIZE (currently set to 104857600)');
+          err('Stack overflow detected.  You can try increasing -sSTACK_SIZE (currently set to 134217728)');
         }
       }
       quit_(1, e);
@@ -12891,7 +12891,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  106271692: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
+  135631772: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
 };
 function getEmsdkSamplerate() { return globalThis.VIAL_TARGET_SAMPLERATE || 44100; }
 function getEmsdkChannelCount() { return Math.min(2, Math.max(1, Math.floor(globalThis.VIAL_CHANNEL_COUNT))) || 1; }
