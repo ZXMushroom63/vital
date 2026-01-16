@@ -31,12 +31,58 @@ const SMEM = new WebAssembly.Memory({
 });
 
 const rootBuffer = SMEM.buffer;
-
+function getFSChecksum() {
+    let checksum = 0;
+    const targets = Vial.FS.root.contents.home.contents?.web_user?.mounted?.root?.contents?.[".local"]?.contents?.share?.contents?.vital?.contents?.User?.contents?.Presets?.contents;
+    if (!targets) {
+        return -1;
+    }
+    Object.values(targets).map(file => {
+        for (let i=0; i < file.name.length; i++) {
+            checksum += file.name.charCodeAt(i);
+        }
+        checksum %= 2**31;
+        checksum += file.mtime.getTime();
+        checksum %= 2**31;
+    });
+    return checksum;
+}
 createVial({
     canvas: document.querySelector("#canvas"),
     wasmMemory: SMEM
 }).then(Vial => {
     globalThis.Vial = Vial;
+    Vial._setupFS();
+    //Vial.FS.mkdir('/home/web_user');
+    //vIDBFS.mkdir("/home/web_user");
+    Vial.FS.mount(vIDBFS, {}, '/home/web_user');
+    Vial.FS.syncfs(true, (err)=>{
+        if (err) {
+            console.error("Failed to restore filesystem state! ", err);
+        } else {
+            console.log("Restored filesystem state.");
+        }
+        let lastSum = getFSChecksum();
+        const SAVE_INTERVAL = 10 * 1000;
+        function trySave() {
+            let newSum = getFSChecksum();
+            if (newSum !== lastSum) {
+                lastSum = newSum;
+                Vial.FS.syncfs(false, (err)=>{
+                    if (err) {
+                        console.error("Failed to record filesystem state! ", err);
+                    } else {
+                        console.log("Saved filesystem state.");
+                    }
+                    setTimeout(trySave, SAVE_INTERVAL);
+                });
+            } else {
+                setTimeout(trySave, SAVE_INTERVAL);
+            }
+        }
+        setTimeout(trySave, SAVE_INTERVAL);
+    });
+    
 });
 
 addEventListener("contextmenu", (e) => { e.preventDefault(); });
@@ -195,6 +241,11 @@ addEventListener("load", () => {
                     break;
             }
             queueMouseEvent();
+        }
+    });
+    addEventListener("keydown", (e)=>{
+        if (!e.altKey && !e.ctrlKey && !e.metaKey && inited) {
+            Vial._processKeyboardKey(e.keyCode, e.key.length > 1 ? 0 : e.key.charCodeAt(0));
         }
     });
     canvas.addEventListener("mouseout", () => {

@@ -70,17 +70,18 @@ void OpenGlImage::init(OpenGlWrapper& open_gl) {
 }
 
 void OpenGlImage::drawImage(OpenGlWrapper& open_gl) {
-  mutex_.lock();
   if (image_) {
+    mutex_.lock();
     // Sometimes this doesnt exist. go figure
     texture_.loadImage(*image_);
     hasBeenLoaded = true;
     image_ = nullptr; //potentially comment this out ?? 
+    mutex_.unlock();
     //std::cout << "Image found successfully." << std::endl; //EMDEBUG
   } else {
-    std::cout << "No image found. This should be impossible." << std::endl;
+    //std::cout << "No image found. This should be impossible." << std::endl;
+    //return;
   }
-  mutex_.unlock();
 
   glEnable(GL_BLEND);
   if (scissor_)

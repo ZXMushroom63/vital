@@ -780,6 +780,39 @@ extern "C" {
         Component::preventRendering = false;
     }
 
+    EMSCRIPTEN_KEEPALIVE
+    void processKeyboardKey(int keyCode, int charCode) {
+      //Component* target = global_editor->gui_.get();
+      //Component* focusTarget = global_editor->gui_->getCurrentlyFocusedComponent();
+      //if (focusTarget != nullptr) {
+      //  target = focusTarget;
+      //}
+      if (charCode > 0) {
+        juce::juce_wchar ch = static_cast<juce::juce_wchar>(charCode);
+        juce::KeyPress kp(keyCode, ModifierKeys::currentModifiers, ch);
+        if (focusedComponent != nullptr) {
+          focusedComponent->keyPressed(kp);
+        } else {
+          global_editor->gui_->keyPressed(kp);
+        }
+      } else {
+        juce::KeyPress kp(keyCode);
+        if (focusedComponent != nullptr) {
+          focusedComponent->keyPressed(kp);
+        } else {
+          global_editor->gui_->keyPressed(kp);
+        }
+      }
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void setupFS() {
+      EM_ASM(
+        globalThis.vIDBFS = IDBFS;
+        globalThis.vMEMFS = MEMFS;
+      );
+    }
+
     
 
     int main(int argc, char* argv[])
@@ -789,6 +822,7 @@ extern "C" {
         startApplication_Advanced();
         dispatchSystemMessage(false);
         processMouseEvent(false, false, false, false, false, false, 0, 0, false, 0.0);
+        processKeyboardKey(0, 0);
         return 0;
     }
 }

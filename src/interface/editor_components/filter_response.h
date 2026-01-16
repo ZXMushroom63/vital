@@ -53,7 +53,7 @@ class SynthSlider;
 
 class FilterResponse : public OpenGlLineRenderer {
   public:
-    static constexpr int kResolution = 512;
+    static constexpr int kResolution = 256;
     static constexpr int kDefaultVisualSampleRate = 200000;
     static constexpr int kCombAlternatePeriod = 3;
 

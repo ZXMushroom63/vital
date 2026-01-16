@@ -2288,13 +2288,7 @@ void Component::internalModalInputAttempt()
 //==============================================================================
 void Component::postCommandMessage (int commandID)
 {
-    WeakReference<Component> target (this);
-
-    MessageManager::callAsync ([=]
-    {
-        if (auto* c = target.get())
-            c->handleCommandMessage (commandID);
-    });
+    handleCommandMessage (commandID);
 }
 
 void Component::handleCommandMessage (int)

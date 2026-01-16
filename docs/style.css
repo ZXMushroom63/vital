@@ -19,6 +19,7 @@
     pointer-events: none;
     z-index: 102;
     font-family: monospace;
+    user-select: none;
 }
 
 #init_panel {
