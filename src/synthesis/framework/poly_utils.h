@@ -257,6 +257,7 @@ namespace vital {
     }
 
     force_inline poly_float swapStereo(poly_float value) {
+    return wasm_i32x4_shuffle(value.value, value.value, 1, 0, 3, 2);
     #if VITAL_AVX2
       return _mm256_shuffle_ps(value.value, value.value, _MM_SHUFFLE(2, 3, 0, 1));
     #elif VITAL_SSE2
@@ -267,6 +268,7 @@ namespace vital {
     }
 
     force_inline poly_int swapStereo(poly_int value) {
+    return wasm_i32x4_shuffle(value.value, value.value, 1, 0, 3, 2);
     #if VITAL_AVX2
       return _mm256_shuffle_epi32(value.value, _MM_SHUFFLE(2, 3, 0, 1));
     #elif VITAL_SSE2
@@ -277,6 +279,7 @@ namespace vital {
     }
 
     force_inline poly_float swapVoices(poly_float value) {
+    return wasm_i32x4_shuffle(value.value, value.value, 2, 3, 0, 1);
     #if VITAL_AVX2
       return _mm256_shuffle_ps(value.value, value.value, _MM_SHUFFLE(1, 0, 3, 2));
     #elif VITAL_SSE2
@@ -287,6 +290,7 @@ namespace vital {
     }
 
     force_inline poly_int swapVoices(poly_int value) {
+    return wasm_i32x4_shuffle(value.value, value.value, 2, 3, 0, 1);
     #if VITAL_AVX2
       return _mm256_shuffle_epi32(value.value, value.value, _MM_SHUFFLE(1, 0, 3, 2));
     #elif VITAL_SSE2
