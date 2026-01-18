@@ -18,9 +18,132 @@
 
 #include "JuceHeader.h"
 #include <kissfft.hh>
+#include <pffft.h>
+
+#ifndef USE_PFFFT
+  #define USE_PFFFT 1
+#endif
+
+#ifndef USE_KISSFFT
+  #define USE_KISSFFT 0
+#endif
 
 namespace vital {
-  #if INTEL_IPP
+
+  #if USE_PFFFT
+
+  class FourierTransform {
+    public:
+      FourierTransform(int bits) : size_(1 << bits) {
+        setup_ = pffft_new_setup(size_, PFFFT_REAL);
+        // PFFFT requires 16/32-byte alignment.
+        // We allocate internal buffers to ensure alignment regardless of the input pointer.
+        work_ = (float*)pffft_aligned_malloc(size_ * sizeof(float));
+        buffer_ = (float*)pffft_aligned_malloc(size_ * sizeof(float));
+      }
+
+      ~FourierTransform() {
+        pffft_destroy_setup(setup_);
+        pffft_aligned_free(work_);
+        pffft_aligned_free(buffer_);
+      }
+
+      void transformRealForward(float* data) {
+        // 1. Copy unaligned Vital data to aligned PFFFT buffer
+        memcpy(buffer_, data, size_ * sizeof(float));
+
+        // 2. Perform Transform
+        // Output format is ordered: [DC, Nyquist, Re1, Im1, Re2, Im2...]
+        pffft_transform_ordered(setup_, buffer_, buffer_, work_, PFFFT_FORWARD);
+
+        // 3. Copy back to Vital data
+        memcpy(data, buffer_, size_ * sizeof(float));
+
+        // 4. Adjust Layout for Vital
+        // Vital expects: [DC, 0, Re1, Im1... ReN/2-1, ImN/2-1, Nyquist, 0]
+        float nyquist = data[1];
+        data[1] = 0.0f;
+        data[size_] = nyquist;
+        data[size_ + 1] = 0.0f;
+      }
+
+      void transformRealInverse(float* data) {
+        // 1. Prepare Data for PFFFT
+        // Restore Nyquist from index size_ to index 1
+        memcpy(buffer_, data, size_ * sizeof(float));
+        buffer_[1] = data[size_];
+
+        // 2. Perform Transform
+        pffft_transform_ordered(setup_, buffer_, buffer_, work_, PFFFT_BACKWARD);
+
+        // 3. Apply Scaling (1/N) and Copy Back
+        // PFFFT inverse transform is unscaled (sum(X * exp)), so we scale by 1/N
+        float scale = 1.0f / size_;
+        for (int i = 0; i < size_; ++i) {
+          data[i] = buffer_[i] * scale;
+        }
+
+        // 4. Zero out the rest of the buffer (Vital expects clean buffer beyond real data)
+        memset(data + size_, 0, size_ * sizeof(float));
+      }
+
+    private:
+      int size_;
+      PFFFT_Setup* setup_;
+      float* work_;
+      float* buffer_;
+
+      JUCE_LEAK_DETECTOR(FourierTransform)
+  };
+
+  #elif USE_KISSFFT
+
+  class FourierTransform {
+    public:
+      FourierTransform(size_t bits) : bits_(bits), size_(1 << bits), forward_(size_, false), inverse_(size_, true) {
+        buffer_ = std::make_unique<std::complex<float>[]>(size_);
+      }
+
+      ~FourierTransform() { }
+
+      void transformRealForward(float* data) {
+        for (int i = size_ - 1; i >= 0; --i) {
+          data[2 * i] = data[i];
+          data[2 * i + 1] = 0.0f;
+        }
+
+        forward_.transform((std::complex<float>*)data, buffer_.get());
+
+        int num_floats = size_ * 2;
+        memcpy(data, buffer_.get(), num_floats * sizeof(float));
+        data[size_] = data[1];
+        data[size_ + 1] = 0.0f;
+        data[1] = 0.0f;
+      }
+
+      void transformRealInverse(float* data) {
+        data[0] *= 0.5f;
+        data[1] = data[size_];
+        inverse_.transform((std::complex<float>*)data, buffer_.get());
+        
+        float multiplier = 2.0f / size_;
+        for (int i = 0; i < size_; ++i)
+          data[i] = buffer_[i].real() * multiplier;
+
+        memset(data + size_, 0, size_ * sizeof(float));
+      }
+
+    private:
+      size_t bits_;
+      size_t size_;
+      std::unique_ptr<std::complex<float>[]> buffer_;
+      kissfft<float> forward_;
+      kissfft<float> inverse_;
+
+      JUCE_LEAK_DETECTOR(FourierTransform)
+  };
+
+  #elif INTEL_IPP
 
   #include "ipps.h"
 
@@ -121,6 +244,7 @@ namespace vital {
 
   #else
 
+  // Default Fallback (re-using KissFFT logic if no other flag is matched)
   class FourierTransform {
     public:
       FourierTransform(size_t bits) : bits_(bits), size_(1 << bits), forward_(size_, false), inverse_(size_, true) {

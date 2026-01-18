@@ -9,7 +9,7 @@ endif
 BUILD_DATE="$(shell date +'%Y %m %d %H %M')"
 
 PAID := 1
-
+PROJDIR := $(shell pwd)
 
 VERSION := $(shell sh -c 'grep -oh -m 1 "VERSION=[0-9\.]*" standalone/builds/linux/Makefile | cut -d "=" -f 2')
 
@@ -92,7 +92,7 @@ wasm_beta:
 	$(MAKE) -C headless/builds/wasm CONFIG=$(CONFIG) EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
 
 wasm_full:
-	$(MAKE) -C standalone/builds/wasm_full CONFIG=$(CONFIG) EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
+	$(MAKE) -C standalone/builds/wasm_full CONFIG=$(CONFIG) EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1" PROJDIR=$(PROJDIR)
 
 lv2:
 	$(MAKE) -C plugin/builds/linux_lv2 CONFIG=$(CONFIG) AR=gcc-ar EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"

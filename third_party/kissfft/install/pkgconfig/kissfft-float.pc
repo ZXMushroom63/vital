@@ -1,5 +1,5 @@
 prefix=/usr/local
-libdir=/home/zxmushroom63/Documents/Code/vital/third_party/kissfft/install
+libdir=$(PROJDIR)/third_party/kissfft/install
 includedir=${prefix}/include
 
 Name: kissfft

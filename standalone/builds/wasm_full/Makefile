@@ -27,12 +27,11 @@ ifndef CONFIG
 endif
 
 JUCE_ARCH_LABEL := $(shell uname -m)
-
-FTFLAGS := -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/brotli/c/include -L/home/zxmushroom63/Documents/Code/vital/standalone/builds/wasm_full/brotli -lbrotlicommon -lbrotlidec -lbrotlienc
-FTFLAGS += -v -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include -I/home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include/freetype -L/home/zxmushroom63/Documents/Code/vital/standalone/builds/wasm_full/freetype -lfreetype
-
-#kissfft, dw abt it
-FTFLAGS += -I/home/zxmushroom63/Documents/Code/vital/third_party/kissfft/include -L/home/zxmushroom63/Documents/Code/vital/third_party/kissfft/install
+#these used to be hardcoded bc makefile variables are hard :(
+FTFLAGS := -I$(PROJDIR)/third_party/freetype-wasm/brotli/c/include -L$(PROJDIR)/standalone/builds/wasm_full/brotli -lbrotlicommon -lbrotlidec -lbrotlienc
+FTFLAGS += -v -I$(PROJDIR)/third_party/freetype-wasm/freetype2/include -I$(PROJDIR)/third_party/freetype-wasm/freetype2/include/freetype -L$(PROJDIR)/standalone/builds/wasm_full/freetype -lfreetype
+FTFLAGS += -I$(PROJDIR)/third_party/kissfft/include -L$(PROJDIR)/third_party/kissfft/install
+FTFLAGS += -I$(PROJDIR)/standalone/builds/wasm_full/pffft/include -L$(PROJDIR)/standalone/builds/wasm_full/pffft/lib -lpffft
 
 
 ifeq ($(CONFIG),Debug)
@@ -70,14 +69,6 @@ ifeq ($(CONFIG),Release)
   JUCE_CPPFLAGS := $(DEPFLAGS) "-DLINUX=1"  "-DBUILD_DATE=$(BUILD_DATE)" "-DJUCE_JACK_CLIENT_NAME=\"Vital\"" "-DJUCE_ALSA_MIDI_INPUT_NAME=\"Vital\"" "-DJUCE_ALSA_MIDI_OUTPUT_NAME=\"Vital\"" "-DJUCE_USE_XRANDR=0" "-DJUCE_DSP_USE_SHARED_FFTW=1" "-DHEADLESS=0" "-DNO_AUTH=1" "-DJUCER_LINUX_MAKE_6B3E762A=1" "-DJUCE_APP_VERSION=1.0.6" "-DJUCE_APP_VERSION_HEX=0x869f0909" "-DJUCE_OPENGL3=1" -pthread -I../../JuceLibraryCode -I../../../third_party/JUCE/modules -I../../../src/common -I../../../src/common/wavetable -I../../../src/interface/editor_components -I../../../src/interface/editor_sections -I../../../src/interface/look_and_feel -I../../../src/interface/wavetable -I../../../src/interface/wavetable/editors -I../../../src/interface/wavetable/overlays -I../../../src/standalone -I../../../src/synthesis/synth_engine -I../../../src/synthesis/effects -I../../../src/synthesis/filters -I../../../src/synthesis/framework -I../../../src/synthesis/lookups -I../../../src/synthesis/modulators -I../../../src/synthesis/modules -I../../../src/synthesis/producers -I../../../src/synthesis/utilities -I../../../third_party $(CPPFLAGS)
   JUCE_CPPFLAGS_APP :=  "-DJucePlugin_Build_VST=0" "-DJucePlugin_Build_VST3=0" "-DJucePlugin_Build_AU=0" "-DJucePlugin_Build_AUv3=0" "-DJucePlugin_Build_RTAS=0" "-DJucePlugin_Build_AAX=0" "-DJucePlugin_Build_Standalone=1" "-DJucePlugin_Build_Unity=0"
   JUCE_TARGET_APP := vial
-
-  # you may be wondering, wtf is this
-  # /home/zxmushroom63/Documents/Code/vital/third_party/freetype-wasm/freetype2/include
-  # tldr; i had to compile self-freetype which meant i had to self compile brotli, etc while sleep deprived and dehydrated
-  # just run a `git clone --depth=1 https://github.com/Ciantic/freetype-wasm.git` in third_party
-  # cd freetype-wasm
-  # ./deps.sh
-  # i already went through the suffering of compiling libfreetype.a
 
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -ffast-math ${GLFLAGS} -ftree-vectorize -ftree-slp-vectorize -funroll-loops $(CFLAGS)  $(FTFLAGS) ${EMXXFLAGS}
   JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++14 $(CXXFLAGS)  $(FTFLAGS)
