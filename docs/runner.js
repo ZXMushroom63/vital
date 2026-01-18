@@ -120,18 +120,22 @@ function debounce(func, delay) {
     };
 }
 
-function ratelimit(func, mininterval) {
+function ratelimit(func, mininterval, deb) {
     let lastSend = -1;
     let timeout;
     return function (...args) {
-        clearTimeout(timeout);
+        if (deb) {
+            clearTimeout(timeout);
+        }
         if ((Date.now() - lastSend) > mininterval) {
             func.apply(this, args);
             lastSend = Date.now();
         } else {
-            timeout = setTimeout(() => {
-                func.apply(this, args);
-            }, mininterval * 2);
+            if (deb) {
+                timeout = setTimeout(() => {
+                    func.apply(this, args);
+                }, mininterval * 2);
+            }
         }
     };
 }
@@ -235,7 +239,7 @@ addEventListener("load", () => {
         ev.wheel = 0;
         ev.dbl = false;
     }
-    const queueMouseEvent = ratelimit(sendMouseEvent, 1000 / Math.max(VIAL_TARGET_FPS * 2, 120));
+    const queueMouseEvent = ratelimit(sendMouseEvent, 1000 / Math.max(VIAL_TARGET_FPS * 2, 120), true);
 
     console.log("Resistering input handlers.");
     const canvas = document.querySelector("#canvas");
@@ -296,9 +300,18 @@ addEventListener("load", () => {
         ev.dbl = true;
         queueMouseEvent();
     });
-    canvas.addEventListener("wheel", (e) => {
-        ev.wheel += Math.min(Math.max(-1, e.deltaY), 1);
+    function wheelHandler(e) {
+        ev.wheel = Math.min(Math.max(-1, e.deltaY), 1);
         queueMouseEvent();
+    }
+    const ratelimitedWheel = ratelimit(wheelHandler, 1000 / 14, false);
+    canvas.addEventListener("wheel", (e) => {
+        if (e.deltaType) {
+            wheelHandler(e);
+        } else {
+            // trackpad event flooding
+            ratelimitedWheel(e);
+        }
     });
     canvas.addEventListener("mouseup", (event) => {
         if (event instanceof MouseEvent) {
