@@ -20,6 +20,7 @@
 #include "utils.h"
 
 #include <cmath>
+#include <wasm_simd128.h>
 
 namespace vital {
 

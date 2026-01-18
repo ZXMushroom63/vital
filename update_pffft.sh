@@ -9,7 +9,7 @@ export EM_CACHE=$(pwd)
 cd ../src
 emcc -c pffft.c \
         -O3 \
-        -msimd128 \
+        -msimd128 -msse4.2 \
         -Wall \
         -W \
         -fPIC \

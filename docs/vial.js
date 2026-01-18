@@ -305,10 +305,10 @@ function writeStackCookie() {
   // The stack grow downwards towards _emscripten_stack_get_end.
   // We write cookies to the final two words in the stack and detect if they are
   // ever overwritten.
-  HEAPU32[((max)>>2)] = 0x02135467;
-  HEAPU32[(((max)+(4))>>2)] = 0x89BACDFE;
+  HEAPU32[((max)>>2)] = 0x02135467;checkInt32(0x02135467);
+  HEAPU32[(((max)+(4))>>2)] = 0x89BACDFE;checkInt32(0x89BACDFE);
   // Also test the global address 0 for integrity.
-  HEAPU32[((0)>>2)] = 1668509029;
+  HEAPU32[((0)>>2)] = 1668509029;checkInt32(1668509029);
 }
 
 function checkStackCookie() {
@@ -480,6 +480,31 @@ function initWorkerLogging() {
 }
 
 initWorkerLogging();
+
+var MAX_UINT8  = (2 **  8) - 1;
+var MAX_UINT16 = (2 ** 16) - 1;
+var MAX_UINT32 = (2 ** 32) - 1;
+var MAX_UINT53 = (2 ** 53) - 1;
+var MAX_UINT64 = (2 ** 64) - 1;
+
+var MIN_INT8  = - (2 ** ( 8 - 1));
+var MIN_INT16 = - (2 ** (16 - 1));
+var MIN_INT32 = - (2 ** (32 - 1));
+var MIN_INT53 = - (2 ** (53 - 1));
+var MIN_INT64 = - (2 ** (64 - 1));
+
+function checkInt(value, bits, min, max) {
+  assert(Number.isInteger(Number(value)), `attempt to write non-integer (${value}) into integer heap`);
+  assert(value <= max, `value (${value}) too large to write as ${bits}-bit value`);
+  assert(value >= min, `value (${value}) too small to write as ${bits}-bit value`);
+}
+
+var checkInt1 = (value) => checkInt(value, 1, 1);
+var checkInt8 = (value) => checkInt(value, 8, MIN_INT8, MAX_UINT8);
+var checkInt16 = (value) => checkInt(value, 16, MIN_INT16, MAX_UINT16);
+var checkInt32 = (value) => checkInt(value, 32, MIN_INT32, MAX_UINT32);
+var checkInt53 = (value) => checkInt(value, 53, MIN_INT53, MAX_UINT53);
+var checkInt64 = (value) => checkInt(value, 64, MIN_INT64, MAX_UINT64);
 
 // end include: runtime_debug.js
 var readyPromiseResolve, readyPromiseReject;
@@ -714,6 +739,8 @@ function initRuntime() {
   runtimeInitialized = true;
 
   if (ENVIRONMENT_IS_PTHREAD) return startWorker(Module);
+
+  setStackLimits();
 
   checkStackCookie();
 
@@ -1453,6 +1480,8 @@ async function createWasm() {
       // cached in wasm-side globals to make checks as fast as possible.
       _emscripten_stack_set_limits(stackHigh, stackLow);
   
+      setStackLimits();
+  
       // Call inside wasm module to set up the stack frame for this pthread in wasm module scope
       stackRestore(stackHigh);
   
@@ -1541,6 +1570,12 @@ async function createWasm() {
 
   var registerTLSInit = (tlsInitFunc) => PThread.tlsInitFunctions.push(tlsInitFunc);
 
+  var setStackLimits = () => {
+      var stackLow = _emscripten_stack_get_base();
+      var stackHigh = _emscripten_stack_get_end();
+      ___set_stack_limits(stackLow, stackHigh);
+    };
+
   
     /**
      * @param {number} ptr
@@ -1550,11 +1585,11 @@ async function createWasm() {
   function setValue(ptr, value, type = 'i8') {
     if (type.endsWith('*')) type = '*';
     switch (type) {
-      case 'i1': HEAP8[ptr] = value; break;
-      case 'i8': HEAP8[ptr] = value; break;
-      case 'i16': HEAP16[((ptr)>>1)] = value; break;
-      case 'i32': HEAP32[((ptr)>>2)] = value; break;
-      case 'i64': HEAP64[((ptr)>>3)] = BigInt(value); break;
+      case 'i1': HEAP8[ptr] = value;checkInt8(value); break;
+      case 'i8': HEAP8[ptr] = value;checkInt8(value); break;
+      case 'i16': HEAP16[((ptr)>>1)] = value;checkInt16(value); break;
+      case 'i32': HEAP32[((ptr)>>2)] = value;checkInt32(value); break;
+      case 'i64': HEAP64[((ptr)>>3)] = BigInt(value);checkInt64(value); break;
       case 'float': HEAPF32[((ptr)>>2)] = value; break;
       case 'double': HEAPF64[((ptr)>>3)] = value; break;
       case '*': HEAPU32[((ptr)>>2)] = value; break;
@@ -1677,7 +1712,7 @@ async function createWasm() {
   
       set_caught(caught) {
         caught = caught ? 1 : 0;
-        HEAP8[(this.ptr)+(12)] = caught;
+        HEAP8[(this.ptr)+(12)] = caught;checkInt8(caught);
       }
   
       get_caught() {
@@ -1686,7 +1721,7 @@ async function createWasm() {
   
       set_rethrown(rethrown) {
         rethrown = rethrown ? 1 : 0;
-        HEAP8[(this.ptr)+(13)] = rethrown;
+        HEAP8[(this.ptr)+(13)] = rethrown;checkInt8(rethrown);
       }
   
       get_rethrown() {
@@ -1719,6 +1754,16 @@ async function createWasm() {
       exceptionLast = ptr;
       uncaughtExceptionCount++;
       assert(false, 'Exception thrown, but exception catching is not enabled. Compile with -sNO_DISABLE_EXCEPTION_CATCHING or -sEXCEPTION_CATCHING_ALLOWED=[..] to catch.');
+    };
+
+  
+  
+  var ___handle_stack_overflow = (requested) => {
+      var base = _emscripten_stack_get_base();
+      var end = _emscripten_stack_get_end();
+      abort(`stack overflow (Attempt to set SP to ${ptrToString(requested)}` +
+            `, with stack limits [${ptrToString(end)} - ${ptrToString(base)}` +
+            ']). If you require more stack space build with -sSTACK_SIZE=<bytes>');
     };
 
   
@@ -4771,38 +4816,38 @@ async function createWasm() {
         return dir + '/' + path;
       },
   writeStat(buf, stat) {
-        HEAP32[((buf)>>2)] = stat.dev;
-        HEAP32[(((buf)+(4))>>2)] = stat.mode;
-        HEAPU32[(((buf)+(8))>>2)] = stat.nlink;
-        HEAP32[(((buf)+(12))>>2)] = stat.uid;
-        HEAP32[(((buf)+(16))>>2)] = stat.gid;
-        HEAP32[(((buf)+(20))>>2)] = stat.rdev;
-        HEAP64[(((buf)+(24))>>3)] = BigInt(stat.size);
-        HEAP32[(((buf)+(32))>>2)] = 4096;
-        HEAP32[(((buf)+(36))>>2)] = stat.blocks;
+        HEAP32[((buf)>>2)] = stat.dev;checkInt32(stat.dev);
+        HEAP32[(((buf)+(4))>>2)] = stat.mode;checkInt32(stat.mode);
+        HEAPU32[(((buf)+(8))>>2)] = stat.nlink;checkInt32(stat.nlink);
+        HEAP32[(((buf)+(12))>>2)] = stat.uid;checkInt32(stat.uid);
+        HEAP32[(((buf)+(16))>>2)] = stat.gid;checkInt32(stat.gid);
+        HEAP32[(((buf)+(20))>>2)] = stat.rdev;checkInt32(stat.rdev);
+        HEAP64[(((buf)+(24))>>3)] = BigInt(stat.size);checkInt64(stat.size);
+        HEAP32[(((buf)+(32))>>2)] = 4096;checkInt32(4096);
+        HEAP32[(((buf)+(36))>>2)] = stat.blocks;checkInt32(stat.blocks);
         var atime = stat.atime.getTime();
         var mtime = stat.mtime.getTime();
         var ctime = stat.ctime.getTime();
-        HEAP64[(((buf)+(40))>>3)] = BigInt(Math.floor(atime / 1000));
-        HEAPU32[(((buf)+(48))>>2)] = (atime % 1000) * 1000 * 1000;
-        HEAP64[(((buf)+(56))>>3)] = BigInt(Math.floor(mtime / 1000));
-        HEAPU32[(((buf)+(64))>>2)] = (mtime % 1000) * 1000 * 1000;
-        HEAP64[(((buf)+(72))>>3)] = BigInt(Math.floor(ctime / 1000));
-        HEAPU32[(((buf)+(80))>>2)] = (ctime % 1000) * 1000 * 1000;
-        HEAP64[(((buf)+(88))>>3)] = BigInt(stat.ino);
+        HEAP64[(((buf)+(40))>>3)] = BigInt(Math.floor(atime / 1000));checkInt64(Math.floor(atime / 1000));
+        HEAPU32[(((buf)+(48))>>2)] = (atime % 1000) * 1000 * 1000;checkInt32((atime % 1000) * 1000 * 1000);
+        HEAP64[(((buf)+(56))>>3)] = BigInt(Math.floor(mtime / 1000));checkInt64(Math.floor(mtime / 1000));
+        HEAPU32[(((buf)+(64))>>2)] = (mtime % 1000) * 1000 * 1000;checkInt32((mtime % 1000) * 1000 * 1000);
+        HEAP64[(((buf)+(72))>>3)] = BigInt(Math.floor(ctime / 1000));checkInt64(Math.floor(ctime / 1000));
+        HEAPU32[(((buf)+(80))>>2)] = (ctime % 1000) * 1000 * 1000;checkInt32((ctime % 1000) * 1000 * 1000);
+        HEAP64[(((buf)+(88))>>3)] = BigInt(stat.ino);checkInt64(stat.ino);
         return 0;
       },
   writeStatFs(buf, stats) {
-        HEAP32[(((buf)+(4))>>2)] = stats.bsize;
-        HEAP32[(((buf)+(40))>>2)] = stats.bsize;
-        HEAP32[(((buf)+(8))>>2)] = stats.blocks;
-        HEAP32[(((buf)+(12))>>2)] = stats.bfree;
-        HEAP32[(((buf)+(16))>>2)] = stats.bavail;
-        HEAP32[(((buf)+(20))>>2)] = stats.files;
-        HEAP32[(((buf)+(24))>>2)] = stats.ffree;
-        HEAP32[(((buf)+(28))>>2)] = stats.fsid;
-        HEAP32[(((buf)+(44))>>2)] = stats.flags;  // ST_NOSUID
-        HEAP32[(((buf)+(36))>>2)] = stats.namelen;
+        HEAP32[(((buf)+(4))>>2)] = stats.bsize;checkInt32(stats.bsize);
+        HEAP32[(((buf)+(40))>>2)] = stats.bsize;checkInt32(stats.bsize);
+        HEAP32[(((buf)+(8))>>2)] = stats.blocks;checkInt32(stats.blocks);
+        HEAP32[(((buf)+(12))>>2)] = stats.bfree;checkInt32(stats.bfree);
+        HEAP32[(((buf)+(16))>>2)] = stats.bavail;checkInt32(stats.bavail);
+        HEAP32[(((buf)+(20))>>2)] = stats.files;checkInt32(stats.files);
+        HEAP32[(((buf)+(24))>>2)] = stats.ffree;checkInt32(stats.ffree);
+        HEAP32[(((buf)+(28))>>2)] = stats.fsid;checkInt32(stats.fsid);
+        HEAP32[(((buf)+(44))>>2)] = stats.flags;checkInt32(stats.flags);  // ST_NOSUID
+        HEAP32[(((buf)+(36))>>2)] = stats.namelen;checkInt32(stats.namelen);
       },
   doMsync(addr, stream, len, flags, offset) {
         if (!FS.isFile(stream.node.mode)) {
@@ -5202,7 +5247,7 @@ async function createWasm() {
               if (sock.recv_queue.length) {
                 bytes = sock.recv_queue[0].data.length;
               }
-              HEAP32[((arg)>>2)] = bytes;
+              HEAP32[((arg)>>2)] = bytes;checkInt32(bytes);
               return 0;
             default:
               return 28;
@@ -5860,7 +5905,7 @@ async function createWasm() {
           var arg = syscallGetVarargP();
           var offset = 0;
           // We're always unlocked.
-          HEAP16[(((arg)+(offset))>>1)] = 2;
+          HEAP16[(((arg)+(offset))>>1)] = 2;checkInt16(2);
           return 0;
         }
         case 13:
@@ -5974,10 +6019,10 @@ async function createWasm() {
                  8;                             // DT_REG, regular file.
         }
         assert(id);
-        HEAP64[((dirp + pos)>>3)] = BigInt(id);
-        HEAP64[(((dirp + pos)+(8))>>3)] = BigInt((idx + 1) * struct_size);
-        HEAP16[(((dirp + pos)+(16))>>1)] = 280;
-        HEAP8[(dirp + pos)+(18)] = type;
+        HEAP64[((dirp + pos)>>3)] = BigInt(id);checkInt64(id);
+        HEAP64[(((dirp + pos)+(8))>>3)] = BigInt((idx + 1) * struct_size);checkInt64((idx + 1) * struct_size);
+        HEAP16[(((dirp + pos)+(16))>>1)] = 280;checkInt16(280);
+        HEAP8[(dirp + pos)+(18)] = type;checkInt8(type);
         stringToUTF8(name, dirp + pos + 19, 256);
         pos += struct_size;
       }
@@ -6012,12 +6057,12 @@ async function createWasm() {
           if (stream.tty.ops.ioctl_tcgets) {
             var termios = stream.tty.ops.ioctl_tcgets(stream);
             var argp = syscallGetVarargP();
-            HEAP32[((argp)>>2)] = termios.c_iflag || 0;
-            HEAP32[(((argp)+(4))>>2)] = termios.c_oflag || 0;
-            HEAP32[(((argp)+(8))>>2)] = termios.c_cflag || 0;
-            HEAP32[(((argp)+(12))>>2)] = termios.c_lflag || 0;
+            HEAP32[((argp)>>2)] = termios.c_iflag || 0;checkInt32(termios.c_iflag || 0);
+            HEAP32[(((argp)+(4))>>2)] = termios.c_oflag || 0;checkInt32(termios.c_oflag || 0);
+            HEAP32[(((argp)+(8))>>2)] = termios.c_cflag || 0;checkInt32(termios.c_cflag || 0);
+            HEAP32[(((argp)+(12))>>2)] = termios.c_lflag || 0;checkInt32(termios.c_lflag || 0);
             for (var i = 0; i < 32; i++) {
-              HEAP8[(argp + i)+(17)] = termios.c_cc[i] || 0;
+              HEAP8[(argp + i)+(17)] = termios.c_cc[i] || 0;checkInt8(termios.c_cc[i] || 0);
             }
             return 0;
           }
@@ -6050,7 +6095,7 @@ async function createWasm() {
         case 21519: {
           if (!stream.tty) return -59;
           var argp = syscallGetVarargP();
-          HEAP32[((argp)>>2)] = 0;
+          HEAP32[((argp)>>2)] = 0;checkInt32(0);
           return 0;
         }
         case 21520: {
@@ -6068,8 +6113,8 @@ async function createWasm() {
           if (stream.tty.ops.ioctl_tiocgwinsz) {
             var winsize = stream.tty.ops.ioctl_tiocgwinsz(stream.tty);
             var argp = syscallGetVarargP();
-            HEAP16[((argp)>>1)] = winsize[0];
-            HEAP16[(((argp)+(2))>>1)] = winsize[1];
+            HEAP16[((argp)>>1)] = winsize[0];checkInt16(winsize[0]);
+            HEAP16[(((argp)+(2))>>1)] = winsize[1];checkInt16(winsize[1]);
           }
           return 0;
         }
@@ -6422,8 +6467,8 @@ async function createWasm() {
   
       var res = PIPEFS.createPipe();
   
-      HEAP32[((fdPtr)>>2)] = res.readable_fd;
-      HEAP32[(((fdPtr)+(4))>>2)] = res.writable_fd;
+      HEAP32[((fdPtr)>>2)] = res.readable_fd;checkInt32(res.readable_fd);
+      HEAP32[(((fdPtr)+(4))>>2)] = res.writable_fd;checkInt32(res.writable_fd);
   
       return 0;
     } catch (e) {
@@ -6457,7 +6502,7 @@ async function createWasm() {
         }
         mask &= events | 8 | 16;
         if (mask) nonzero++;
-        HEAP16[(((pollfd)+(6))>>1)] = mask;
+        HEAP16[(((pollfd)+(6))>>1)] = mask;checkInt16(mask);
       }
       return nonzero;
     } catch (e) {
@@ -6509,24 +6554,24 @@ async function createWasm() {
           addr = inetPton4(addr);
           zeroMemory(sa, 16);
           if (addrlen) {
-            HEAP32[((addrlen)>>2)] = 16;
+            HEAP32[((addrlen)>>2)] = 16;checkInt32(16);
           }
-          HEAP16[((sa)>>1)] = family;
-          HEAP32[(((sa)+(4))>>2)] = addr;
-          HEAP16[(((sa)+(2))>>1)] = _htons(port);
+          HEAP16[((sa)>>1)] = family;checkInt16(family);
+          HEAP32[(((sa)+(4))>>2)] = addr;checkInt32(addr);
+          HEAP16[(((sa)+(2))>>1)] = _htons(port);checkInt16(_htons(port));
           break;
         case 10:
           addr = inetPton6(addr);
           zeroMemory(sa, 28);
           if (addrlen) {
-            HEAP32[((addrlen)>>2)] = 28;
+            HEAP32[((addrlen)>>2)] = 28;checkInt32(28);
           }
-          HEAP32[((sa)>>2)] = family;
-          HEAP32[(((sa)+(8))>>2)] = addr[0];
-          HEAP32[(((sa)+(12))>>2)] = addr[1];
-          HEAP32[(((sa)+(16))>>2)] = addr[2];
-          HEAP32[(((sa)+(20))>>2)] = addr[3];
-          HEAP16[(((sa)+(2))>>1)] = _htons(port);
+          HEAP32[((sa)>>2)] = family;checkInt32(family);
+          HEAP32[(((sa)+(8))>>2)] = addr[0];checkInt32(addr[0]);
+          HEAP32[(((sa)+(12))>>2)] = addr[1];checkInt32(addr[1]);
+          HEAP32[(((sa)+(16))>>2)] = addr[2];checkInt32(addr[2]);
+          HEAP32[(((sa)+(20))>>2)] = addr[3];checkInt32(addr[3]);
+          HEAP16[(((sa)+(2))>>1)] = _htons(port);checkInt16(_htons(port));
           break;
         default:
           return 5;
@@ -6961,24 +7006,24 @@ async function createWasm() {
   
   
       var date = new Date(time*1000);
-      HEAP32[((tmPtr)>>2)] = date.getSeconds();
-      HEAP32[(((tmPtr)+(4))>>2)] = date.getMinutes();
-      HEAP32[(((tmPtr)+(8))>>2)] = date.getHours();
-      HEAP32[(((tmPtr)+(12))>>2)] = date.getDate();
-      HEAP32[(((tmPtr)+(16))>>2)] = date.getMonth();
-      HEAP32[(((tmPtr)+(20))>>2)] = date.getFullYear()-1900;
-      HEAP32[(((tmPtr)+(24))>>2)] = date.getDay();
+      HEAP32[((tmPtr)>>2)] = date.getSeconds();checkInt32(date.getSeconds());
+      HEAP32[(((tmPtr)+(4))>>2)] = date.getMinutes();checkInt32(date.getMinutes());
+      HEAP32[(((tmPtr)+(8))>>2)] = date.getHours();checkInt32(date.getHours());
+      HEAP32[(((tmPtr)+(12))>>2)] = date.getDate();checkInt32(date.getDate());
+      HEAP32[(((tmPtr)+(16))>>2)] = date.getMonth();checkInt32(date.getMonth());
+      HEAP32[(((tmPtr)+(20))>>2)] = date.getFullYear()-1900;checkInt32(date.getFullYear()-1900);
+      HEAP32[(((tmPtr)+(24))>>2)] = date.getDay();checkInt32(date.getDay());
   
       var yday = ydayFromDate(date)|0;
-      HEAP32[(((tmPtr)+(28))>>2)] = yday;
-      HEAP32[(((tmPtr)+(36))>>2)] = -(date.getTimezoneOffset() * 60);
+      HEAP32[(((tmPtr)+(28))>>2)] = yday;checkInt32(yday);
+      HEAP32[(((tmPtr)+(36))>>2)] = -(date.getTimezoneOffset() * 60);checkInt32(-(date.getTimezoneOffset() * 60));
   
       // Attention: DST is in December in South, and some regions don't have DST at all.
       var start = new Date(date.getFullYear(), 0, 1);
       var summerOffset = new Date(date.getFullYear(), 6, 1).getTimezoneOffset();
       var winterOffset = start.getTimezoneOffset();
       var dst = (summerOffset != winterOffset && date.getTimezoneOffset() == Math.min(winterOffset, summerOffset))|0;
-      HEAP32[(((tmPtr)+(32))>>2)] = dst;
+      HEAP32[(((tmPtr)+(32))>>2)] = dst;checkInt32(dst);
     ;
   }
 
@@ -7005,7 +7050,7 @@ async function createWasm() {
       var dstOffset = Math.min(winterOffset, summerOffset); // DST is in December in South
       if (dst < 0) {
         // Attention: some regions don't have DST at all.
-        HEAP32[(((tmPtr)+(32))>>2)] = Number(summerOffset != winterOffset && dstOffset == guessedOffset);
+        HEAP32[(((tmPtr)+(32))>>2)] = Number(summerOffset != winterOffset && dstOffset == guessedOffset);checkInt32(Number(summerOffset != winterOffset && dstOffset == guessedOffset));
       } else if ((dst > 0) != (dstOffset == guessedOffset)) {
         var nonDstOffset = Math.max(winterOffset, summerOffset);
         var trueOffset = dst > 0 ? dstOffset : nonDstOffset;
@@ -7013,16 +7058,16 @@ async function createWasm() {
         date.setTime(date.getTime() + (trueOffset - guessedOffset)*60000);
       }
   
-      HEAP32[(((tmPtr)+(24))>>2)] = date.getDay();
+      HEAP32[(((tmPtr)+(24))>>2)] = date.getDay();checkInt32(date.getDay());
       var yday = ydayFromDate(date)|0;
-      HEAP32[(((tmPtr)+(28))>>2)] = yday;
+      HEAP32[(((tmPtr)+(28))>>2)] = yday;checkInt32(yday);
       // To match expected behavior, update fields from date
-      HEAP32[((tmPtr)>>2)] = date.getSeconds();
-      HEAP32[(((tmPtr)+(4))>>2)] = date.getMinutes();
-      HEAP32[(((tmPtr)+(8))>>2)] = date.getHours();
-      HEAP32[(((tmPtr)+(12))>>2)] = date.getDate();
-      HEAP32[(((tmPtr)+(16))>>2)] = date.getMonth();
-      HEAP32[(((tmPtr)+(20))>>2)] = date.getYear();
+      HEAP32[((tmPtr)>>2)] = date.getSeconds();checkInt32(date.getSeconds());
+      HEAP32[(((tmPtr)+(4))>>2)] = date.getMinutes();checkInt32(date.getMinutes());
+      HEAP32[(((tmPtr)+(8))>>2)] = date.getHours();checkInt32(date.getHours());
+      HEAP32[(((tmPtr)+(12))>>2)] = date.getDate();checkInt32(date.getDate());
+      HEAP32[(((tmPtr)+(16))>>2)] = date.getMonth();checkInt32(date.getMonth());
+      HEAP32[(((tmPtr)+(20))>>2)] = date.getYear();checkInt32(date.getYear());
   
       var timeMs = date.getTime();
       if (isNaN(timeMs)) {
@@ -7056,7 +7101,7 @@ async function createWasm() {
       var stream = SYSCALLS.getStreamFromFD(fd);
       var res = FS.mmap(stream, len, offset, prot, flags);
       var ptr = res.ptr;
-      HEAP32[((allocated)>>2)] = res.allocated;
+      HEAP32[((allocated)>>2)] = res.allocated;checkInt32(res.allocated);
       HEAPU32[((addr)>>2)] = ptr;
       return 0;
     } catch (e) {
@@ -7117,7 +7162,7 @@ async function createWasm() {
       // See http://pubs.opengroup.org/onlinepubs/009695399/functions/tzset.html
       HEAPU32[((timezone)>>2)] = stdTimezoneOffset * 60;
   
-      HEAP32[((daylight)>>2)] = Number(winterOffset != summerOffset);
+      HEAP32[((daylight)>>2)] = Number(winterOffset != summerOffset);checkInt32(Number(winterOffset != summerOffset));
   
       var extractZone = (timezoneOffset) => {
         // Why inverse sign?
@@ -7173,7 +7218,7 @@ async function createWasm() {
       }
       // "now" is in ms, and wasi times are in ns.
       var nsec = Math.round(now * 1000 * 1000);
-      HEAP64[((ptime)>>3)] = BigInt(nsec);
+      HEAP64[((ptime)>>3)] = BigInt(nsec);checkInt64(nsec);
       return 0;
     ;
   }
@@ -7647,7 +7692,7 @@ async function createWasm() {
         if (typeof SDL != "undefined") {
           var flags = HEAPU32[((SDL.screen)>>2)];
           flags = flags | 0x00800000; // set SDL_FULLSCREEN flag
-          HEAP32[((SDL.screen)>>2)] = flags;
+          HEAP32[((SDL.screen)>>2)] = flags;checkInt32(flags);
         }
         Browser.updateCanvasDimensions(Browser.getCanvas());
         Browser.updateResizeListeners();
@@ -7657,7 +7702,7 @@ async function createWasm() {
         if (typeof SDL != "undefined") {
           var flags = HEAPU32[((SDL.screen)>>2)];
           flags = flags & ~0x00800000; // clear SDL_FULLSCREEN flag
-          HEAP32[((SDL.screen)>>2)] = flags;
+          HEAP32[((SDL.screen)>>2)] = flags;checkInt32(flags);
         }
         Browser.updateCanvasDimensions(Browser.getCanvas());
         Browser.updateResizeListeners();
@@ -7766,7 +7811,7 @@ async function createWasm() {
           return 0;
         }
         if (numConfigs) {
-          HEAP32[((numConfigs)>>2)] = 1; // Total number of supported configs: 1.
+          HEAP32[((numConfigs)>>2)] = 1;checkInt32(1); // Total number of supported configs: 1.
         }
         if (config && config_size > 0) {
           HEAPU32[((config)>>2)] = 62002;
@@ -7910,7 +7955,7 @@ async function createWasm() {
           } else {
             GL.recordError(0x502 /* GL_INVALID_OPERATION */);
           }
-          HEAP32[(((buffers)+(i*4))>>2)] = id;
+          HEAP32[(((buffers)+(i*4))>>2)] = id;checkInt32(id);
         }
       },
   MAX_TEMP_BUFFER_SIZE:2097152,
@@ -8366,10 +8411,10 @@ async function createWasm() {
         return 0;
       }
       if (majorVersion) {
-        HEAP32[((majorVersion)>>2)] = 1; // Advertise EGL Major version: '1'
+        HEAP32[((majorVersion)>>2)] = 1;checkInt32(1); // Advertise EGL Major version: '1'
       }
       if (minorVersion) {
-        HEAP32[((minorVersion)>>2)] = 4; // Advertise EGL Minor version: '4'
+        HEAP32[((minorVersion)>>2)] = 4;checkInt32(4); // Advertise EGL Minor version: '4'
       }
       EGL.defaultDisplayInitialized = true;
       EGL.setErrorCode(0x3000 /* EGL_SUCCESS */);
@@ -9648,13 +9693,13 @@ async function createWasm() {
         var query = GLctx.disjointTimerQueryExt['createQueryEXT']();
         if (!query) {
           GL.recordError(0x502 /* GL_INVALID_OPERATION */);
-          while (i < n) HEAP32[(((ids)+(i++*4))>>2)] = 0;
+          while (i < n) HEAP32[(((ids)+(i++*4))>>2)] = 0;checkInt32(0);
           return;
         }
         var id = GL.getNewId(GL.queries);
         query.name = id;
         GL.queries[id] = query;
-        HEAP32[(((ids)+(i*4))>>2)] = id;
+        HEAP32[(((ids)+(i*4))>>2)] = id;checkInt32(id);
       }
     };
   var _emscripten_glGenQueriesEXT = _glGenQueriesEXT;
@@ -9710,9 +9755,9 @@ async function createWasm() {
       if (info) {
         // If an error occurs, nothing will be written to length, size and type and name.
         var numBytesWrittenExclNull = name && stringToUTF8(info.name, name, bufSize);
-        if (length) HEAP32[((length)>>2)] = numBytesWrittenExclNull;
-        if (size) HEAP32[((size)>>2)] = info.size;
-        if (type) HEAP32[((type)>>2)] = info.type;
+        if (length) HEAP32[((length)>>2)] = numBytesWrittenExclNull;checkInt32(numBytesWrittenExclNull);
+        if (size) HEAP32[((size)>>2)] = info.size;checkInt32(info.size);
+        if (type) HEAP32[((type)>>2)] = info.type;checkInt32(info.type);
       }
     };
   
@@ -9735,9 +9780,9 @@ async function createWasm() {
       if (!result) return; // If an error occurs, nothing will be written to uniformBlockName or length.
       if (uniformBlockName && bufSize > 0) {
         var numBytesWrittenExclNull = stringToUTF8(result, uniformBlockName, bufSize);
-        if (length) HEAP32[((length)>>2)] = numBytesWrittenExclNull;
+        if (length) HEAP32[((length)>>2)] = numBytesWrittenExclNull;checkInt32(numBytesWrittenExclNull);
       } else {
-        if (length) HEAP32[((length)>>2)] = 0;
+        if (length) HEAP32[((length)>>2)] = 0;checkInt32(0);
       }
     };
   var _emscripten_glGetActiveUniformBlockName = _glGetActiveUniformBlockName;
@@ -9754,7 +9799,7 @@ async function createWasm() {
   
       if (pname == 0x8A41 /* GL_UNIFORM_BLOCK_NAME_LENGTH */) {
         var name = GLctx.getActiveUniformBlockName(program, uniformBlockIndex);
-        HEAP32[((params)>>2)] = name.length+1;
+        HEAP32[((params)>>2)] = name.length+1;checkInt32(name.length+1);
         return;
       }
   
@@ -9762,10 +9807,10 @@ async function createWasm() {
       if (result === null) return; // If an error occurs, nothing should be written to params.
       if (pname == 0x8A43 /*GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES*/) {
         for (var i = 0; i < result.length; i++) {
-          HEAP32[(((params)+(i*4))>>2)] = result[i];
+          HEAP32[(((params)+(i*4))>>2)] = result[i];checkInt32(result[i]);
         }
       } else {
-        HEAP32[((params)>>2)] = result;
+        HEAP32[((params)>>2)] = result;checkInt32(result);
       }
     };
   var _emscripten_glGetActiveUniformBlockiv = _glGetActiveUniformBlockiv;
@@ -9793,7 +9838,7 @@ async function createWasm() {
   
       var len = result.length;
       for (var i = 0; i < len; i++) {
-        HEAP32[(((params)+(i*4))>>2)] = result[i];
+        HEAP32[(((params)+(i*4))>>2)] = result[i];checkInt32(result[i]);
       }
     };
   var _emscripten_glGetActiveUniformsiv = _glGetActiveUniformsiv;
@@ -9805,10 +9850,10 @@ async function createWasm() {
       if (len > maxCount) {
         len = maxCount;
       }
-      HEAP32[((count)>>2)] = len;
+      HEAP32[((count)>>2)] = len;checkInt32(len);
       for (var i = 0; i < len; ++i) {
         var id = GL.shaders.indexOf(result[i]);
-        HEAP32[(((shaders)+(i*4))>>2)] = id;
+        HEAP32[(((shaders)+(i*4))>>2)] = id;checkInt32(id);
       }
     };
   var _emscripten_glGetAttachedShaders = _glGetAttachedShaders;
@@ -9824,9 +9869,9 @@ async function createWasm() {
       return HEAPU32[((ptr)>>2)] + HEAPU32[(((ptr)+(4))>>2)] * 4294967296;
     };
   var writeI53ToI64 = (ptr, num) => {
-      HEAPU32[((ptr)>>2)] = num;
+      HEAPU32[((ptr)>>2)] = num;checkInt32(num);
       var lower = HEAPU32[((ptr)>>2)];
-      HEAPU32[(((ptr)+(4))>>2)] = (num - lower)/4294967296;
+      HEAPU32[(((ptr)+(4))>>2)] = (num - lower)/4294967296;checkInt32((num - lower)/4294967296);
       var deserialized = (num >= 0) ? readI53FromU64(ptr) : readI53FromI64(ptr);
       var offset = ((ptr)>>2);
       if (deserialized != num) warnOnce(`writeI53ToI64() out of range: serialized JS Number ${num} to Wasm heap as bytes lo=${ptrToString(HEAPU32[offset])}, hi=${ptrToString(HEAPU32[offset+1])}, which deserializes back to ${deserialized} instead!`);
@@ -9943,9 +9988,9 @@ async function createWasm() {
                        result instanceof Array) {
               for (var i = 0; i < result.length; ++i) {
                 switch (type) {
-                  case 0: HEAP32[(((p)+(i*4))>>2)] = result[i]; break;
+                  case 0: HEAP32[(((p)+(i*4))>>2)] = result[i];checkInt32(result[i]); break;
                   case 2: HEAPF32[(((p)+(i*4))>>2)] = result[i]; break;
-                  case 4: HEAP8[(p)+(i)] = result[i] ? 1 : 0; break;
+                  case 4: HEAP8[(p)+(i)] = result[i] ? 1 : 0;checkInt8(result[i] ? 1 : 0); break;
                 }
               }
               return;
@@ -9968,9 +10013,9 @@ async function createWasm() {
   
       switch (type) {
         case 1: writeI53ToI64(p, ret); break;
-        case 0: HEAP32[((p)>>2)] = ret; break;
+        case 0: HEAP32[((p)>>2)] = ret;checkInt32(ret); break;
         case 2:   HEAPF32[((p)>>2)] = ret; break;
-        case 4: HEAP8[p] = ret ? 1 : 0; break;
+        case 4: HEAP8[p] = ret ? 1 : 0;checkInt8(ret ? 1 : 0); break;
       }
     };
   
@@ -9999,7 +10044,7 @@ async function createWasm() {
         GL.recordError(0x501 /* GL_INVALID_VALUE */);
         return;
       }
-      HEAP32[((data)>>2)] = GLctx.getBufferParameter(target, value);
+      HEAP32[((data)>>2)] = GLctx.getBufferParameter(target, value);checkInt32(GLctx.getBufferParameter(target, value));
     };
   var _emscripten_glGetBufferParameteriv = _glGetBufferParameteriv;
 
@@ -10012,7 +10057,7 @@ async function createWasm() {
         if (mappedBuffer) {
           ptr = mappedBuffer.mem;
         }
-        HEAP32[((params)>>2)] = ptr;
+        HEAP32[((params)>>2)] = ptr;checkInt32(ptr);
       } else {
         GL.recordError(0x500/*GL_INVALID_ENUM*/);
         err('GL_INVALID_ENUM in glGetBufferPointerv');
@@ -10046,7 +10091,7 @@ async function createWasm() {
           result instanceof WebGLTexture) {
         result = result.name | 0;
       }
-      HEAP32[((params)>>2)] = result;
+      HEAP32[((params)>>2)] = result;checkInt32(result);
     };
   var _emscripten_glGetFramebufferAttachmentParameteriv = _glGetFramebufferAttachmentParameteriv;
 
@@ -10092,9 +10137,9 @@ async function createWasm() {
   
       switch (type) {
         case 1: writeI53ToI64(data, ret); break;
-        case 0: HEAP32[((data)>>2)] = ret; break;
+        case 0: HEAP32[((data)>>2)] = ret;checkInt32(ret); break;
         case 2: HEAPF32[((data)>>2)] = ret; break;
-        case 4: HEAP8[data] = ret ? 1 : 0; break;
+        case 4: HEAP8[data] = ret ? 1 : 0;checkInt8(ret ? 1 : 0); break;
         default: throw 'internal emscriptenWebGLGetIndexed() error, bad type: ' + type;
       }
     };
@@ -10134,7 +10179,7 @@ async function createWasm() {
       var ret = GLctx.getInternalformatParameter(target, internalformat, pname);
       if (ret === null) return;
       for (var i = 0; i < ret.length && i < bufSize; ++i) {
-        HEAP32[(((params)+(i*4))>>2)] = ret[i];
+        HEAP32[(((params)+(i*4))>>2)] = ret[i];checkInt32(ret[i]);
       }
     };
   var _emscripten_glGetInternalformativ = _glGetInternalformativ;
@@ -10150,7 +10195,7 @@ async function createWasm() {
       var log = GLctx.getProgramInfoLog(GL.programs[program]);
       if (log === null) log = '(unknown error)';
       var numBytesWrittenExclNull = (maxLength > 0 && infoLog) ? stringToUTF8(log, infoLog, maxLength) : 0;
-      if (length) HEAP32[((length)>>2)] = numBytesWrittenExclNull;
+      if (length) HEAP32[((length)>>2)] = numBytesWrittenExclNull;checkInt32(numBytesWrittenExclNull);
     };
   var _emscripten_glGetProgramInfoLog = _glGetProgramInfoLog;
 
@@ -10174,7 +10219,7 @@ async function createWasm() {
       if (pname == 0x8B84) { // GL_INFO_LOG_LENGTH
         var log = GLctx.getProgramInfoLog(program);
         if (log === null) log = '(unknown error)';
-        HEAP32[((p)>>2)] = log.length + 1;
+        HEAP32[((p)>>2)] = log.length + 1;checkInt32(log.length + 1);
       } else if (pname == 0x8B87 /* GL_ACTIVE_UNIFORM_MAX_LENGTH */) {
         if (!program.maxUniformLength) {
           var numActiveUniforms = GLctx.getProgramParameter(program, 0x8B86/*GL_ACTIVE_UNIFORMS*/);
@@ -10182,7 +10227,7 @@ async function createWasm() {
             program.maxUniformLength = Math.max(program.maxUniformLength, GLctx.getActiveUniform(program, i).name.length+1);
           }
         }
-        HEAP32[((p)>>2)] = program.maxUniformLength;
+        HEAP32[((p)>>2)] = program.maxUniformLength;checkInt32(program.maxUniformLength);
       } else if (pname == 0x8B8A /* GL_ACTIVE_ATTRIBUTE_MAX_LENGTH */) {
         if (!program.maxAttributeLength) {
           var numActiveAttributes = GLctx.getProgramParameter(program, 0x8B89/*GL_ACTIVE_ATTRIBUTES*/);
@@ -10190,7 +10235,7 @@ async function createWasm() {
             program.maxAttributeLength = Math.max(program.maxAttributeLength, GLctx.getActiveAttrib(program, i).name.length+1);
           }
         }
-        HEAP32[((p)>>2)] = program.maxAttributeLength;
+        HEAP32[((p)>>2)] = program.maxAttributeLength;checkInt32(program.maxAttributeLength);
       } else if (pname == 0x8A35 /* GL_ACTIVE_UNIFORM_BLOCK_MAX_NAME_LENGTH */) {
         if (!program.maxUniformBlockNameLength) {
           var numActiveUniformBlocks = GLctx.getProgramParameter(program, 0x8A36/*GL_ACTIVE_UNIFORM_BLOCKS*/);
@@ -10198,9 +10243,9 @@ async function createWasm() {
             program.maxUniformBlockNameLength = Math.max(program.maxUniformBlockNameLength, GLctx.getActiveUniformBlockName(program, i).length+1);
           }
         }
-        HEAP32[((p)>>2)] = program.maxUniformBlockNameLength;
+        HEAP32[((p)>>2)] = program.maxUniformBlockNameLength;checkInt32(program.maxUniformBlockNameLength);
       } else {
-        HEAP32[((p)>>2)] = GLctx.getProgramParameter(program, pname);
+        HEAP32[((p)>>2)] = GLctx.getProgramParameter(program, pname);checkInt32(GLctx.getProgramParameter(program, pname));
       }
     };
   var _emscripten_glGetProgramiv = _glGetProgramiv;
@@ -10249,7 +10294,7 @@ async function createWasm() {
       } else {
         ret = param;
       }
-      HEAP32[((params)>>2)] = ret;
+      HEAP32[((params)>>2)] = ret;checkInt32(ret);
     };
   var _emscripten_glGetQueryObjectivEXT = _glGetQueryObjectivEXT;
 
@@ -10274,7 +10319,7 @@ async function createWasm() {
       } else {
         ret = param;
       }
-      HEAP32[((params)>>2)] = ret;
+      HEAP32[((params)>>2)] = ret;checkInt32(ret);
     };
   var _emscripten_glGetQueryObjectuiv = _glGetQueryObjectuiv;
 
@@ -10291,7 +10336,7 @@ async function createWasm() {
         GL.recordError(0x501 /* GL_INVALID_VALUE */);
         return;
       }
-      HEAP32[((params)>>2)] = GLctx.getQuery(target, pname);
+      HEAP32[((params)>>2)] = GLctx.getQuery(target, pname);checkInt32(GLctx.getQuery(target, pname));
     };
   var _emscripten_glGetQueryiv = _glGetQueryiv;
 
@@ -10303,7 +10348,7 @@ async function createWasm() {
         GL.recordError(0x501 /* GL_INVALID_VALUE */);
         return;
       }
-      HEAP32[((params)>>2)] = GLctx.disjointTimerQueryExt['getQueryEXT'](target, pname);
+      HEAP32[((params)>>2)] = GLctx.disjointTimerQueryExt['getQueryEXT'](target, pname);checkInt32(GLctx.disjointTimerQueryExt['getQueryEXT'](target, pname));
     };
   var _emscripten_glGetQueryivEXT = _glGetQueryivEXT;
 
@@ -10315,7 +10360,7 @@ async function createWasm() {
         GL.recordError(0x501 /* GL_INVALID_VALUE */);
         return;
       }
-      HEAP32[((params)>>2)] = GLctx.getRenderbufferParameter(target, pname);
+      HEAP32[((params)>>2)] = GLctx.getRenderbufferParameter(target, pname);checkInt32(GLctx.getRenderbufferParameter(target, pname));
     };
   var _emscripten_glGetRenderbufferParameteriv = _glGetRenderbufferParameteriv;
 
@@ -10339,7 +10384,7 @@ async function createWasm() {
         GL.recordError(0x501 /* GL_INVALID_VALUE */);
         return;
       }
-      HEAP32[((params)>>2)] = GLctx.getSamplerParameter(GL.samplers[sampler], pname);
+      HEAP32[((params)>>2)] = GLctx.getSamplerParameter(GL.samplers[sampler], pname);checkInt32(GLctx.getSamplerParameter(GL.samplers[sampler], pname));
     };
   var _emscripten_glGetSamplerParameteriv = _glGetSamplerParameteriv;
 
@@ -10349,16 +10394,16 @@ async function createWasm() {
       var log = GLctx.getShaderInfoLog(GL.shaders[shader]);
       if (log === null) log = '(unknown error)';
       var numBytesWrittenExclNull = (maxLength > 0 && infoLog) ? stringToUTF8(log, infoLog, maxLength) : 0;
-      if (length) HEAP32[((length)>>2)] = numBytesWrittenExclNull;
+      if (length) HEAP32[((length)>>2)] = numBytesWrittenExclNull;checkInt32(numBytesWrittenExclNull);
     };
   var _emscripten_glGetShaderInfoLog = _glGetShaderInfoLog;
 
   /** @suppress {duplicate } */
   var _glGetShaderPrecisionFormat = (shaderType, precisionType, range, precision) => {
       var result = GLctx.getShaderPrecisionFormat(shaderType, precisionType);
-      HEAP32[((range)>>2)] = result.rangeMin;
-      HEAP32[(((range)+(4))>>2)] = result.rangeMax;
-      HEAP32[((precision)>>2)] = result.precision;
+      HEAP32[((range)>>2)] = result.rangeMin;checkInt32(result.rangeMin);
+      HEAP32[(((range)+(4))>>2)] = result.rangeMax;checkInt32(result.rangeMax);
+      HEAP32[((precision)>>2)] = result.precision;checkInt32(result.precision);
     };
   var _emscripten_glGetShaderPrecisionFormat = _glGetShaderPrecisionFormat;
 
@@ -10367,7 +10412,7 @@ async function createWasm() {
       var result = GLctx.getShaderSource(GL.shaders[shader]);
       if (!result) return; // If an error occurs, nothing will be written to length or source.
       var numBytesWrittenExclNull = (bufSize > 0 && source) ? stringToUTF8(result, source, bufSize) : 0;
-      if (length) HEAP32[((length)>>2)] = numBytesWrittenExclNull;
+      if (length) HEAP32[((length)>>2)] = numBytesWrittenExclNull;checkInt32(numBytesWrittenExclNull);
     };
   var _emscripten_glGetShaderSource = _glGetShaderSource;
 
@@ -10388,15 +10433,15 @@ async function createWasm() {
         // (An empty string is falsey, so we can just check that instead of
         // looking at log.length.)
         var logLength = log ? log.length + 1 : 0;
-        HEAP32[((p)>>2)] = logLength;
+        HEAP32[((p)>>2)] = logLength;checkInt32(logLength);
       } else if (pname == 0x8B88) { // GL_SHADER_SOURCE_LENGTH
         var source = GLctx.getShaderSource(GL.shaders[shader]);
         // source may be a null, or the empty string, both of which are falsey
         // values that we report a 0 length for.
         var sourceLength = source ? source.length + 1 : 0;
-        HEAP32[((p)>>2)] = sourceLength;
+        HEAP32[((p)>>2)] = sourceLength;checkInt32(sourceLength);
       } else {
-        HEAP32[((p)>>2)] = GLctx.getShaderParameter(GL.shaders[shader], pname);
+        HEAP32[((p)>>2)] = GLctx.getShaderParameter(GL.shaders[shader], pname);checkInt32(GLctx.getShaderParameter(GL.shaders[shader], pname));
       }
     };
   var _emscripten_glGetShaderiv = _glGetShaderiv;
@@ -10505,8 +10550,8 @@ async function createWasm() {
       }
       var ret = GLctx.getSyncParameter(GL.syncs[sync], pname);
       if (ret !== null) {
-        HEAP32[((values)>>2)] = ret;
-        if (length) HEAP32[((length)>>2)] = 1; // Report a single value outputted.
+        HEAP32[((values)>>2)] = ret;checkInt32(ret);
+        if (length) HEAP32[((length)>>2)] = 1;checkInt32(1); // Report a single value outputted.
       }
     };
   var _emscripten_glGetSynciv = _glGetSynciv;
@@ -10533,7 +10578,7 @@ async function createWasm() {
         GL.recordError(0x501 /* GL_INVALID_VALUE */);
         return;
       }
-      HEAP32[((params)>>2)] = GLctx.getTexParameter(target, pname);
+      HEAP32[((params)>>2)] = GLctx.getTexParameter(target, pname);checkInt32(GLctx.getTexParameter(target, pname));
     };
   var _emscripten_glGetTexParameteriv = _glGetTexParameteriv;
 
@@ -10545,13 +10590,13 @@ async function createWasm() {
   
       if (name && bufSize > 0) {
         var numBytesWrittenExclNull = stringToUTF8(info.name, name, bufSize);
-        if (length) HEAP32[((length)>>2)] = numBytesWrittenExclNull;
+        if (length) HEAP32[((length)>>2)] = numBytesWrittenExclNull;checkInt32(numBytesWrittenExclNull);
       } else {
-        if (length) HEAP32[((length)>>2)] = 0;
+        if (length) HEAP32[((length)>>2)] = 0;checkInt32(0);
       }
   
-      if (size) HEAP32[((size)>>2)] = info.size;
-      if (type) HEAP32[((type)>>2)] = info.type;
+      if (size) HEAP32[((size)>>2)] = info.size;checkInt32(info.size);
+      if (type) HEAP32[((type)>>2)] = info.type;checkInt32(info.type);
     };
   var _emscripten_glGetTransformFeedbackVarying = _glGetTransformFeedbackVarying;
 
@@ -10583,7 +10628,7 @@ async function createWasm() {
   
       var len = result.length;
       for (var i = 0; i < len; i++) {
-        HEAP32[(((uniformIndices)+(i*4))>>2)] = result[i];
+        HEAP32[(((uniformIndices)+(i*4))>>2)] = result[i];checkInt32(result[i]);
       }
     };
   var _emscripten_glGetUniformIndices = _glGetUniformIndices;
@@ -10722,13 +10767,13 @@ async function createWasm() {
       var data = GLctx.getUniform(program, webglGetUniformLocation(location));
       if (typeof data == 'number' || typeof data == 'boolean') {
         switch (type) {
-          case 0: HEAP32[((params)>>2)] = data; break;
+          case 0: HEAP32[((params)>>2)] = data;checkInt32(data); break;
           case 2: HEAPF32[((params)>>2)] = data; break;
         }
       } else {
         for (var i = 0; i < data.length; i++) {
           switch (type) {
-            case 0: HEAP32[(((params)+(i*4))>>2)] = data[i]; break;
+            case 0: HEAP32[(((params)+(i*4))>>2)] = data[i];checkInt32(data[i]); break;
             case 2: HEAPF32[(((params)+(i*4))>>2)] = data[i]; break;
           }
         }
@@ -10767,19 +10812,19 @@ async function createWasm() {
       }
       var data = GLctx.getVertexAttrib(index, pname);
       if (pname == 0x889F/*VERTEX_ATTRIB_ARRAY_BUFFER_BINDING*/) {
-        HEAP32[((params)>>2)] = data && data["name"];
+        HEAP32[((params)>>2)] = data && data["name"];checkInt32(data && data["name"]);
       } else if (typeof data == 'number' || typeof data == 'boolean') {
         switch (type) {
-          case 0: HEAP32[((params)>>2)] = data; break;
+          case 0: HEAP32[((params)>>2)] = data;checkInt32(data); break;
           case 2: HEAPF32[((params)>>2)] = data; break;
-          case 5: HEAP32[((params)>>2)] = Math.fround(data); break;
+          case 5: HEAP32[((params)>>2)] = Math.fround(data);checkInt32(Math.fround(data)); break;
         }
       } else {
         for (var i = 0; i < data.length; i++) {
           switch (type) {
-            case 0: HEAP32[(((params)+(i*4))>>2)] = data[i]; break;
+            case 0: HEAP32[(((params)+(i*4))>>2)] = data[i];checkInt32(data[i]); break;
             case 2: HEAPF32[(((params)+(i*4))>>2)] = data[i]; break;
-            case 5: HEAP32[(((params)+(i*4))>>2)] = Math.fround(data[i]); break;
+            case 5: HEAP32[(((params)+(i*4))>>2)] = Math.fround(data[i]);checkInt32(Math.fround(data[i])); break;
           }
         }
       }
@@ -10809,7 +10854,7 @@ async function createWasm() {
       if (GL.currentContext.clientBuffers[index].enabled) {
         err("glGetVertexAttribPointer on client-side array: not supported, bad data returned");
       }
-      HEAP32[((pointer)>>2)] = GLctx.getVertexAttribOffset(index, pname);
+      HEAP32[((pointer)>>2)] = GLctx.getVertexAttribOffset(index, pname);checkInt32(GLctx.getVertexAttribOffset(index, pname));
     };
   var _emscripten_glGetVertexAttribPointerv = _glGetVertexAttribPointerv;
 
@@ -11916,12 +11961,12 @@ async function createWasm() {
     return proxyToMainThread(44, 0, 1, penviron_count, penviron_buf_size);
   
       var strings = getEnvStrings();
-      HEAPU32[((penviron_count)>>2)] = strings.length;
+      HEAPU32[((penviron_count)>>2)] = strings.length;checkInt32(strings.length);
       var bufSize = 0;
       for (var string of strings) {
         bufSize += lengthBytesUTF8(string) + 1;
       }
-      HEAPU32[((penviron_buf_size)>>2)] = bufSize;
+      HEAPU32[((penviron_buf_size)>>2)] = bufSize;checkInt32(bufSize);
       return 0;
     
   }
@@ -11967,10 +12012,10 @@ async function createWasm() {
                    FS.isLink(stream.mode) ? 7 :
                    4;
       }
-      HEAP8[pbuf] = type;
-      HEAP16[(((pbuf)+(2))>>1)] = flags;
-      HEAP64[(((pbuf)+(8))>>3)] = BigInt(rightsBase);
-      HEAP64[(((pbuf)+(16))>>3)] = BigInt(rightsInheriting);
+      HEAP8[pbuf] = type;checkInt8(type);
+      HEAP16[(((pbuf)+(2))>>1)] = flags;checkInt16(flags);
+      HEAP64[(((pbuf)+(8))>>3)] = BigInt(rightsBase);checkInt64(rightsBase);
+      HEAP64[(((pbuf)+(16))>>3)] = BigInt(rightsInheriting);checkInt64(rightsInheriting);
       return 0;
     } catch (e) {
     if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
@@ -12008,7 +12053,7 @@ async function createWasm() {
   
       var stream = SYSCALLS.getStreamFromFD(fd);
       var num = doReadv(stream, iov, iovcnt);
-      HEAPU32[((pnum)>>2)] = num;
+      HEAPU32[((pnum)>>2)] = num;checkInt32(num);
       return 0;
     } catch (e) {
     if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
@@ -12033,7 +12078,7 @@ async function createWasm() {
       if (isNaN(offset)) return 61;
       var stream = SYSCALLS.getStreamFromFD(fd);
       FS.llseek(stream, offset, whence);
-      HEAP64[((newOffset)>>3)] = BigInt(stream.position);
+      HEAP64[((newOffset)>>3)] = BigInt(stream.position);checkInt64(stream.position);
       if (stream.getdents && offset === 0 && whence === 0) stream.getdents = null; // reset readdir state
       return 0;
     } catch (e) {
@@ -12097,7 +12142,7 @@ async function createWasm() {
   
       var stream = SYSCALLS.getStreamFromFD(fd);
       var num = doWritev(stream, iov, iovcnt);
-      HEAPU32[((pnum)>>2)] = num;
+      HEAPU32[((pnum)>>2)] = num;checkInt32(num);
       return 0;
     } catch (e) {
     if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
@@ -12149,17 +12194,17 @@ async function createWasm() {
         assert(!errno);
   
         ai = _malloc(32);
-        HEAP32[(((ai)+(4))>>2)] = family;
-        HEAP32[(((ai)+(8))>>2)] = type;
-        HEAP32[(((ai)+(12))>>2)] = proto;
+        HEAP32[(((ai)+(4))>>2)] = family;checkInt32(family);
+        HEAP32[(((ai)+(8))>>2)] = type;checkInt32(type);
+        HEAP32[(((ai)+(12))>>2)] = proto;checkInt32(proto);
         HEAPU32[(((ai)+(24))>>2)] = canon;
         HEAPU32[(((ai)+(20))>>2)] = sa;
         if (family === 10) {
-          HEAP32[(((ai)+(16))>>2)] = 28;
+          HEAP32[(((ai)+(16))>>2)] = 28;checkInt32(28);
         } else {
-          HEAP32[(((ai)+(16))>>2)] = 16;
+          HEAP32[(((ai)+(16))>>2)] = 16;checkInt32(16);
         }
-        HEAP32[(((ai)+(28))>>2)] = 0;
+        HEAP32[(((ai)+(28))>>2)] = 0;checkInt32(0);
   
         return ai;
       }
@@ -12558,6 +12603,7 @@ missingLibrarySymbols.forEach(missingLibrarySymbol)
   'getHeapMax',
   'abortOnCannotGrowMemory',
   'ENV',
+  'setStackLimits',
   'ERRNO_CODES',
   'strError',
   'inetPton4',
@@ -12891,7 +12937,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  135632188: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
+  135641372: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
 };
 function getEmsdkSamplerate() { return globalThis.VIAL_TARGET_SAMPLERATE || 44100; }
 function getEmsdkChannelCount() { return Math.min(2, Math.max(1, Math.floor(globalThis.VIAL_CHANNEL_COUNT))) || 1; }
@@ -12938,6 +12984,7 @@ var _emscripten_stack_get_free = makeInvalidEarlyAccess('_emscripten_stack_get_f
 var __emscripten_stack_restore = makeInvalidEarlyAccess('__emscripten_stack_restore');
 var __emscripten_stack_alloc = makeInvalidEarlyAccess('__emscripten_stack_alloc');
 var _emscripten_stack_get_current = makeInvalidEarlyAccess('_emscripten_stack_get_current');
+var ___set_stack_limits = Module['___set_stack_limits'] = makeInvalidEarlyAccess('___set_stack_limits');
 
 function assignWasmExports(wasmExports) {
   _free = createExportWrapper('free', 1);
@@ -12979,6 +13026,7 @@ function assignWasmExports(wasmExports) {
   __emscripten_stack_restore = wasmExports['_emscripten_stack_restore'];
   __emscripten_stack_alloc = wasmExports['_emscripten_stack_alloc'];
   _emscripten_stack_get_current = wasmExports['emscripten_stack_get_current'];
+  Module['___set_stack_limits'] = ___set_stack_limits = createExportWrapper('__set_stack_limits', 2);
 }
   var wasmImports;
   function assignWasmImports() {
@@ -12989,6 +13037,8 @@ function assignWasmExports(wasmExports) {
     __call_sighandler: ___call_sighandler,
     /** @export */
     __cxa_throw: ___cxa_throw,
+    /** @export */
+    __handle_stack_overflow: ___handle_stack_overflow,
     /** @export */
     __pthread_create_js: ___pthread_create_js,
     /** @export */

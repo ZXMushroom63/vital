@@ -19,20 +19,34 @@
 #include <cstdint>
 #include <climits>
 #include <cstdlib>
+#include <wasm_simd128.h>
 
-#if VITAL_AVX2
+#if !defined(__SSE2__)
+  static_assert(false, "SSE2 compile hint not found!");
+#endif
+
+#ifdef __SSE2__
+  #pragma message("Compiling with SSE2 instructions!")
+#else
+  static_assert(false, "SSE2 not found!");
+#endif
+
+#if 0
+  #define VITAL_WASM 1
+#elif VITAL_AVX2
   #define VITAL_AVX2 1
   static_assert(false, "AVX2 is not supported yet.");
-#elif __SSE2__
+#elif defined(__SSE2__)
   #define VITAL_SSE2 1
 #elif defined(__ARM_NEON__) || defined(__ARM_NEON)
   #define VITAL_NEON 1
+  static_assert(false, "NEON found");
 #else
   static_assert(false, "No SIMD Intrinsics found which are necessary for compilation");
 #endif
 
 #if VITAL_SSE2
-  #include <immintrin.h>
+  #include <nmmintrin.h>
 #elif VITAL_NEON
   #include <arm_neon.h>
 #endif
@@ -50,13 +64,15 @@
 namespace vital {
   struct poly_int {
 #if VITAL_AVX2
-    static constexpr size_t kSize = 8;
+    static_assert(false, "AVX is not supported!");
+    static constexpr size_t kSize = 8; //8x 32bit int/float
     typedef __m256i simd_type;
 #elif VITAL_SSE2
-    static constexpr size_t kSize = 4;
+    static constexpr size_t kSize = 4; //4x 32bit int/float
     typedef __m128i simd_type;
 #elif VITAL_NEON
-    static constexpr size_t kSize = 4;
+    static_assert(false, "NEON is not supported!");
+    static constexpr size_t kSize = 4; //4x 32bit int/float
     typedef uint32x4_t simd_type;
 #endif
 
@@ -125,7 +141,9 @@ namespace vital {
     }
 
     static force_inline simd_type vector_call mul(simd_type one, simd_type two) {
-#if VITAL_AVX2
+#if defined(__EMSCRIPTEN__)
+      return one * two;
+#elif VITAL_AVX2
       return _mm256_mul_epi32(one, two);
 #elif VITAL_SSE2
       simd_type mul0_2 = _mm_mul_epu32(one, two);
@@ -215,7 +233,13 @@ namespace vital {
     }
 
     static force_inline uint32_t vector_call sum(simd_type value) {
-#if VITAL_AVX2
+#if defined(__EMSCRIPTEN__)
+      simd_type high = __builtin_shufflevector(value, value, 2, 3, 0, 1);
+      simd_type sum1 = value + high;
+      simd_type high2 = __builtin_shufflevector(sum1, sum1, 1, 0, 3, 2);
+      simd_type final_sum = sum1 + high2;
+      return (uint32_t)final_sum[0];
+#elif VITAL_AVX2
       simd_type flip = _mm256_permute4x64_epi64(value, _MM_SHUFFLE(1, 0, 3, 2))
       simd_type sum = _mm256_hadd_epi32(value, flip);
       sum = _mm256_hadd_epi32(sum, sum);
@@ -530,7 +554,9 @@ namespace vital {
     }
 
     static force_inline simd_type vector_call mul(simd_type one, simd_type two) {
-#if VITAL_AVX2
+#if defined(__EMSCRIPTEN__)
+      return one * two;
+#elif VITAL_AVX2
       return _mm256_mul_ps(one, two);
 #elif VITAL_SSE2
       return _mm_mul_ps(one, two);
@@ -578,7 +604,9 @@ namespace vital {
     }
 
     static force_inline simd_type vector_call div(simd_type one, simd_type two) {
-#if VITAL_AVX2
+#if defined(__EMSCRIPTEN__)
+      return one / two;
+#elif VITAL_AVX2
       return _mm256_div_ps(one, two);
 #elif VITAL_SSE2
       return _mm_div_ps(one, two);
