@@ -324,7 +324,7 @@ public:
         else
             slider.setRange (0.0, 1.0);
 
-        slider.setScrollWheelEnabled (false);
+        slider.setScrollWheelEnabled (true);
         addAndMakeVisible (slider);
 
         valueLabel.setColour (Label::outlineColourId, slider.findColour (Slider::textBoxOutlineColourId));

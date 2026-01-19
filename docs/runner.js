@@ -301,10 +301,10 @@ addEventListener("load", () => {
         queueMouseEvent();
     });
     function wheelHandler(e) {
-        ev.wheel = Math.min(Math.max(-1, e.deltaY), 1);
+        ev.wheel += Math.min(Math.max(-1, e.deltaY * (e.deltaMode ? 1 : 0.05)), 1);
         queueMouseEvent();
     }
-    const ratelimitedWheel = ratelimit(wheelHandler, 1000 / 14, false);
+    const ratelimitedWheel = wheelHandler; //ratelimit(wheelHandler, 1000 / 14, false);
     canvas.addEventListener("wheel", (e) => {
         if (e.deltaType) {
             wheelHandler(e);

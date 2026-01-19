@@ -1069,7 +1069,7 @@ public:
         {
             // sometimes duplicate wheel events seem to be sent, so since we're going to
             // bump the value by a minimum of the interval, avoid doing this twice..
-            if (e.eventTime != lastMouseWheelTime)
+            if (true)
             {
                 lastMouseWheelTime = e.eventTime;
 

@@ -163,7 +163,7 @@ HeaderSection::HeaderSection() : SynthSection("header_section"), tab_offset_(0) 
   tab_selector_->setRange(0, 3);
   tab_selector_->addListener(this);
   tab_selector_->setNames({"VOICE", "EFFECTS", "MATRIX", "ADVANCED"});
-  tab_selector_->setScrollWheelEnabled(false);
+  tab_selector_->setScrollWheelEnabled(true);
 
   synth_preset_selector_ = std::make_unique<SynthPresetSelector>();
   addSubSection(synth_preset_selector_.get());

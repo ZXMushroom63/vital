@@ -423,7 +423,7 @@ class SynthSlider : public OpenGlSlider, public TextEditor::Listener {
 
     bool show_popup_on_hover_;
     String popup_prefix_;
-    bool scroll_enabled_;
+    bool scroll_enabled_ = true;
     bool bipolar_modulation_;
     bool stereo_modulation_;
     bool bypass_modulation_;
