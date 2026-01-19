@@ -106,8 +106,8 @@ wasm_hyperpass_lite:
 	@echo this can take a long time, please be patient! =O3
 	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O3 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug
 	@echo HYPRPASS COMPLETE!
-	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > vial.tmp.js
-	-mv vial.tmp.js vial.js
+	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
+	-mv docs/vial.tmp.js docs/vial.js
 
 #long time to optimise, near perfect output
 wasm_hyperpass:
@@ -115,8 +115,8 @@ wasm_hyperpass:
 	@echo this can take a long time, please be patient! =O4
 	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug
 	@echo HYPRPASS COMPLETE!
-	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > vial.tmp.js
-	-mv vial.tmp.js vial.js
+	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
+	-mv docs/vial.tmp.js docs/vial.js
 
 #extremely long time to optimise, perfect output
 wasm_hyperpass_convergent:
@@ -124,8 +124,8 @@ wasm_hyperpass_convergent:
 	@echo this can take a long time, please be patient! =O4conv
 	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --converge --debug
 	@echo HYPRPASS COMPLETE!
-	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > vial.tmp.js
-	-mv vial.tmp.js vial.js
+	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
+	-mv docs/vial.tmp.js docs/vial.js
 
 lv2:
 	$(MAKE) -C plugin/builds/linux_lv2 CONFIG=$(CONFIG) AR=gcc-ar EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"

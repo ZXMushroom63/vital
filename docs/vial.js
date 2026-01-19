@@ -871,7 +871,7 @@ function createExportWrapper(name, nargs) {
 var wasmBinaryFile;
 
 function findWasmBinary() {
-    return locateFile('vial.wasm');
+    return locateFile('vialhypr.wasm');
 }
 
 function getBinarySync(file) {

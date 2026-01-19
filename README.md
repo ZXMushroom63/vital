@@ -5,6 +5,8 @@ WebVial is a WIP web port of the Vital source release.\
 Try it here: [https://zxmushroom63.github.io/vital](https://zxmushroom63.github.io/vital)
 
 
+WebMIDI support will happen eventually, adding backends is a slow and tedious processs.
+
 
 ### Compiling & Testing
 This guide is for NixOS, it makes dependency management very easy. See [shell.nix](shell.nix) for a list of required packages. Also ensure you have a mainstream web browser available. (chromium or firefox is fine)
@@ -39,3 +41,8 @@ This guide is for NixOS, it makes dependency management very easy. See [shell.ni
 14. Leave the default settings, and click the start button
     - <img src=startbtn.png height=24 alt="screenshot of start button">
 15. After a bit of lag (up to 30s), the synth should start! Click around a bit i guess
+16. Optional: Extra optimisations! Run one of the following in the root directory for increased performance at the cost of filesize.
+    - `make wasm_hyprpass_lite` (recommended, pretty much as fast as the others but takes somewhat less time)
+    - `make wasm_hyprpass` (very slow)
+    - `make wasm_hyprpass_converge` (ETA to pass completion: 1242 years)
+    - This should significantly improve startup speeds.
