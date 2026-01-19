@@ -316,16 +316,16 @@ typedef struct {
     double* audioPerf;
 } audiothread_params;
 
-void shiftReadableStack(float*** readableStack, int size, float** newEntry) {
+void shiftReadableStack(float*** rStack, int size, float** newEntry) {
     for (int i = 1; i < size; ++i) {
-        readableStack[i - 1] = readableStack[i];
+        rStack[i - 1] = rStack[i];
     }
-    readableStack[size - 1] = newEntry;
+    rStack[size - 1] = newEntry;
 }
 
-int getLowestWriteIdx(float*** readableStack, int targetReadIndex) { //targetFillLevel - 1
+int getLowestWriteIdx(float*** rStack, int targetReadIndex) { //targetFillLevel - 1
     int index = targetReadIndex;
-    while ((readableStack[index] == nullptr) && (index >= 0)) {
+    while ((rStack[index] == nullptr) && (index >= 0)) {
         index--;
     }
     return index + 1;
@@ -417,19 +417,19 @@ double* setupAudioThread(int c, int stackSize, int bSize, double clockspeedMult)
         }
     }
 
-    audiothread_params tparams;
-    tparams.audioStack = audioStack;
-    tparams.channelCount = c;
-    tparams.stackSize = stackSize;
-    tparams.delayMilliseconds = (((double)bSize)*1000.00/((double)getEmsdkSamplerate())) / clockspeedMult;
-    tparams.audioLockRef = &audioLock;
-    tparams.consumptionRef = &consumption;
-    tparams.readableStack = readableStack;
-    tparams.bufSize = bSize;
-    tparams.audioPerf = &audioPerfTime;
+    audiothread_params* tparams = new audiothread_params();
+    tparams->audioStack = audioStack;
+    tparams->channelCount = c;
+    tparams->stackSize = stackSize;
+    tparams->delayMilliseconds = (((double)bSize)*1000.00/((double)getEmsdkSamplerate())) / clockspeedMult;
+    tparams->audioLockRef = &audioLock;
+    tparams->consumptionRef = &consumption;
+    tparams->readableStack = readableStack;
+    tparams->bufSize = bSize;
+    tparams->audioPerf = &audioPerfTime;
 
     pthread_t periodic_thread;
-    pthread_create(&periodic_thread, NULL, audioThread, (void*)&tparams);
+    pthread_create(&periodic_thread, NULL, audioThread, (void*)tparams);
 
     sendAudioStack(&audioLock, &consumption, audioStack);
     
