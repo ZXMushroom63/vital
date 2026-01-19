@@ -30,5 +30,6 @@
         emscripten
         brotli
         python314
+        binaryen
     ];
 }

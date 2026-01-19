@@ -16,7 +16,6 @@ VERSION := $(shell sh -c 'grep -oh -m 1 "VERSION=[0-9\.]*" standalone/builds/lin
 MACHINE := $(shell sh -c 'uname -m 2> /dev/null || echo not')
 
 
-
 #FINAL_FLAGS := -sSHARED_MEMORY=1 -Wl,--shared-memory -O3 -g0 -sSIMD=1 -ftree-vectorize -flto -fvisibility=hidden -DNDEBUG=1 --closure 1 -sEVAL_CTORS -fno-rtti -fno-exceptions
 EMXXFLAGS := -msimd128 -msse4.2 -sINVOKE_RUN=0 -sSTACK_SIZE=134217728 -sALLOW_MEMORY_GROWTH=0 --cache ./emsdk_cache -sUSE_WEBGL2=1 -sFULL_ES2=1 -sFULL_ES3=1 -sMIN_WEBGL_VERSION=2 -sMODULARIZE=1 -sEXPORT_NAME='createVial' -sEXPORTED_FUNCTIONS="['_setupAudioThread','_main']" -sEXPORTED_RUNTIME_METHODS="['HEAPU8','HEAPF32','HEAPU32','HEAP32','HEAPF64','FS']" -sLEGACY_VM_SUPPORT=0 -sINITIAL_MEMORY=786432000 -sIMPORTED_MEMORY=1 -sSHARED_MEMORY=1 -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=2 -sFORCE_FILESYSTEM -lidbfs.js
 # also make sure that SIMD is being correctly used
@@ -99,6 +98,34 @@ wasm_beta:
 
 wasm_full:
 	$(MAKE) -C standalone/builds/wasm_full CONFIG=$(CONFIG) EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1" PROJDIR=$(PROJDIR)
+
+#--enable-relaxed-simd one day we will be free
+#moderate time to optimise, great output
+wasm_hyperpass_lite:
+	@echo START HYPRPASS LITE
+	@echo this can take a long time, please be patient! =O3
+	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O3 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug
+	@echo HYPRPASS COMPLETE!
+	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > vial.tmp.js
+	-mv vial.tmp.js vial.js
+
+#long time to optimise, near perfect output
+wasm_hyperpass:
+	@echo START HYPRPASS O4
+	@echo this can take a long time, please be patient! =O4
+	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug
+	@echo HYPRPASS COMPLETE!
+	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > vial.tmp.js
+	-mv vial.tmp.js vial.js
+
+#extremely long time to optimise, perfect output
+wasm_hyperpass_convergent:
+	@echo START HYPRPASS CONVERGENT
+	@echo this can take a long time, please be patient! =O4conv
+	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --converge --debug
+	@echo HYPRPASS COMPLETE!
+	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > vial.tmp.js
+	-mv vial.tmp.js vial.js
 
 lv2:
 	$(MAKE) -C plugin/builds/linux_lv2 CONFIG=$(CONFIG) AR=gcc-ar EMXXFLAGS="$(EMXXFLAGS)" GLFLAGS="$(GLFLAGS)" BUILD_DATE=$(BUILD_DATE) CXXFLAGS="-DNO_AUTH=1"
