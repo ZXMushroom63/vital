@@ -312,7 +312,8 @@ addEventListener("load", () => {
             // trackpad event flooding
             ratelimitedWheel(e);
         }
-    });
+	e.preventDefault();
+    }, { passive: false });
     canvas.addEventListener("mouseup", (event) => {
         if (event instanceof MouseEvent) {
             switch (event.button) {
