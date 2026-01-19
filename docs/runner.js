@@ -107,6 +107,10 @@ createVial({
         setTimeout(trySave, SAVE_INTERVAL);
     });
 
+}).catch(function(error) {
+    console.error("Module creation failed:", error);
+    alert("Failed to initialise WebAssembly module!\nYour CPU chipset likely does not support SIMD, or\nyour browser is missing WASM SIMD/thread support.");
+    alert("See console for full error.");
 });
 
 addEventListener("contextmenu", (e) => { e.preventDefault(); });
