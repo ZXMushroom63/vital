@@ -67,6 +67,11 @@ bool KeyPress::isCurrentlyDown() const
                   == (mods.getRawFlags() & ModifierKeys::allKeyboardModifiers);
 }
 
+bool KeyPress::isKeyCurrentlyDown (int keyCode)
+{
+    return KeyPress::keyCodeMap[keyCode & 0xFF];
+}
+
 //==============================================================================
 namespace KeyPressHelpers
 {

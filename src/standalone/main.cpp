@@ -20,6 +20,7 @@
 #include "load_save.h"
 #include "startup.h"
 #include "synth_editor.h"
+#include "synth_computer_keyboard.h"
 #include "tuning.h"
 #include <emscripten.h>
 
@@ -798,17 +799,22 @@ extern "C" {
       if (focusedComponent != nullptr) {
         target = focusedComponent;
       }
+      bool consumed = false;
       if (pressEvent) {
         if (charCode > 0) {
           juce::juce_wchar ch = static_cast<juce::juce_wchar>(charCode);
           juce::KeyPress kp(keyCode, ModifierKeys::currentModifiers, ch);
-          target->keyPressed(kp);
+          consumed = target->keyPressed(kp) || consumed;
         } else {
           juce::KeyPress kp(keyCode);
-          target->keyPressed(kp);
+          consumed = target->keyPressed(kp) || consumed;
         }
       }
-      target->keyStateChanged(pressEvent);
+      consumed = target->keyStateChanged(pressEvent) || consumed;
+      std::cout << "Event consumed fully: " << consumed << std::endl;
+      if (!consumed) {
+        global_editor->computer_keyboard_->keyStateChanged(pressEvent, nullptr);
+      }
     }
 
     EMSCRIPTEN_KEEPALIVE

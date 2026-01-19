@@ -30,7 +30,8 @@ EMXXFLAGS := -msimd128 -msse4.2 -sINVOKE_RUN=0 -sSTACK_SIZE=134217728 -sALLOW_ME
 EMMXFLAGS += -O3 -flto -fvisibility=hidden "-DNDEBUG=1" --closure 1 -sEVAL_CTORS -fno-rtti -fno-exceptions -g0 -sSIMD=1 -sNO_EXIT_RUNTIME=1 -ftree-vectorize -finline-functions -funroll-loops -fvectorize -ffast-math --use-llvm-opts --disable-assertions -sSTACK_OVERFLOW_CHECK=1 -freorder-blocks -floop-vectorize
 
 # AGGRESSIVE MATH OPTIMISATIONS
-EMMXFLAGS += -fno-signed-zeros -fno-nans -fno-infs -fno-trapping-math -funsafe-math-optimizations
+EMMXFLAGS += -fno-signed-zeros -fno-nans -fno-infs -fno-trapping-math -funsafe-math-optimizations -fassociative-math -freciprocal-math -ffinite-math-only -fno-strict-aliasing
+
 #EMMXFLAGS += -g3 -ggdb
 
 PROGRAM = vial

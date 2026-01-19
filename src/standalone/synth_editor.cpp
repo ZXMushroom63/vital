@@ -75,6 +75,7 @@ SynthEditor::SynthEditor(bool use_gui) : SynthGuiInterface(this, use_gui) {
 
     setWantsKeyboardFocus(true);
     addKeyListener(computer_keyboard_.get());
+    std::cout << "keyb listener registered." << std::endl;
     setOpaque(true);
   }
 

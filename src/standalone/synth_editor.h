@@ -48,9 +48,9 @@ class SynthEditor : public AudioAppComponent, public SynthBase, public SynthGuiI
     void timerCallback() override;
     
     void animate(bool animate);
-
-  private:
     std::unique_ptr<SynthComputerKeyboard> computer_keyboard_;
+  private:
+    
     CriticalSection critical_section_;
     StringArray current_midi_ins_;
     double current_time_;

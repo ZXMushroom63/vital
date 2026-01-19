@@ -621,10 +621,10 @@ String SystemClipboard::getTextFromClipboard()
 }
 
 //==============================================================================
-bool KeyPress::isKeyCurrentlyDown (int keyCode)
-{
-    return XWindowSystem::getInstance()->isKeyCurrentlyDown (keyCode);
-}
+// bool KeyPress::isKeyCurrentlyDown (int keyCode)
+// {
+//     return XWindowSystem::getInstance()->isKeyCurrentlyDown (keyCode);
+// }
 
 void LookAndFeel::playAlertSound()
 {
