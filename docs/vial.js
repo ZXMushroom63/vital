@@ -12891,7 +12891,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  135632236: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
+  135632204: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
 };
 function getEmsdkSamplerate() { return globalThis.VIAL_TARGET_SAMPLERATE || 44100; }
 function getEmsdkChannelCount() { return Math.min(2, Math.max(1, Math.floor(globalThis.VIAL_CHANNEL_COUNT))) || 1; }
@@ -12911,6 +12911,7 @@ var _dispatchSystemMessage = Module['_dispatchSystemMessage'] = makeInvalidEarly
 var _processMouseEvent = Module['_processMouseEvent'] = makeInvalidEarlyAccess('_processMouseEvent');
 var _processKeyboardKey = Module['_processKeyboardKey'] = makeInvalidEarlyAccess('_processKeyboardKey');
 var _preinit = Module['_preinit'] = makeInvalidEarlyAccess('_preinit');
+var _processMidiEvent = Module['_processMidiEvent'] = makeInvalidEarlyAccess('_processMidiEvent');
 var _main = Module['_main'] = makeInvalidEarlyAccess('_main');
 var _setupAudioThread = Module['_setupAudioThread'] = makeInvalidEarlyAccess('_setupAudioThread');
 var _ntohs = makeInvalidEarlyAccess('_ntohs');
@@ -12952,6 +12953,7 @@ function assignWasmExports(wasmExports) {
   Module['_processMouseEvent'] = _processMouseEvent = createExportWrapper('processMouseEvent', 10);
   Module['_processKeyboardKey'] = _processKeyboardKey = createExportWrapper('processKeyboardKey', 3);
   Module['_preinit'] = _preinit = createExportWrapper('preinit', 0);
+  Module['_processMidiEvent'] = _processMidiEvent = createExportWrapper('processMidiEvent', 3);
   Module['_main'] = _main = createExportWrapper('__main_argc_argv', 2);
   Module['_setupAudioThread'] = _setupAudioThread = createExportWrapper('setupAudioThread', 4);
   _ntohs = createExportWrapper('ntohs', 1);

@@ -107,7 +107,7 @@ createVial({
         setTimeout(trySave, SAVE_INTERVAL);
     });
 
-}).catch(function(error) {
+}).catch(function (error) {
     console.error("Module creation failed:", error);
     alert("Failed to initialise WebAssembly module!\nYour CPU chipset likely does not support SIMD, or\nyour browser is missing WASM SIMD/thread support.");
     alert("See console for full error.");
@@ -316,7 +316,7 @@ addEventListener("load", () => {
             // trackpad event flooding
             ratelimitedWheel(e);
         }
-	e.preventDefault();
+        e.preventDefault();
     }, { passive: false });
     canvas.addEventListener("mouseup", (event) => {
         if (event instanceof MouseEvent) {
@@ -366,6 +366,50 @@ addEventListener("load", () => {
     addEventListener("resize", () => {
         debouncedHandler();
     });
+
+
+    /** @type Map<string, MIDIInput>  */
+    const midiListenerDB = new Map();
+
+    function isNoteOn(statusByte, vel) {
+        return (statusByte & 0xF0) === 0x90 && vel !== 0;
+    }
+    navigator.permissions.query({ name: "midi" }).then(res => {
+        /** @param {MIDIMessageEvent} message  */
+        function handleMidiData(message) {
+            if (!message.data || !inited) {
+                return;
+            }
+            const [stat, note, vel] = message.data;
+            const isDownEvent = isNoteOn(stat, vel);
+
+            Vial._processMidiEvent(isDownEvent, note, vel);
+        }
+
+        /** @param {MIDIInput[]} inputList  */
+        function updateMidiState(inputList) {
+            inputList.forEach(inp => {
+                if (midiListenerDB.has(inp.id)) {
+                    midiListenerDB.get(inp.id).onmidimessage = null;
+                }
+                inp.onmidimessage = handleMidiData;
+                midiListenerDB.set(inp.id, inp);
+            });
+        }
+
+        /** @param {MIDIAccess} midiIF  */
+        function initMidi(midiIF) {
+            updateMidiState([...midiIF.inputs.values()]);
+            midiIF.addEventListener("statechange", () => {
+                updateMidiState([...midiIF.inputs.values()]);
+            });
+        }
+        if (res.state !== "denied") {
+            navigator.requestMIDIAccess().then((midiIF) => {
+                initMidi(midiIF);
+            });
+        }
+    })
 });
 function getProgramComponents(programID, kNumShaders) {
     kNumShaders ||= 21;
