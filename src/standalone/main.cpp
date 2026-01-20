@@ -827,6 +827,10 @@ extern "C" {
       return KeyPress::keyCodeMap;
     }
 
+    EMSCRIPTEN_KEEPALIVE
+    void processMidiEvent(bool isKeyDown, int note, int vel) {
+      global_editor->computer_keyboard_->processCustomMIDI(isKeyDown, note, vel);
+    }
     
 
     int main(int argc, char* argv[])

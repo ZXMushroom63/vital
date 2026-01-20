@@ -38,6 +38,8 @@ class SynthComputerKeyboard : public vital::StringLayout, public KeyListener {
     // KeyListener
     bool keyPressed(const KeyPress &key, Component *origin) override;
     bool keyStateChanged(bool isKeyDown, Component *origin) override;
+    void processCustomMIDI(bool isKeyDown, int note, int vel);
+    bool* midiMap = nullptr;
 
   private:
     vital::SoundEngine* synth_;

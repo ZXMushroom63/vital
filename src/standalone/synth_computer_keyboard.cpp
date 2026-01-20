@@ -47,8 +47,15 @@ bool SynthComputerKeyboard::keyPressed(const KeyPress &key, Component *origin) {
   return false;
 }
 
+void SynthComputerKeyboard::processCustomMIDI(bool isKeyDown, int note, int vel) {
+  if (isKeyDown) {
+    keyboard_state_->noteOn(kKeyboardMidiChannel, note, static_cast<float>(vel)/127.0f);
+  } else {
+    keyboard_state_->noteOff(kKeyboardMidiChannel, note, static_cast<float>(vel)/127.0f);
+  }
+}
+
 bool SynthComputerKeyboard::keyStateChanged(bool isKeyDown, Component *origin) {
-  std::cout << "synth keyb detected summ" << std::endl;
   bool consumed = false;
   for (int i = 0; i < layout_.length(); ++i) {
     int note = computer_keyboard_offset_ + i;
