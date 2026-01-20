@@ -65,7 +65,7 @@ function getFSChecksum() {
             checksum += file.name.charCodeAt(i);
         }
         checksum %= 2 ** 31;
-        checksum += file.mtime.getTime();
+        checksum += file.mtime.getTime ? file.mtime.getTime() : file.mtime
         checksum %= 2 ** 31;
     });
     return checksum;
