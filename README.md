@@ -4,9 +4,10 @@
 WebVial is a WIP web port of the Vital source release.\
 Try it here: [https://zxmushroom63.github.io/vital](https://zxmushroom63.github.io/vital)
 
-
-WebMIDI support will happen eventually, adding backends is a slow and tedious processs.
-
+### Features
+- WebMIDI support
+- It is a versatile synth
+- Moderately performant. (still working on that)
 
 ### Compiling & Testing
 This guide is for NixOS, it makes dependency management very easy. See [shell.nix](shell.nix) for a list of required packages. Also ensure you have a mainstream web browser available. (chromium or firefox is fine)
