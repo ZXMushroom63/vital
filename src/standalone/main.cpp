@@ -21,6 +21,7 @@
 #include "startup.h"
 #include "synth_editor.h"
 #include "synth_computer_keyboard.h"
+#include "sound_engine.h"
 #include "tuning.h"
 #include <emscripten.h>
 
@@ -832,19 +833,26 @@ extern "C" {
       global_editor->computer_keyboard_->processCustomMIDI(isKeyDown, note, vel);
     }
     
+    EMSCRIPTEN_KEEPALIVE
+    void dumpAudioBuffers() {
+      //running twice is necessary
+      global_editor->computer_keyboard_->synth_->allSoundsOff();
+      AudioIODevice::zeroAudio();
+      global_editor->computer_keyboard_->synth_->allSoundsOff();
+      AudioIODevice::zeroAudio();
+    }
 
     int main(int argc, char* argv[])
     {
         STDOUT_LOG("Main function called!");
+        preinit();
         startApplication_Classic();
         startApplication_Advanced();
         dispatchSystemMessage(false);
         processMouseEvent(false, false, false, false, false, false, 0, 0, false, 0.0);
         processKeyboardKey(0, 0, false);
+        processMidiEvent(false, 0, 0);
+        dumpAudioBuffers();
         return 0;
     }
 }
-//START_JUCE_APPLICATION(SynthApplication)
-// investigate runDispatchLoop
-// CURRENT PROBLEM! the opengl context never actually initialises!
-// initialiseOnRenderThread()

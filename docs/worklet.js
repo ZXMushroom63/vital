@@ -12,6 +12,7 @@ class VialProcessor extends AudioWorkletProcessor {
         this.lockPtr = -1;
         this.consumptionPtr = -1;
         this.bufferPtr = -1;
+        this.maxConsumption = Infinity;
 
         // i sincerely hate W3C for replacing the beautiful, clean, scriptprocessor with this piece of junk
         // wdym i cant specify my own buffer size
@@ -31,7 +32,7 @@ class VialProcessor extends AudioWorkletProcessor {
 
     handleInitMessage(event) {
         console.log("Received event!!!", event);
-        const { sharedArrBuf, consumption, lockPtr, bufferStack } = event.data;
+        const { sharedArrBuf, consumption, lockPtr, bufferStack, maxConsumption } = event.data;
         console.log("Worklet Initialised! Data: ", event.data);
         this.sharedMemory = sharedArrBuf;
         this.HEAPF32 = new Float32Array(sharedArrBuf);
@@ -40,6 +41,7 @@ class VialProcessor extends AudioWorkletProcessor {
         this.consumptionPtr = consumption;
         this.bufferPtr = bufferStack;
         this.lockPtr = lockPtr;
+        this.maxConsumption = maxConsumption;
         const self = this;
         
         this.Lock.acquireLock = function () {
@@ -81,6 +83,14 @@ class VialProcessor extends AudioWorkletProcessor {
         const HEAPU8 = this.HEAPU8;
         try {
             const consumption = HEAPU8[this.consumptionPtr];
+            if (consumption >= this.maxConsumption) {
+                // out of buffer data, send zeros
+                for (let c = 0; c < tOut.length; c++) {
+                    const f32 = tOut[c];
+                    f32.fill(0);
+                }
+                return true;
+            }
             const ptr = HEAPU32[this.bufferPtr / 4 + consumption];
             if (!ptr) {
                 return true;

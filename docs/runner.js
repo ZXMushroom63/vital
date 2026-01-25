@@ -13,7 +13,7 @@ globalThis.VIAL_CLOCKSPEED_MULTIPLIER = 1.25; //Speed multiplier for how often t
 globalThis.VIAL_BSIZE = 0; //is initialised automatically
 globalThis.VIAL_TARGET_FPS = 24;
 
-const pages = 12000; //64kb pages
+const pages = 9600; //64kb pages
 const memSize = pages * 64 * 1024;
 console.log("Memory Budget: " + memSize + "b");
 console.log(" - Megabytes: " + memSize / 1024 / 1024 + "MiB");
@@ -210,7 +210,8 @@ addEventListener("load", () => {
                         sharedArrBuf: rootBuffer,
                         consumption: _V_AUDIO_CONSUMPTION_PTR,
                         lockPtr: _V_AUDIO_LOCK_PTR,
-                        bufferStack: _V_AUDIO_PTRSTACK
+                        bufferStack: _V_AUDIO_PTRSTACK,
+                        maxConsumption: audioStackSize*2-1
                     });
 
                     console.log("Message posted.");

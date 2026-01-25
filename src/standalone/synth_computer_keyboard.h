@@ -40,9 +40,9 @@ class SynthComputerKeyboard : public vital::StringLayout, public KeyListener {
     bool keyStateChanged(bool isKeyDown, Component *origin) override;
     void processCustomMIDI(bool isKeyDown, int note, int vel);
     bool* midiMap = nullptr;
+    vital::SoundEngine* synth_;
 
   private:
-    vital::SoundEngine* synth_;
     MidiKeyboardState* keyboard_state_;
     std::set<char> keys_pressed_;
     int computer_keyboard_offset_;

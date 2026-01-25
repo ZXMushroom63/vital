@@ -1,0 +1,5 @@
+emsdk_cache
+emsdk_cache/*
+emsdk_cache/*.*
+emsdk_cache/
+emsdk_cache/sysroot/*

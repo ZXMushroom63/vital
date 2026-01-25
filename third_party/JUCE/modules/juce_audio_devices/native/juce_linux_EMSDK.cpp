@@ -24,6 +24,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
+#include <memory.h>
 
 namespace juce
 {
@@ -32,6 +33,8 @@ extern "C"
 {
 
 int bSizeGlobal = 128;
+int stackSizeGlobal = 4;
+int channelCountGlobal = 2;
 
 EM_JS(int, getEmsdkSamplerate, (), {
   return globalThis.VIAL_TARGET_SAMPLERATE || 44100;
@@ -169,10 +172,14 @@ public:
 
     String inputId, outputId;
     static AudioIODeviceCallback* internalCallback;
+    static bool* fastRender;
 private:
     bool isOpen_ = false, isStarted = false;
 };
+
 AudioIODeviceCallback* EMSDKAudioIODevice::internalCallback = nullptr;
+bool* EMSDKAudioIODevice::fastRender = nullptr;
+
 
 //==============================================================================
 class EMSDKAudioIODeviceType  : public AudioIODeviceType
@@ -285,6 +292,7 @@ uint8_t consumption = 0;
 float*** audioStack = nullptr;
 float*** readableStack = nullptr;
 double audioPerfTime = 0.0;
+bool increasedLockDelay = false;
 
 EM_JS(void, sendAudioStack, (uint8_t* lock, uint8_t* consumption, float*** audioStack), {
     globalThis._V_AUDIO_LOCK_PTR = lock;
@@ -292,9 +300,9 @@ EM_JS(void, sendAudioStack, (uint8_t* lock, uint8_t* consumption, float*** audio
     globalThis._V_AUDIO_PTRSTACK = audioStack;
 });
 
-void acquire_lock(uint8_t* lockRef) {
+void acquire_lock(uint8_t* lockRef, bool* increasedLockDelay) {
     while (*lockRef == 1) {
-        usleep(3000); //3ms
+        usleep((*increasedLockDelay) ? 200000 : 3000); //3ms
         // spinlock
     }
     *lockRef = 1;
@@ -314,6 +322,8 @@ typedef struct {
     float*** readableStack;
     int bufSize;
     double* audioPerf;
+    bool* fastRender;
+    bool* moreLockDelay;
 } audiothread_params;
 
 void shiftReadableStack(float*** rStack, int size, float** newEntry) {
@@ -331,6 +341,8 @@ int getLowestWriteIdx(float*** rStack, int targetReadIndex) { //targetFillLevel 
     return index + 1;
 }
 
+bool freezeAudioThread = false;
+
 void* audioThread(void* arg) {
     audiothread_params* params = (audiothread_params*)arg;
     int c = params->channelCount;
@@ -340,6 +352,8 @@ void* audioThread(void* arg) {
     uint8_t* lock = params->audioLockRef;
     uint8_t* consumption = params->consumptionRef;
     double* audioPerf = params->audioPerf;
+    bool* fastRen = params->fastRender;
+    bool* moreLockDelay = params->moreLockDelay;
     int bSize = params->bufSize;
 
     int targetFillLevel = params->stackSize;
@@ -349,13 +363,14 @@ void* audioThread(void* arg) {
     std::cout << "Audio Thread Beginning Processing!" << std::endl;
 
     while (1) {
-        acquire_lock(lock);
+        acquire_lock(lock, moreLockDelay);
         for (int con = 0; con < (*consumption); con++) {
             shiftReadableStack(readableStack, stackSize, nullptr);
             shiftReadableStack(audioStack, stackSize, audioStack[0]); //circular
         }
         *consumption = 0;
-        double start_time = emscripten_get_now();
+        bool fastVal = *fastRen;
+        double start_time = fastVal ? 0 : emscripten_get_now();
         double workload = 0;
         if (targetFillIndex < 0 || targetFillIndex >= stackSize) {
             std::cerr << "Error: targetFillIndex out of bounds: " << targetFillIndex << " in " << stackSize << std::endl;
@@ -382,24 +397,55 @@ void* audioThread(void* arg) {
             readableStack[writeIndex] = audioStack[writeIndex];
             workload += 1.0;
         }
+
         release_lock(lock);
 
-        double end_time = emscripten_get_now();
+        if (!fastVal) {
+            double end_time = emscripten_get_now();
         
-        double duration = end_time - start_time;
-        if (workload > 0.0) {
-            *audioPerf = duration / workload;
+            double duration = end_time - start_time;
+            if (workload > 0.0) {
+                *audioPerf = duration / workload;
+            }
+            usleep(1000*std::max(delayMilliseconds - duration, 1.0));
+        } else {
+            usleep(250);
         }
-        usleep(1000*std::max(delayMilliseconds - duration, 1.0));
     }
     return NULL;
 }
 
 EMSCRIPTEN_KEEPALIVE
+void setFastRender(bool fastRen) {
+    if (EMSDKAudioIODevice::fastRender != nullptr) {
+        *EMSDKAudioIODevice::fastRender = fastRen;
+    } else {
+        std::cerr << "Audio thread not setup yet!" << std::endl;
+    }
+}
+
+EMSCRIPTEN_KEEPALIVE
+void AudioIODevice::zeroAudio() {
+    for (int s = 0; s < (stackSizeGlobal * 2); s++) {
+        for (int i = 0; i < channelCountGlobal; i++) {
+            memset(audioStack[s][i], 0, sizeof(float) * bSizeGlobal);
+        }
+    }
+}
+
+EMSCRIPTEN_KEEPALIVE
+void setThreadMode(bool x) {
+    increasedLockDelay = x;
+}
+
+EMSCRIPTEN_KEEPALIVE
 double* setupAudioThread(int c, int stackSize, int bSize, double clockspeedMult) {
     bSizeGlobal = bSize;
+    stackSizeGlobal = stackSize;
+    channelCountGlobal = c;
     audioStack = (float***)malloc(sizeof(float**) * (stackSize * 2));
     readableStack = (float***)malloc(sizeof(float**) * (stackSize * 2));
+    EMSDKAudioIODevice::fastRender = (bool*)malloc(sizeof(bool) * 1);
     
     std::cout << "[EMAUDIO] Target Fill Index: " << (stackSize-1) << std::endl;
     std::cout << "[EMAUDIO] Max Stack Size: " << (stackSize*2) << std::endl;
@@ -427,6 +473,8 @@ double* setupAudioThread(int c, int stackSize, int bSize, double clockspeedMult)
     tparams->readableStack = readableStack;
     tparams->bufSize = bSize;
     tparams->audioPerf = &audioPerfTime;
+    tparams->fastRender = EMSDKAudioIODevice::fastRender;
+    tparams->moreLockDelay = &increasedLockDelay;
 
     pthread_t periodic_thread;
     pthread_create(&periodic_thread, NULL, audioThread, (void*)tparams);

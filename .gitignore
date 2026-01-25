@@ -34,5 +34,8 @@ Debug
 Profile
 Release
 emsdk_cache
+emsdk_cache/
+standalone/builds/wasm_full/emsdk_cache/
+./standalone/builds/wasm_full/emsdk_cache/
 *.debug.wasm
 STAGE

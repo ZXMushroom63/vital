@@ -312,6 +312,8 @@ public:
     */
     virtual int getXRunCount() const noexcept;
 
+    static void zeroAudio();
+
     //==============================================================================
 protected:
     /** Creates a device, setting its name and type member variables. */
