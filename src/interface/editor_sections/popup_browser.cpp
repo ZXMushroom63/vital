@@ -486,7 +486,7 @@ void SelectionList::leftClick(const MouseEvent& e) {
   File selection = getSelection(e);
   if (!selection.exists() && selection != getFavoritesFile() && selection != getAllFile()) {
     if (selection.getFileName() == String(kAddFolderName))
-      addAdditionalFolder();
+      //addAdditionalFolder();
     return;
   }
 
@@ -1116,7 +1116,7 @@ PopupBrowser::PopupBrowser() : SynthSection("Popup Browser"),
   addButton(download_button_.get());
   download_button_->setVisible(false);
 
-#if !defined(NO_TEXT_ENTRY)
+#if (!defined(NO_TEXT_ENTRY)) || 1 //EMPATCH
   search_box_ = std::make_unique<OpenGlTextEditor>("Search");
   search_box_->addListener(this);
   search_box_->setSelectAllWhenFocused(true);
@@ -1296,7 +1296,7 @@ void PopupBrowser::checkNoContent() {
   bool has_content = LoadSave::hasDataDirectory();
   if (search_box_)
     search_box_->setVisible(has_content);
-  download_button_->setVisible(!has_content);
+  download_button_->setVisible(false);
 }
 
 void PopupBrowser::checkStoreButton() {

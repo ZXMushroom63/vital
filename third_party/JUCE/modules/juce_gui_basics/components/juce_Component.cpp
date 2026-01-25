@@ -1833,6 +1833,9 @@ bool Component::preventRendering = false;
 //==============================================================================
 void Component::repaint()
 {
+    if (Component::preventRendering) {
+        return;
+    }
     internalRepaintUnchecked (getLocalBounds(), true);
 }
 

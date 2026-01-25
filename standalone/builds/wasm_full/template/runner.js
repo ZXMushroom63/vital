@@ -74,7 +74,8 @@ globalThis._V_KMAP_PTR = null;
 createVial({
     canvas: document.querySelector("#canvas"),
     wasmMemory: SMEM
-}).then(Vial => {
+}).then(async Vial => {
+    const wtBuffer = await (await fetch("test_wavetable.wav")).arrayBuffer();
     globalThis.Vial = Vial;
     globalThis._V_KMAP_PTR = Vial._preinit();
     //Vial.FS.mkdir('/home/web_user');
@@ -86,6 +87,30 @@ createVial({
         } else {
             console.log("Restored filesystem state.");
         }
+
+        Vial.FS.mkdirTree('/home/web_user/.local/share/vital/User');
+
+        Vial.FS.mkdir('/wavetable_mount');
+        Vial.FS.mkdir('/sample_mount');
+
+        Vial.FS.writeFile('/wavetable_mount/test_wavetable.wav', new Uint8Array(wtBuffer));
+        Vial.FS.writeFile('/sample_mount/notarealsample.wav', new Uint8Array(wtBuffer));
+
+        try { Vial.FS.rmdir("/home/web_user/.local/share/vital/User/Wavetables"); } catch(e) {}
+        try { Vial.FS.rmdir("/home/web_user/.local/share/vital/User/Samples"); } catch(e) {}
+        try {
+            Vial.FS.symlink('/wavetable_mount', '/home/web_user/.local/share/vital/User/Wavetables');
+        } catch (e) {
+            console.error(e);
+        }
+        try {
+            Vial.FS.symlink('/sample_mount', '/home/web_user/.local/share/vital/User/Samples');
+        } catch (e) {
+            console.error(e);
+        }
+
+
+
         let lastSum = getFSChecksum();
         const SAVE_INTERVAL = 10 * 1000;
         function trySave() {

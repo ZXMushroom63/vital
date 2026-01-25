@@ -881,7 +881,7 @@ function createExportWrapper(name, nargs) {
 var wasmBinaryFile;
 
 function findWasmBinary() {
-    return locateFile('vial.wasm');
+    return locateFile('vialhypr.wasm');
 }
 
 function getBinarySync(file) {
@@ -12961,7 +12961,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  135632940: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
+  135642044: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
 };
 function getEmsdkSamplerate() { return globalThis.VIAL_TARGET_SAMPLERATE || 44100; }
 function getEmsdkChannelCount() { return Math.min(2, Math.max(1, Math.floor(globalThis.VIAL_CHANNEL_COUNT))) || 1; }
@@ -12985,7 +12985,6 @@ var _processMidiEvent = Module['_processMidiEvent'] = makeInvalidEarlyAccess('_p
 var _dumpAudioBuffers = Module['_dumpAudioBuffers'] = makeInvalidEarlyAccess('_dumpAudioBuffers');
 var __ZN4juce13AudioIODevice9zeroAudioEv = Module['__ZN4juce13AudioIODevice9zeroAudioEv'] = makeInvalidEarlyAccess('__ZN4juce13AudioIODevice9zeroAudioEv');
 var _main = Module['_main'] = makeInvalidEarlyAccess('_main');
-var _setFastRender = Module['_setFastRender'] = makeInvalidEarlyAccess('_setFastRender');
 var _setThreadMode = Module['_setThreadMode'] = makeInvalidEarlyAccess('_setThreadMode');
 var _setupAudioThread = Module['_setupAudioThread'] = makeInvalidEarlyAccess('_setupAudioThread');
 var _ntohs = makeInvalidEarlyAccess('_ntohs');
@@ -13031,7 +13030,6 @@ function assignWasmExports(wasmExports) {
   Module['_dumpAudioBuffers'] = _dumpAudioBuffers = createExportWrapper('dumpAudioBuffers', 0);
   Module['__ZN4juce13AudioIODevice9zeroAudioEv'] = __ZN4juce13AudioIODevice9zeroAudioEv = createExportWrapper('_ZN4juce13AudioIODevice9zeroAudioEv', 0);
   Module['_main'] = _main = createExportWrapper('__main_argc_argv', 2);
-  Module['_setFastRender'] = _setFastRender = createExportWrapper('setFastRender', 1);
   Module['_setThreadMode'] = _setThreadMode = createExportWrapper('setThreadMode', 1);
   Module['_setupAudioThread'] = _setupAudioThread = createExportWrapper('setupAudioThread', 4);
   _ntohs = createExportWrapper('ntohs', 1);

@@ -331,6 +331,7 @@ bool Wavetable3d::updateRenderValues() {
   spectral_morph_value_ = spectral_morph_value;
   distortion_value_ = distortion_value;
   distortion_phase_ = distortion_phase;
+  return true;
 
   return !loading_wavetable_ && ((~equal).anyMask() || new_morph);
 }
