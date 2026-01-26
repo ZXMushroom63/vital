@@ -683,7 +683,7 @@ function initMemory() {
     wasmMemory = Module['wasmMemory'];
   } else
   {
-    var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 629145600;
+    var INITIAL_MEMORY = Module['INITIAL_MEMORY'] || 642252800;
 
     assert(INITIAL_MEMORY >= 134217728, 'INITIAL_MEMORY should be larger than STACK_SIZE, was ' + INITIAL_MEMORY + '! (STACK_SIZE=' + 134217728 + ')');
     /** @suppress {checkTypes} */

@@ -13,7 +13,7 @@ globalThis.VIAL_CLOCKSPEED_MULTIPLIER = 1.25; //Speed multiplier for how often t
 globalThis.VIAL_BSIZE = 0; //is initialised automatically
 globalThis.VIAL_TARGET_FPS = 24;
 
-const pages = 9600; //64kb pages
+const pages = 9800; //64kb pages
 const memSize = pages * 64 * 1024;
 console.log("Memory Budget: " + memSize + "b");
 console.log(" - Megabytes: " + memSize / 1024 / 1024 + "MiB");
