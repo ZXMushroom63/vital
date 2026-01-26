@@ -597,6 +597,7 @@ extern "C" {
         juce::virtualDisplay.totalArea.setHeight(h);
         juce::virtualDisplay.userArea.setHeight(h);
         Component::preventRendering = true;
+        std::cout << "doing setbounds call" << std::endl;
         global_editor->setBounds(0, 0, w, h);
         Component::preventRendering = false;
         dbgNoExitCounter--;
@@ -853,6 +854,8 @@ extern "C" {
         processKeyboardKey(0, 0, false);
         processMidiEvent(false, 0, 0);
         dumpAudioBuffers();
+        vialSetWindowSize(100, 100);
+        vialRedraw();
         return 0;
     }
 }

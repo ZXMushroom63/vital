@@ -71,11 +71,41 @@ function getFSChecksum() {
     return checksum;
 }
 globalThis._V_KMAP_PTR = null;
+globalThis.fileReadWorker = new Worker("fileworker.js");
+const FILE_DEALLOC_TIMEOUT = 30 * 1000;
+globalThis.FILE_DEALLOC_QUEUE = new Set();
+globalThis.BLANK_BUF = new Uint8Array(0);
+
+globalThis.ASSET_MOUNTPOINTS = {
+    "./Wavetables": "/wavetable_mount",
+    "./Samples": "/sample_mount",
+};
+function deallocateUnusedFiles() {
+    if (Math.random() > 0.1) {
+        return;
+    }
+    const now = Date.now();
+    const remQueue = [];
+    for (const allocatedFile of FILE_DEALLOC_QUEUE) { //remove unused file buffers from memory
+        if ((now - allocatedFile.readTime) > FILE_DEALLOC_TIMEOUT) {
+            console.log("[FILEALLOC] GC: ", allocatedFile.entName);
+            FILE_OVERRIDES[allocatedFile.entName] = allocatedFile.entry; //replace buffer with handle
+            Vial.FS.writeFile(allocatedFile.targetWritePath, BLANK_BUF); //remove the buffer
+            remQueue.push(allocatedFile);
+        }
+    }
+    remQueue.forEach(x => FILE_DEALLOC_QUEUE.delete(x));
+}
 createVial({
     canvas: document.querySelector("#canvas"),
     wasmMemory: SMEM
 }).then(async Vial => {
-    const wtBuffer = await (await fetch("test_wavetable.wav")).arrayBuffer();
+    // hack in blob/file support, so you can access a lot of files without needing obtuse amounts of memory.
+    // using the sample blob in multiple areas will unfortunately not use the same arraybuffer for all blobs, so consider each blob/file in this dict unique
+    globalThis.FILE_OVERRIDES = {
+        "./Wavetables/test_wavetable.wav": await (await fetch("test_wavetable.wav")).blob(),
+        "./Samples/clock.wav": await (await fetch("clock_final.mp3")).blob(),
+    };
     globalThis.Vial = Vial;
     globalThis._V_KMAP_PTR = Vial._preinit();
     //Vial.FS.mkdir('/home/web_user');
@@ -93,8 +123,20 @@ createVial({
         Vial.FS.mkdir('/wavetable_mount');
         Vial.FS.mkdir('/sample_mount');
 
-        Vial.FS.writeFile('/wavetable_mount/test_wavetable.wav', new Uint8Array(wtBuffer));
-        Vial.FS.writeFile('/sample_mount/notarealsample.wav', new Uint8Array(wtBuffer));
+
+        Object.keys(FILE_OVERRIDES).forEach(assetPath => {
+            let targetAssetPath = assetPath;
+            let foundMountpoint = false;
+            Object.entries(globalThis.ASSET_MOUNTPOINTS).forEach(ent => {
+                if (targetAssetPath.includes(ent[0])) {
+                    foundMountpoint = true;
+                    targetAssetPath = targetAssetPath.replace(ent[0], ent[1]);
+                }
+            });
+            if (foundMountpoint) {
+                Vial.FS.writeFile(targetAssetPath, BLANK_BUF);
+            }
+        });
 
         try { Vial.FS.rmdir("/home/web_user/.local/share/vital/User/Wavetables"); } catch(e) {}
         try { Vial.FS.rmdir("/home/web_user/.local/share/vital/User/Samples"); } catch(e) {}
@@ -201,6 +243,7 @@ addEventListener("load", () => {
             document.querySelector("#fps_counter").innerText = `${(1000 / (now - prevFrame)).toFixed(2)} FPS [💻${(1000 / (post - now)).toFixed(2)}] [🔊${(Vial.HEAPF64[audioTimeRef] || 0).toFixed(1)}ms / ${audioResponseTime}ms] [📦${VIAL_BSIZE}/${VIAL_TARGET_SAMPLERATE} : ${["MONO", "STEREO"][VIAL_CHANNEL_COUNT - 1] || "OTHER"}]`;
 
             prevFrame = now;
+            deallocateUnusedFiles();
         }
         renderLoop();
         document.querySelector("#canvas").style.zIndex = 100;

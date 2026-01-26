@@ -19,16 +19,81 @@
 
   ==============================================================================
 */
+#include <string.h>;
+#include <emscripten.h>;
 
 namespace juce
 {
 
 int64 juce_fileSetPosition (void* handle, int64 pos);
 
+EM_JS(void, prepareForFileRead, (char* str), {
+    let filePath = "";
+    let ptr = str;
+    while (HEAPU8[ptr] > 0) {
+        filePath += String.fromCharCode(HEAPU8[ptr]);
+        ptr++;
+    }
+    filePath = filePath.trim();
+    const splits = filePath.split("/");
+    const entName = "./" + splits[splits.length - 2] + "/" + splits[splits.length - 1];
+    const entry = FILE_OVERRIDES[entName];
+    if (!entry) {
+        console.log("No entry for ", entName);
+        return;
+    }
+    if (entry instanceof Uint8Array) {
+        console.log("Entry already patched: ", entName);
+        return;
+    }
+    if (entry instanceof Blob) {
+        console.log("[JS] Shimming read request for : ", filePath);
+
+        const SAB = new SharedArrayBuffer(1 + entry.size); //first byte is for signalling
+        const view = new Uint8Array(SAB);
+        globalThis.fileReadWorker.postMessage({
+            SAB: SAB,
+            lockPtr: 0,
+            file: entry
+        });
+        while (Atomics.compareExchange(view, 0, 1, 2) !== 1) {};
+        FILE_OVERRIDES[entName] = view.subarray(1, view.length);
+
+        let targetWritePath = entName;
+        let foundSymlink = false;
+        Object.entries(globalThis.ASSET_MOUNTPOINTS).forEach(ent => {
+            if (targetWritePath.includes(ent[0])) {
+                foundSymlink = true;
+                targetWritePath = targetWritePath.replace(ent[0], ent[1]);
+            }
+        });
+        if (!foundSymlink) {
+            targetWritePath = filePath;
+        }
+        
+        Vial.FS.writeFile(targetWritePath, FILE_OVERRIDES[entName]);
+        console.log("Shimmed read was successful!");
+
+        FILE_DEALLOC_QUEUE.add({
+            targetWritePath,
+            readTime: Date.now(),
+            entName,
+            entry,
+            gcBuffer: FILE_OVERRIDES[entName]
+        });
+        // todo: add a queue of files to delete (push buffers to WeakSet along with paths and read time, and deallocate after 30s?) !!! Should reduce memory consumption
+    }
+});
 
 //==============================================================================
 FileInputStream::FileInputStream (const File& f)  : file (f)
 {
+    //std::cout << "[C] Found read request for : " << f.getFullPathName().toStdString() << std::endl;
+    std::string fname = f.getFullPathName().toStdString();
+    char* buffer = (char*)malloc(fname.size() + 1);
+    strcpy(buffer, fname.c_str());
+    prepareForFileRead(buffer);
+    free(buffer);
     openHandle();
 }
 
