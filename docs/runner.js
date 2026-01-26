@@ -56,7 +56,7 @@ function getVialConfig() {
 }
 function getFSChecksum() {
     let checksum = 0;
-    const targets = Vial.FS.root.contents.home.contents?.web_user?.mounted?.root?.contents?.[".local"]?.contents?.share?.contents?.vital?.contents?.User?.contents?.Presets?.contents;
+    const targets = Vial.FS.root.contents.home.contents?.web_user?.contents?.[".local"]?.contents?.share?.contents?.vital?.contents?.User?.contents?.Presets?.mounted?.root?.contents;
     if (!targets) {
         return -1;
     }
@@ -88,7 +88,7 @@ function deallocateUnusedFiles() {
     const remQueue = [];
     for (const allocatedFile of FILE_DEALLOC_QUEUE) { //remove unused file buffers from memory
         if ((now - allocatedFile.readTime) > FILE_DEALLOC_TIMEOUT) {
-            console.log("[FILEALLOC] GC: ", allocatedFile.entName);
+            console.log("[FILEALLOC] GC:", allocatedFile.entName);
             FILE_OVERRIDES[allocatedFile.entName] = allocatedFile.entry; //replace buffer with handle
             Vial.FS.writeFile(allocatedFile.targetWritePath, BLANK_BUF); //remove the buffer
             remQueue.push(allocatedFile);
@@ -105,12 +105,15 @@ createVial({
     globalThis.FILE_OVERRIDES = {
         "./Wavetables/test_wavetable.wav": await (await fetch("test_wavetable.wav")).blob(),
         "./Samples/clock.wav": await (await fetch("clock_final.mp3")).blob(),
+        "./Presets/demopad.vital": await (await fetch("demopad.vital")).blob(),
     };
     globalThis.Vial = Vial;
     globalThis._V_KMAP_PTR = Vial._preinit();
     //Vial.FS.mkdir('/home/web_user');
     //vIDBFS.mkdir("/home/web_user");
-    Vial.FS.mount(vIDBFS, {}, '/home/web_user');
+    Vial.FS.mkdirTree('/home/web_user/.local/share/vital/User/Presets');
+    Vial.FS.mount(vIDBFS, {}, '/home/web_user/.local/share/vital/User/Presets');
+    const targetDir = "/home/web_user/.local/share/vital/User/";
     Vial.FS.syncfs(true, (err) => {
         if (err) {
             console.error("Failed to restore filesystem state! ", err);
@@ -118,11 +121,18 @@ createVial({
             console.log("Restored filesystem state.");
         }
 
-        Vial.FS.mkdirTree('/home/web_user/.local/share/vital/User');
-
-        Vial.FS.mkdir('/wavetable_mount');
-        Vial.FS.mkdir('/sample_mount');
-
+        Object.entries(globalThis.ASSET_MOUNTPOINTS).forEach(mnt => {
+            Vial.FS.mkdir(mnt[1]);
+            const folderName = mnt[0].replace("./", "");
+            try {
+                Vial.FS.rmdir(targetDir + folderName);
+            } catch (e) { }
+            try {
+                Vial.FS.symlink(mnt[1], targetDir + folderName);
+            } catch (e) {
+                console.error(e);
+            }
+        });
 
         Object.keys(FILE_OVERRIDES).forEach(assetPath => {
             let targetAssetPath = assetPath;
@@ -134,24 +144,13 @@ createVial({
                 }
             });
             if (foundMountpoint) {
+                console.log("1. Writing to ", targetAssetPath);
                 Vial.FS.writeFile(targetAssetPath, BLANK_BUF);
+            } else {
+                console.log("2. Writing to ", targetAssetPath);
+                Vial.FS.writeFile(targetDir + targetAssetPath.slice(2), BLANK_BUF);
             }
         });
-
-        try { Vial.FS.rmdir("/home/web_user/.local/share/vital/User/Wavetables"); } catch(e) {}
-        try { Vial.FS.rmdir("/home/web_user/.local/share/vital/User/Samples"); } catch(e) {}
-        try {
-            Vial.FS.symlink('/wavetable_mount', '/home/web_user/.local/share/vital/User/Wavetables');
-        } catch (e) {
-            console.error(e);
-        }
-        try {
-            Vial.FS.symlink('/sample_mount', '/home/web_user/.local/share/vital/User/Samples');
-        } catch (e) {
-            console.error(e);
-        }
-
-
 
         let lastSum = getFSChecksum();
         const SAVE_INTERVAL = 10 * 1000;
@@ -210,7 +209,9 @@ function ratelimit(func, mininterval, deb) {
         }
     };
 }
-
+function isPageHidden() {
+    return document.hidden || document.msHidden || document.webkitHidden || document.mozHidden;
+}
 addEventListener("load", () => {
     document.querySelector("#loading_blocker").remove();
     let inited = false;
@@ -235,12 +236,19 @@ addEventListener("load", () => {
         document.querySelector("#init_panel").remove();
         function renderLoop() {
             const now = performance.now();
-            Vial._vialRedraw();
+            const visible = !isPageHidden();
+            if (visible) {
+                Vial._vialRedraw();
+            }
             const post = performance.now();
 
             setTimeout(renderLoop, Math.max(1000 / (VIAL_TARGET_FPS) - (post - now), 1));
             const audioResponseTime = (VIAL_BSIZE / VIAL_TARGET_SAMPLERATE * 1000).toFixed(1);
-            document.querySelector("#fps_counter").innerText = `${(1000 / (now - prevFrame)).toFixed(2)} FPS [💻${(1000 / (post - now)).toFixed(2)}] [🔊${(Vial.HEAPF64[audioTimeRef] || 0).toFixed(1)}ms / ${audioResponseTime}ms] [📦${VIAL_BSIZE}/${VIAL_TARGET_SAMPLERATE} : ${["MONO", "STEREO"][VIAL_CHANNEL_COUNT - 1] || "OTHER"}]`;
+            if (visible) {
+                document.querySelector("#fps_counter").innerText = `${(1000 / (now - prevFrame)).toFixed(2)} FPS [💻${(1000 / (post - now)).toFixed(2)}] [🔊${(Vial.HEAPF64[audioTimeRef] || 0).toFixed(1)}ms / ${audioResponseTime}ms] [📦${VIAL_BSIZE}/${VIAL_TARGET_SAMPLERATE} : ${["MONO", "STEREO"][VIAL_CHANNEL_COUNT - 1] || "OTHER"}]`;
+            } else {
+                document.querySelector("#fps_counter").innerText = `webvial is not focused/visible`;
+            }
 
             prevFrame = now;
             deallocateUnusedFiles();
@@ -279,7 +287,7 @@ addEventListener("load", () => {
                         consumption: _V_AUDIO_CONSUMPTION_PTR,
                         lockPtr: _V_AUDIO_LOCK_PTR,
                         bufferStack: _V_AUDIO_PTRSTACK,
-                        maxConsumption: audioStackSize*2-1
+                        maxConsumption: audioStackSize * 2 - 1
                     });
 
                     console.log("Message posted.");

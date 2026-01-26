@@ -39,15 +39,16 @@ EM_JS(void, prepareForFileRead, (char* str), {
     const entName = "./" + splits[splits.length - 2] + "/" + splits[splits.length - 1];
     const entry = FILE_OVERRIDES[entName];
     if (!entry) {
-        console.log("No entry for ", entName);
+        console.log("No entry for", entName);
         return;
     }
     if (entry instanceof Uint8Array) {
-        console.log("Entry already patched: ", entName);
+        console.log("Entry already patched:", entName);
         return;
     }
     if (entry instanceof Blob) {
-        console.log("[JS] Shimming read request for : ", filePath);
+        const st = Date.now();
+        console.log("[JS] Shimming read request for:", filePath);
 
         const SAB = new SharedArrayBuffer(1 + entry.size); //first byte is for signalling
         const view = new Uint8Array(SAB);
@@ -72,7 +73,7 @@ EM_JS(void, prepareForFileRead, (char* str), {
         }
         
         Vial.FS.writeFile(targetWritePath, FILE_OVERRIDES[entName]);
-        console.log("Shimmed read was successful!");
+        console.log("Shimmed read was successful! Completed in ", Math.floor(Date.now() - st), "ms");
 
         FILE_DEALLOC_QUEUE.add({
             targetWritePath,

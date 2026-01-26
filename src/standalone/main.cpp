@@ -813,7 +813,6 @@ extern "C" {
         }
       }
       consumed = target->keyStateChanged(pressEvent) || consumed;
-      std::cout << "Event consumed fully: " << consumed << std::endl;
       if (!consumed) {
         global_editor->computer_keyboard_->keyStateChanged(pressEvent, nullptr);
       }
