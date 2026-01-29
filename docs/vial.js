@@ -728,9 +728,9 @@ function initRuntime() {
   checkStackCookie();
 
   // Begin ATINITS hooks
-  if (!Module['noFSInit'] && !FS.initialized) FS.init();
+  SOCKFS.root = FS.mount(SOCKFS, {}, null);
+if (!Module['noFSInit'] && !FS.initialized) FS.init();
 TTY.init();
-SOCKFS.root = FS.mount(SOCKFS, {}, null);
 PIPEFS.root = FS.mount(PIPEFS, {}, null);
   // End ATINITS hooks
 
@@ -1794,6 +1794,22 @@ async function createWasm() {
       return spawnThread(threadParams);
     };
 
+  var initRandomFill = () => {
+      // This block is not needed on v19+ since crypto.getRandomValues is builtin
+      if (ENVIRONMENT_IS_NODE) {
+        var nodeCrypto = require('crypto');
+        return (view) => nodeCrypto.randomFillSync(view);
+      }
+  
+      // like with most Web APIs, we can't use Web Crypto API directly on shared memory,
+      // so we need to create an intermediate buffer and copy it to the destination
+      return (view) => view.set(crypto.getRandomValues(new Uint8Array(view.byteLength)));
+    };
+  var randomFill = (view) => {
+      // Lazily init on the first invocation.
+      (randomFill = initRandomFill())(view);
+    };
+  
   var PATH = {
   isAbs:(path) => path.charAt(0) === '/',
   splitPath:(filename) => {
@@ -1854,23 +1870,6 @@ async function createWasm() {
   join:(...paths) => PATH.normalize(paths.join('/')),
   join2:(l, r) => PATH.normalize(l + '/' + r),
   };
-  
-  var initRandomFill = () => {
-      // This block is not needed on v19+ since crypto.getRandomValues is builtin
-      if (ENVIRONMENT_IS_NODE) {
-        var nodeCrypto = require('crypto');
-        return (view) => nodeCrypto.randomFillSync(view);
-      }
-  
-      // like with most Web APIs, we can't use Web Crypto API directly on shared memory,
-      // so we need to create an intermediate buffer and copy it to the destination
-      return (view) => view.set(crypto.getRandomValues(new Uint8Array(view.byteLength)));
-    };
-  var randomFill = (view) => {
-      // Lazily init on the first invocation.
-      (randomFill = initRandomFill())(view);
-    };
-  
   
   
   var PATH_FS = {
@@ -4763,103 +4762,6 @@ async function createWasm() {
         abort('FS.standardizePath has been removed; use PATH.normalize instead');
       },
   };
-  
-  var SYSCALLS = {
-  DEFAULT_POLLMASK:5,
-  calculateAt(dirfd, path, allowEmpty) {
-        if (PATH.isAbs(path)) {
-          return path;
-        }
-        // relative path
-        var dir;
-        if (dirfd === -100) {
-          dir = FS.cwd();
-        } else {
-          var dirstream = SYSCALLS.getStreamFromFD(dirfd);
-          dir = dirstream.path;
-        }
-        if (path.length == 0) {
-          if (!allowEmpty) {
-            throw new FS.ErrnoError(44);;
-          }
-          return dir;
-        }
-        return dir + '/' + path;
-      },
-  writeStat(buf, stat) {
-        HEAP32[((buf)>>2)] = stat.dev;
-        HEAP32[(((buf)+(4))>>2)] = stat.mode;
-        HEAPU32[(((buf)+(8))>>2)] = stat.nlink;
-        HEAP32[(((buf)+(12))>>2)] = stat.uid;
-        HEAP32[(((buf)+(16))>>2)] = stat.gid;
-        HEAP32[(((buf)+(20))>>2)] = stat.rdev;
-        HEAP64[(((buf)+(24))>>3)] = BigInt(stat.size);
-        HEAP32[(((buf)+(32))>>2)] = 4096;
-        HEAP32[(((buf)+(36))>>2)] = stat.blocks;
-        var atime = stat.atime.getTime();
-        var mtime = stat.mtime.getTime();
-        var ctime = stat.ctime.getTime();
-        HEAP64[(((buf)+(40))>>3)] = BigInt(Math.floor(atime / 1000));
-        HEAPU32[(((buf)+(48))>>2)] = (atime % 1000) * 1000 * 1000;
-        HEAP64[(((buf)+(56))>>3)] = BigInt(Math.floor(mtime / 1000));
-        HEAPU32[(((buf)+(64))>>2)] = (mtime % 1000) * 1000 * 1000;
-        HEAP64[(((buf)+(72))>>3)] = BigInt(Math.floor(ctime / 1000));
-        HEAPU32[(((buf)+(80))>>2)] = (ctime % 1000) * 1000 * 1000;
-        HEAP64[(((buf)+(88))>>3)] = BigInt(stat.ino);
-        return 0;
-      },
-  writeStatFs(buf, stats) {
-        HEAP32[(((buf)+(4))>>2)] = stats.bsize;
-        HEAP32[(((buf)+(60))>>2)] = stats.bsize;
-        HEAP64[(((buf)+(8))>>3)] = BigInt(stats.blocks);
-        HEAP64[(((buf)+(16))>>3)] = BigInt(stats.bfree);
-        HEAP64[(((buf)+(24))>>3)] = BigInt(stats.bavail);
-        HEAP64[(((buf)+(32))>>3)] = BigInt(stats.files);
-        HEAP64[(((buf)+(40))>>3)] = BigInt(stats.ffree);
-        HEAP32[(((buf)+(48))>>2)] = stats.fsid;
-        HEAP32[(((buf)+(64))>>2)] = stats.flags;  // ST_NOSUID
-        HEAP32[(((buf)+(56))>>2)] = stats.namelen;
-      },
-  doMsync(addr, stream, len, flags, offset) {
-        if (!FS.isFile(stream.node.mode)) {
-          throw new FS.ErrnoError(43);
-        }
-        if (flags & 2) {
-          // MAP_PRIVATE calls need not to be synced back to underlying fs
-          return 0;
-        }
-        var buffer = HEAPU8.slice(addr, addr + len);
-        FS.msync(stream, buffer, offset, len, flags);
-      },
-  getStreamFromFD(fd) {
-        var stream = FS.getStreamChecked(fd);
-        return stream;
-      },
-  varargs:undefined,
-  getStr(ptr) {
-        var ret = UTF8ToString(ptr);
-        return ret;
-      },
-  };
-  
-  
-  function ___syscall_chdir(path) {
-  if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(3, 0, 1, path);
-  
-  try {
-  
-      path = SYSCALLS.getStr(path);
-      FS.chdir(path);
-      return 0;
-    } catch (e) {
-    if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
-    return -e.errno;
-  }
-  
-  }
-  
-
   var SOCKFS = {
   websocketArgs:{
   },
@@ -5760,7 +5662,7 @@ async function createWasm() {
   
   function ___syscall_connect(fd, addr, addrlen, d1, d2, d3) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(4, 0, 1, fd, addr, addrlen, d1, d2, d3);
+    return proxyToMainThread(3, 0, 1, fd, addr, addrlen, d1, d2, d3);
   
   try {
   
@@ -5778,9 +5680,88 @@ async function createWasm() {
 
   
   
+  var SYSCALLS = {
+  DEFAULT_POLLMASK:5,
+  calculateAt(dirfd, path, allowEmpty) {
+        if (PATH.isAbs(path)) {
+          return path;
+        }
+        // relative path
+        var dir;
+        if (dirfd === -100) {
+          dir = FS.cwd();
+        } else {
+          var dirstream = SYSCALLS.getStreamFromFD(dirfd);
+          dir = dirstream.path;
+        }
+        if (path.length == 0) {
+          if (!allowEmpty) {
+            throw new FS.ErrnoError(44);;
+          }
+          return dir;
+        }
+        return dir + '/' + path;
+      },
+  writeStat(buf, stat) {
+        HEAP32[((buf)>>2)] = stat.dev;
+        HEAP32[(((buf)+(4))>>2)] = stat.mode;
+        HEAPU32[(((buf)+(8))>>2)] = stat.nlink;
+        HEAP32[(((buf)+(12))>>2)] = stat.uid;
+        HEAP32[(((buf)+(16))>>2)] = stat.gid;
+        HEAP32[(((buf)+(20))>>2)] = stat.rdev;
+        HEAP64[(((buf)+(24))>>3)] = BigInt(stat.size);
+        HEAP32[(((buf)+(32))>>2)] = 4096;
+        HEAP32[(((buf)+(36))>>2)] = stat.blocks;
+        var atime = stat.atime.getTime();
+        var mtime = stat.mtime.getTime();
+        var ctime = stat.ctime.getTime();
+        HEAP64[(((buf)+(40))>>3)] = BigInt(Math.floor(atime / 1000));
+        HEAPU32[(((buf)+(48))>>2)] = (atime % 1000) * 1000 * 1000;
+        HEAP64[(((buf)+(56))>>3)] = BigInt(Math.floor(mtime / 1000));
+        HEAPU32[(((buf)+(64))>>2)] = (mtime % 1000) * 1000 * 1000;
+        HEAP64[(((buf)+(72))>>3)] = BigInt(Math.floor(ctime / 1000));
+        HEAPU32[(((buf)+(80))>>2)] = (ctime % 1000) * 1000 * 1000;
+        HEAP64[(((buf)+(88))>>3)] = BigInt(stat.ino);
+        return 0;
+      },
+  writeStatFs(buf, stats) {
+        HEAP32[(((buf)+(4))>>2)] = stats.bsize;
+        HEAP32[(((buf)+(60))>>2)] = stats.bsize;
+        HEAP64[(((buf)+(8))>>3)] = BigInt(stats.blocks);
+        HEAP64[(((buf)+(16))>>3)] = BigInt(stats.bfree);
+        HEAP64[(((buf)+(24))>>3)] = BigInt(stats.bavail);
+        HEAP64[(((buf)+(32))>>3)] = BigInt(stats.files);
+        HEAP64[(((buf)+(40))>>3)] = BigInt(stats.ffree);
+        HEAP32[(((buf)+(48))>>2)] = stats.fsid;
+        HEAP32[(((buf)+(64))>>2)] = stats.flags;  // ST_NOSUID
+        HEAP32[(((buf)+(56))>>2)] = stats.namelen;
+      },
+  doMsync(addr, stream, len, flags, offset) {
+        if (!FS.isFile(stream.node.mode)) {
+          throw new FS.ErrnoError(43);
+        }
+        if (flags & 2) {
+          // MAP_PRIVATE calls need not to be synced back to underlying fs
+          return 0;
+        }
+        var buffer = HEAPU8.slice(addr, addr + len);
+        FS.msync(stream, buffer, offset, len, flags);
+      },
+  getStreamFromFD(fd) {
+        var stream = FS.getStreamChecked(fd);
+        return stream;
+      },
+  varargs:undefined,
+  getStr(ptr) {
+        var ret = UTF8ToString(ptr);
+        return ret;
+      },
+  };
+  
+  
   function ___syscall_dup3(fd, newfd, flags) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(5, 0, 1, fd, newfd, flags);
+    return proxyToMainThread(4, 0, 1, fd, newfd, flags);
   
   try {
   
@@ -5804,7 +5785,7 @@ async function createWasm() {
   
   function ___syscall_faccessat(dirfd, path, amode, flags) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(6, 0, 1, dirfd, path, amode, flags);
+    return proxyToMainThread(5, 0, 1, dirfd, path, amode, flags);
   
   try {
   
@@ -5851,7 +5832,7 @@ async function createWasm() {
   
   function ___syscall_fcntl64(fd, cmd, varargs) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(7, 0, 1, fd, cmd, varargs);
+    return proxyToMainThread(6, 0, 1, fd, cmd, varargs);
   
   SYSCALLS.varargs = varargs;
   try {
@@ -5908,7 +5889,7 @@ async function createWasm() {
   
   function ___syscall_fstat64(fd, buf) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(8, 0, 1, fd, buf);
+    return proxyToMainThread(7, 0, 1, fd, buf);
   
   try {
   
@@ -5930,7 +5911,7 @@ async function createWasm() {
   
   function ___syscall_getcwd(buf, size) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(9, 0, 1, buf, size);
+    return proxyToMainThread(8, 0, 1, buf, size);
   
   try {
   
@@ -5953,7 +5934,7 @@ async function createWasm() {
   
   function ___syscall_getdents64(fd, dirp, count) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(10, 0, 1, fd, dirp, count);
+    return proxyToMainThread(9, 0, 1, fd, dirp, count);
   
   try {
   
@@ -6017,113 +5998,9 @@ async function createWasm() {
 
   
   
-  
-  function ___syscall_ioctl(fd, op, varargs) {
-  if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(11, 0, 1, fd, op, varargs);
-  
-  SYSCALLS.varargs = varargs;
-  try {
-  
-      var stream = SYSCALLS.getStreamFromFD(fd);
-      switch (op) {
-        case 21509: {
-          if (!stream.tty) return -59;
-          return 0;
-        }
-        case 21505: {
-          if (!stream.tty) return -59;
-          if (stream.tty.ops.ioctl_tcgets) {
-            var termios = stream.tty.ops.ioctl_tcgets(stream);
-            var argp = syscallGetVarargP();
-            HEAP32[((argp)>>2)] = termios.c_iflag || 0;
-            HEAP32[(((argp)+(4))>>2)] = termios.c_oflag || 0;
-            HEAP32[(((argp)+(8))>>2)] = termios.c_cflag || 0;
-            HEAP32[(((argp)+(12))>>2)] = termios.c_lflag || 0;
-            for (var i = 0; i < 32; i++) {
-              HEAP8[(argp + i)+(17)] = termios.c_cc[i] || 0;
-            }
-            return 0;
-          }
-          return 0;
-        }
-        case 21510:
-        case 21511:
-        case 21512: {
-          if (!stream.tty) return -59;
-          return 0; // no-op, not actually adjusting terminal settings
-        }
-        case 21506:
-        case 21507:
-        case 21508: {
-          if (!stream.tty) return -59;
-          if (stream.tty.ops.ioctl_tcsets) {
-            var argp = syscallGetVarargP();
-            var c_iflag = HEAP32[((argp)>>2)];
-            var c_oflag = HEAP32[(((argp)+(4))>>2)];
-            var c_cflag = HEAP32[(((argp)+(8))>>2)];
-            var c_lflag = HEAP32[(((argp)+(12))>>2)];
-            var c_cc = []
-            for (var i = 0; i < 32; i++) {
-              c_cc.push(HEAP8[(argp + i)+(17)]);
-            }
-            return stream.tty.ops.ioctl_tcsets(stream.tty, op, { c_iflag, c_oflag, c_cflag, c_lflag, c_cc });
-          }
-          return 0; // no-op, not actually adjusting terminal settings
-        }
-        case 21519: {
-          if (!stream.tty) return -59;
-          var argp = syscallGetVarargP();
-          HEAP32[((argp)>>2)] = 0;
-          return 0;
-        }
-        case 21520: {
-          if (!stream.tty) return -59;
-          return -28; // not supported
-        }
-        case 21537:
-        case 21531: {
-          var argp = syscallGetVarargP();
-          return FS.ioctl(stream, op, argp);
-        }
-        case 21523: {
-          // TODO: in theory we should write to the winsize struct that gets
-          // passed in, but for now musl doesn't read anything on it
-          if (!stream.tty) return -59;
-          if (stream.tty.ops.ioctl_tiocgwinsz) {
-            var winsize = stream.tty.ops.ioctl_tiocgwinsz(stream.tty);
-            var argp = syscallGetVarargP();
-            HEAP16[((argp)>>1)] = winsize[0];
-            HEAP16[(((argp)+(2))>>1)] = winsize[1];
-          }
-          return 0;
-        }
-        case 21524: {
-          // TODO: technically, this ioctl call should change the window size.
-          // but, since emscripten doesn't have any concept of a terminal window
-          // yet, we'll just silently throw it away as we do TIOCGWINSZ
-          if (!stream.tty) return -59;
-          return 0;
-        }
-        case 21515: {
-          if (!stream.tty) return -59;
-          return 0;
-        }
-        default: return -28; // not supported
-      }
-    } catch (e) {
-    if (typeof FS == 'undefined' || !(e.name === 'ErrnoError')) throw e;
-    return -e.errno;
-  }
-  
-  }
-  
-
-  
-  
   function ___syscall_lstat64(path, buf) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(12, 0, 1, path, buf);
+    return proxyToMainThread(10, 0, 1, path, buf);
   
   try {
   
@@ -6141,7 +6018,7 @@ async function createWasm() {
   
   function ___syscall_mkdirat(dirfd, path, mode) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(13, 0, 1, dirfd, path, mode);
+    return proxyToMainThread(11, 0, 1, dirfd, path, mode);
   
   try {
   
@@ -6161,7 +6038,7 @@ async function createWasm() {
   
   function ___syscall_newfstatat(dirfd, path, buf, flags) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(14, 0, 1, dirfd, path, buf, flags);
+    return proxyToMainThread(12, 0, 1, dirfd, path, buf, flags);
   
   try {
   
@@ -6185,7 +6062,7 @@ async function createWasm() {
   
   function ___syscall_openat(dirfd, path, flags, varargs) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(15, 0, 1, dirfd, path, flags, varargs);
+    return proxyToMainThread(13, 0, 1, dirfd, path, flags, varargs);
   
   SYSCALLS.varargs = varargs;
   try {
@@ -6437,7 +6314,7 @@ async function createWasm() {
   
   function ___syscall_pipe(fdPtr) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(16, 0, 1, fdPtr);
+    return proxyToMainThread(14, 0, 1, fdPtr);
   
   try {
   
@@ -6463,7 +6340,7 @@ async function createWasm() {
   
   function ___syscall_poll(fds, nfds, timeout) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(17, 0, 1, fds, nfds, timeout);
+    return proxyToMainThread(15, 0, 1, fds, nfds, timeout);
   
   try {
   
@@ -6499,7 +6376,7 @@ async function createWasm() {
   
   function ___syscall_readlinkat(dirfd, path, buf, bufsize) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(18, 0, 1, dirfd, path, buf, bufsize);
+    return proxyToMainThread(16, 0, 1, dirfd, path, buf, bufsize);
   
   try {
   
@@ -6563,7 +6440,7 @@ async function createWasm() {
   
   function ___syscall_recvfrom(fd, buf, len, flags, addr, addrlen) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(19, 0, 1, fd, buf, len, flags, addr, addrlen);
+    return proxyToMainThread(17, 0, 1, fd, buf, len, flags, addr, addrlen);
   
   try {
   
@@ -6588,7 +6465,7 @@ async function createWasm() {
   
   function ___syscall_renameat(olddirfd, oldpath, newdirfd, newpath) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(20, 0, 1, olddirfd, oldpath, newdirfd, newpath);
+    return proxyToMainThread(18, 0, 1, olddirfd, oldpath, newdirfd, newpath);
   
   try {
   
@@ -6610,7 +6487,7 @@ async function createWasm() {
   
   function ___syscall_rmdir(path) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(21, 0, 1, path);
+    return proxyToMainThread(19, 0, 1, path);
   
   try {
   
@@ -6630,7 +6507,7 @@ async function createWasm() {
   
   function ___syscall_sendto(fd, message, length, flags, addr, addr_len) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(22, 0, 1, fd, message, length, flags, addr, addr_len);
+    return proxyToMainThread(20, 0, 1, fd, message, length, flags, addr, addr_len);
   
   try {
   
@@ -6654,7 +6531,7 @@ async function createWasm() {
   
   function ___syscall_socket(domain, type, protocol) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(23, 0, 1, domain, type, protocol);
+    return proxyToMainThread(21, 0, 1, domain, type, protocol);
   
   try {
   
@@ -6673,7 +6550,7 @@ async function createWasm() {
   
   function ___syscall_stat64(path, buf) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(24, 0, 1, path, buf);
+    return proxyToMainThread(22, 0, 1, path, buf);
   
   try {
   
@@ -6691,7 +6568,7 @@ async function createWasm() {
   
   function ___syscall_symlinkat(target, dirfd, linkpath) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(25, 0, 1, target, dirfd, linkpath);
+    return proxyToMainThread(23, 0, 1, target, dirfd, linkpath);
   
   try {
   
@@ -6712,7 +6589,7 @@ async function createWasm() {
   
   function ___syscall_unlinkat(dirfd, path, flags) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(26, 0, 1, dirfd, path, flags);
+    return proxyToMainThread(24, 0, 1, dirfd, path, flags);
   
   try {
   
@@ -6742,7 +6619,7 @@ async function createWasm() {
   
   function ___syscall_utimensat(dirfd, path, times, flags) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(27, 0, 1, dirfd, path, times, flags);
+    return proxyToMainThread(25, 0, 1, dirfd, path, times, flags);
   
   try {
   
@@ -7068,7 +6945,7 @@ async function createWasm() {
   
   function __mmap_js(len, prot, flags, fd, offset, allocated, addr) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(28, 0, 1, len, prot, flags, fd, offset, allocated, addr);
+    return proxyToMainThread(26, 0, 1, len, prot, flags, fd, offset, allocated, addr);
   
     offset = bigintToI53Checked(offset);
   
@@ -7098,7 +6975,7 @@ async function createWasm() {
   
   function __munmap_js(addr, len, prot, flags, fd, offset) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(29, 0, 1, addr, len, prot, flags, fd, offset);
+    return proxyToMainThread(27, 0, 1, addr, len, prot, flags, fd, offset);
   
     offset = bigintToI53Checked(offset);
   
@@ -7789,7 +7666,7 @@ async function createWasm() {
   
   function _eglChooseConfig(display, attrib_list, configs, config_size, numConfigs) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(30, 0, 1, display, attrib_list, configs, config_size, numConfigs);
+    return proxyToMainThread(28, 0, 1, display, attrib_list, configs, config_size, numConfigs);
   return EGL.chooseConfig(display, attrib_list, configs, config_size, numConfigs)
   }
   
@@ -8209,7 +8086,7 @@ async function createWasm() {
   
   function _eglCreateContext(display, config, hmm, contextAttribs) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(31, 0, 1, display, config, hmm, contextAttribs);
+    return proxyToMainThread(29, 0, 1, display, config, hmm, contextAttribs);
   
       if (display != 62000) {
         EGL.setErrorCode(0x3008 /* EGL_BAD_DISPLAY */);
@@ -8265,7 +8142,7 @@ async function createWasm() {
   
   function _eglCreateWindowSurface(display, config, win, attrib_list) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(32, 0, 1, display, config, win, attrib_list);
+    return proxyToMainThread(30, 0, 1, display, config, win, attrib_list);
   
       if (display != 62000) {
         EGL.setErrorCode(0x3008 /* EGL_BAD_DISPLAY */);
@@ -8290,7 +8167,7 @@ async function createWasm() {
   
   function _eglDestroyContext(display, context) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(33, 0, 1, display, context);
+    return proxyToMainThread(31, 0, 1, display, context);
   
       if (display != 62000) {
         EGL.setErrorCode(0x3008 /* EGL_BAD_DISPLAY */);
@@ -8315,7 +8192,7 @@ async function createWasm() {
   
   function _eglDestroySurface(display, surface) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(34, 0, 1, display, surface);
+    return proxyToMainThread(32, 0, 1, display, surface);
   
       if (display != 62000) {
         EGL.setErrorCode(0x3008 /* EGL_BAD_DISPLAY */);
@@ -8341,7 +8218,7 @@ async function createWasm() {
   
   function _eglGetCurrentContext() {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(35, 0, 1);
+    return proxyToMainThread(33, 0, 1);
   return EGL.currentContext
   }
   
@@ -8350,7 +8227,7 @@ async function createWasm() {
   
   function _eglGetDisplay(nativeDisplayType) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(36, 0, 1, nativeDisplayType);
+    return proxyToMainThread(34, 0, 1, nativeDisplayType);
   
       EGL.setErrorCode(0x3000 /* EGL_SUCCESS */);
       // Emscripten EGL implementation "emulates" X11, and eglGetDisplay is
@@ -8368,7 +8245,7 @@ async function createWasm() {
   
   function _eglInitialize(display, majorVersion, minorVersion) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(37, 0, 1, display, majorVersion, minorVersion);
+    return proxyToMainThread(35, 0, 1, display, majorVersion, minorVersion);
   
       if (display != 62000) {
         EGL.setErrorCode(0x3008 /* EGL_BAD_DISPLAY */);
@@ -8392,7 +8269,7 @@ async function createWasm() {
   
   function _eglMakeCurrent(display, draw, read, context) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(38, 0, 1, display, draw, read, context);
+    return proxyToMainThread(36, 0, 1, display, draw, read, context);
   
       if (display != 62000) {
         EGL.setErrorCode(0x3008 /* EGL_BAD_DISPLAY */);
@@ -8424,7 +8301,7 @@ async function createWasm() {
   
   function _eglSwapBuffers(dpy, surface) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(39, 0, 1, dpy, surface);
+    return proxyToMainThread(37, 0, 1, dpy, surface);
   
   
       if (!EGL.defaultDisplayInitialized) {
@@ -8694,7 +8571,7 @@ async function createWasm() {
   
   function _eglSwapInterval(display, interval) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(40, 0, 1, display, interval);
+    return proxyToMainThread(38, 0, 1, display, interval);
   
       if (display != 62000) {
         EGL.setErrorCode(0x3008 /* EGL_BAD_DISPLAY */);
@@ -8713,7 +8590,7 @@ async function createWasm() {
   
   function _eglTerminate(display) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(41, 0, 1, display);
+    return proxyToMainThread(39, 0, 1, display);
   
       if (display != 62000) {
         EGL.setErrorCode(0x3008 /* EGL_BAD_DISPLAY */);
@@ -11845,7 +11722,7 @@ async function createWasm() {
   
   function setCanvasElementSizeMainThread(target, width, height) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(42, 0, 1, target, width, height);
+    return proxyToMainThread(40, 0, 1, target, width, height);
   return setCanvasElementSizeCallingThread(target, width, height)
   }
   
@@ -11901,7 +11778,7 @@ async function createWasm() {
   
   function _environ_get(__environ, environ_buf) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(43, 0, 1, __environ, environ_buf);
+    return proxyToMainThread(41, 0, 1, __environ, environ_buf);
   
       var bufSize = 0;
       var envp = 0;
@@ -11921,7 +11798,7 @@ async function createWasm() {
   
   function _environ_sizes_get(penviron_count, penviron_buf_size) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(44, 0, 1, penviron_count, penviron_buf_size);
+    return proxyToMainThread(42, 0, 1, penviron_count, penviron_buf_size);
   
       var strings = getEnvStrings();
       HEAPU32[((penviron_count)>>2)] = strings.length;
@@ -11940,7 +11817,7 @@ async function createWasm() {
   
   function _fd_close(fd) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(45, 0, 1, fd);
+    return proxyToMainThread(43, 0, 1, fd);
   
   try {
   
@@ -11959,7 +11836,7 @@ async function createWasm() {
   
   function _fd_fdstat_get(fd, pbuf) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(46, 0, 1, fd, pbuf);
+    return proxyToMainThread(44, 0, 1, fd, pbuf);
   
   try {
   
@@ -12010,7 +11887,7 @@ async function createWasm() {
   
   function _fd_read(fd, iov, iovcnt, pnum) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(47, 0, 1, fd, iov, iovcnt, pnum);
+    return proxyToMainThread(45, 0, 1, fd, iov, iovcnt, pnum);
   
   try {
   
@@ -12031,7 +11908,7 @@ async function createWasm() {
   
   function _fd_seek(fd, offset, whence, newOffset) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(48, 0, 1, fd, offset, whence, newOffset);
+    return proxyToMainThread(46, 0, 1, fd, offset, whence, newOffset);
   
     offset = bigintToI53Checked(offset);
   
@@ -12057,7 +11934,7 @@ async function createWasm() {
   
   function _fd_sync(fd) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(49, 0, 1, fd);
+    return proxyToMainThread(47, 0, 1, fd);
   
   try {
   
@@ -12099,7 +11976,7 @@ async function createWasm() {
   
   function _fd_write(fd, iov, iovcnt, pnum) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(50, 0, 1, fd, iov, iovcnt, pnum);
+    return proxyToMainThread(48, 0, 1, fd, iov, iovcnt, pnum);
   
   try {
   
@@ -12127,7 +12004,7 @@ async function createWasm() {
   
   function _getaddrinfo(node, service, hint, out) {
   if (ENVIRONMENT_IS_PTHREAD)
-    return proxyToMainThread(51, 0, 1, node, service, hint, out);
+    return proxyToMainThread(49, 0, 1, node, service, hint, out);
   
       // Note getaddrinfo currently only returns a single addrinfo with ai_next defaulting to NULL. When NULL
       // hints are specified or ai_family set to AF_UNSPEC or ai_socktype or ai_protocol set to 0 then we
@@ -12906,7 +12783,6 @@ var proxiedFunctionTable = [
   _proc_exit,
   exitOnMainThread,
   pthreadCreateProxied,
-  ___syscall_chdir,
   ___syscall_connect,
   ___syscall_dup3,
   ___syscall_faccessat,
@@ -12914,7 +12790,6 @@ var proxiedFunctionTable = [
   ___syscall_fstat64,
   ___syscall_getcwd,
   ___syscall_getdents64,
-  ___syscall_ioctl,
   ___syscall_lstat64,
   ___syscall_mkdirat,
   ___syscall_newfstatat,
@@ -12961,7 +12836,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  135634508: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
+  135622076: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
 };
 function getEmsdkSamplerate() { return globalThis.VIAL_TARGET_SAMPLERATE || 44100; }
 function getEmsdkChannelCount() { return Math.min(2, Math.max(1, Math.floor(globalThis.VIAL_CHANNEL_COUNT))) || 1; }
@@ -12970,8 +12845,8 @@ function prepareForFileRead(str) { let filePath = ""; let ptr = str; while (HEAP
 function __asyncjs__debugStackFreezeGL() { return Asyncify.handleAsync(async () => { await (new Promise(resolve => { globalThis.resumeStackGL = function(debug) {if(debug){debugger;};resolve();globalThis.resumeStackGL=null;}; })); console.log("DebugStack Forward"); return 0; }); }
 
 // Imports from the Wasm binary.
-var _free = makeInvalidEarlyAccess('_free');
-var _malloc = makeInvalidEarlyAccess('_malloc');
+var _free = Module['_free'] = makeInvalidEarlyAccess('_free');
+var _malloc = Module['_malloc'] = makeInvalidEarlyAccess('_malloc');
 var _startApplication_Classic = Module['_startApplication_Classic'] = makeInvalidEarlyAccess('_startApplication_Classic');
 var _startApplication_Advanced = Module['_startApplication_Advanced'] = makeInvalidEarlyAccess('_startApplication_Advanced');
 var _vialSetWindowSize = Module['_vialSetWindowSize'] = makeInvalidEarlyAccess('_vialSetWindowSize');
@@ -12980,6 +12855,7 @@ var _vialRedraw = Module['_vialRedraw'] = makeInvalidEarlyAccess('_vialRedraw');
 var _vialTickResizeEvents = Module['_vialTickResizeEvents'] = makeInvalidEarlyAccess('_vialTickResizeEvents');
 var _dispatchSystemMessage = Module['_dispatchSystemMessage'] = makeInvalidEarlyAccess('_dispatchSystemMessage');
 var _processMouseEvent = Module['_processMouseEvent'] = makeInvalidEarlyAccess('_processMouseEvent');
+var _processDnD = Module['_processDnD'] = makeInvalidEarlyAccess('_processDnD');
 var _processKeyboardKey = Module['_processKeyboardKey'] = makeInvalidEarlyAccess('_processKeyboardKey');
 var _preinit = Module['_preinit'] = makeInvalidEarlyAccess('_preinit');
 var _processMidiEvent = Module['_processMidiEvent'] = makeInvalidEarlyAccess('_processMidiEvent');
@@ -13015,8 +12891,8 @@ var __emscripten_stack_alloc = makeInvalidEarlyAccess('__emscripten_stack_alloc'
 var _emscripten_stack_get_current = makeInvalidEarlyAccess('_emscripten_stack_get_current');
 
 function assignWasmExports(wasmExports) {
-  _free = createExportWrapper('free', 1);
-  _malloc = createExportWrapper('malloc', 1);
+  Module['_free'] = _free = createExportWrapper('free', 1);
+  Module['_malloc'] = _malloc = createExportWrapper('malloc', 1);
   Module['_startApplication_Classic'] = _startApplication_Classic = createExportWrapper('startApplication_Classic', 0);
   Module['_startApplication_Advanced'] = _startApplication_Advanced = createExportWrapper('startApplication_Advanced', 0);
   Module['_vialSetWindowSize'] = _vialSetWindowSize = createExportWrapper('vialSetWindowSize', 2);
@@ -13025,6 +12901,7 @@ function assignWasmExports(wasmExports) {
   Module['_vialTickResizeEvents'] = _vialTickResizeEvents = createExportWrapper('vialTickResizeEvents', 0);
   Module['_dispatchSystemMessage'] = _dispatchSystemMessage = createExportWrapper('dispatchSystemMessage', 1);
   Module['_processMouseEvent'] = _processMouseEvent = createExportWrapper('processMouseEvent', 10);
+  Module['_processDnD'] = _processDnD = createExportWrapper('processDnD', 1);
   Module['_processKeyboardKey'] = _processKeyboardKey = createExportWrapper('processKeyboardKey', 3);
   Module['_preinit'] = _preinit = createExportWrapper('preinit', 0);
   Module['_processMidiEvent'] = _processMidiEvent = createExportWrapper('processMidiEvent', 3);
@@ -13071,8 +12948,6 @@ function assignWasmExports(wasmExports) {
     /** @export */
     __pthread_create_js: ___pthread_create_js,
     /** @export */
-    __syscall_chdir: ___syscall_chdir,
-    /** @export */
     __syscall_connect: ___syscall_connect,
     /** @export */
     __syscall_dup3: ___syscall_dup3,
@@ -13086,8 +12961,6 @@ function assignWasmExports(wasmExports) {
     __syscall_getcwd: ___syscall_getcwd,
     /** @export */
     __syscall_getdents64: ___syscall_getdents64,
-    /** @export */
-    __syscall_ioctl: ___syscall_ioctl,
     /** @export */
     __syscall_lstat64: ___syscall_lstat64,
     /** @export */

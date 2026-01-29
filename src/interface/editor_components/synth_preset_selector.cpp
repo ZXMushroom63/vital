@@ -197,9 +197,9 @@ void SynthPresetSelector::showPopupMenu(Component* anchor) {
   PopupItems options;
   options.addItem(kBrowsePresets, "Browse Presets");
   options.addItem(kSavePreset, "Save Preset");
-  options.addItem(kImportPreset, "Open External Preset");
+  //options.addItem(kImportPreset, "Open External Preset");
   options.addItem(kExportPreset, "Export Preset");
-  options.addItem(kImportBank, "Import Bank");
+  //options.addItem(kImportBank, "Import Bank");
   options.addItem(kExportBank, "Export Bank");
   options.addItem(-1, "");
   options.addItem(kInitPreset, "Initialize Preset");

@@ -27,6 +27,7 @@ namespace juce
 {
 
 static uint32 lastUniquePeerID = 1;
+ComponentPeer* ComponentPeer::inst = nullptr;
 
 //==============================================================================
 ComponentPeer::ComponentPeer (Component& comp, int flags)
@@ -35,6 +36,8 @@ ComponentPeer::ComponentPeer (Component& comp, int flags)
       uniqueID (lastUniquePeerID += 2) // increment by 2 so that this can never hit 0
 {
     Desktop::getInstance().peers.add (this);
+    std::cout << "peer created" << std::endl;
+    ComponentPeer::inst = this;
 }
 
 ComponentPeer::~ComponentPeer()
@@ -42,6 +45,7 @@ ComponentPeer::~ComponentPeer()
     auto& desktop = Desktop::getInstance();
     desktop.peers.removeFirstMatchingValue (this);
     desktop.triggerFocusCallback();
+    ComponentPeer::inst = nullptr;
 }
 
 //==============================================================================

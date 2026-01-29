@@ -101,6 +101,7 @@ FileChooser::FileChooser (const String& chooserBoxTitle,
       useNativeDialogBox (useNativeBox && isPlatformDialogAvailable()),
       treatFilePackagesAsDirs (treatFilePackagesAsDirectories)
 {
+    patchingExportRequest = false;
    #ifndef JUCE_MAC
     ignoreUnused (treatFilePackagesAsDirs);
    #endif
@@ -117,6 +118,8 @@ FileChooser::~FileChooser()
 #if JUCE_MODAL_LOOPS_PERMITTED
 bool FileChooser::browseForFileToOpen (FilePreviewComponent* previewComp)
 {
+    patchingExportRequest = false;
+    return false; //file opening not directly supported
     return showDialog (FileBrowserComponent::openMode
                         | FileBrowserComponent::canSelectFiles,
                        previewComp);
@@ -124,6 +127,8 @@ bool FileChooser::browseForFileToOpen (FilePreviewComponent* previewComp)
 
 bool FileChooser::browseForMultipleFilesToOpen (FilePreviewComponent* previewComp)
 {
+    patchingExportRequest = false;
+    return false;
     return showDialog (FileBrowserComponent::openMode
                         | FileBrowserComponent::canSelectFiles
                         | FileBrowserComponent::canSelectMultipleItems,
@@ -132,6 +137,7 @@ bool FileChooser::browseForMultipleFilesToOpen (FilePreviewComponent* previewCom
 
 bool FileChooser::browseForMultipleFilesOrDirectories (FilePreviewComponent* previewComp)
 {
+    return false;
     return showDialog (FileBrowserComponent::openMode
                         | FileBrowserComponent::canSelectFiles
                         | FileBrowserComponent::canSelectDirectories
@@ -141,6 +147,8 @@ bool FileChooser::browseForMultipleFilesOrDirectories (FilePreviewComponent* pre
 
 bool FileChooser::browseForFileToSave (const bool warnAboutOverwrite)
 {
+    patchingExportRequest = true;
+    return true;
     return showDialog (FileBrowserComponent::saveMode
                         | FileBrowserComponent::canSelectFiles
                         | (warnAboutOverwrite ? FileBrowserComponent::warnAboutOverwriting : 0),
@@ -149,6 +157,8 @@ bool FileChooser::browseForFileToSave (const bool warnAboutOverwrite)
 
 bool FileChooser::browseForDirectory()
 {
+    patchingExportRequest = false;
+    return false;
     return showDialog (FileBrowserComponent::openMode
                         | FileBrowserComponent::canSelectDirectories,
                        nullptr);
@@ -233,6 +243,9 @@ Array<File> FileChooser::getResults() const noexcept
 
 File FileChooser::getResult() const
 {
+    if (patchingExportRequest) {
+        return File("/home/web_user/.export/export_target");
+    }
     auto fileResults = getResults();
 
     // if you've used a multiple-file select, you should use the getResults() method

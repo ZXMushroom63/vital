@@ -792,6 +792,26 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE
+    void processDnD(char* fileName) {
+      std::string error;
+      global_editor->loadFromFile(juce::File(std::string(fileName)), error);
+      std::cerr << error << std::endl;
+      // ComponentPeer::DragInfo dragData;
+      // StringArray arr;
+      // switch (type) {
+      //   case 0:
+      //     arr.add("/dnd_target.vital");
+      //     break;
+      //   default:
+      //   arr.add("/dnd_target");
+      //     break;
+      // }
+      // dragData.files = arr;
+      // dragData.position = Point<int>(x, y);
+      // ComponentPeer::inst->handleDragMove(dragData);
+    }
+
+    EMSCRIPTEN_KEEPALIVE
     void processKeyboardKey(int keyCode, int charCode, bool pressEvent) {
       Component* target = global_editor->gui_.get();
       //Component* focusTarget = global_editor->gui_->getCurrentlyFocusedComponent();
@@ -855,6 +875,7 @@ extern "C" {
         dumpAudioBuffers();
         vialSetWindowSize(100, 100);
         vialRedraw();
+        processDnD(nullptr);
         return 0;
     }
 }

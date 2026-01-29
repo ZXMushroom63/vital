@@ -85,6 +85,7 @@ public:
 
     /** Destructor. */
     virtual ~ComponentPeer();
+    static ComponentPeer* inst;
 
     //==============================================================================
     /** Returns the component being represented by this peer. */

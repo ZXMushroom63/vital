@@ -54,6 +54,27 @@ function buf2str(buf) {
 function getVialConfig() {
     return buf2str(lookupFSPath("/home/web_user/.vial/Vial.config").contents);
 }
+function exportTrigger() {
+    let exports = Vial.FS.root.contents.home.contents?.web_user?.contents?.[".export"]?.contents || [];
+    if (!Array.isArray(exports)) {
+        exports = Object.values(exports);
+    }
+    exports.forEach(exp => {
+        if (!(exp.contents instanceof Object.getPrototypeOf(Uint8Array))) {
+            return;
+        }
+        const blob = new File([exp.contents], exp.name, { type: "application/octet-steam" });
+        const dlTarget = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        dlTarget.href = url;
+        dlTarget.setAttribute("download", exp.name);
+        dlTarget.click();
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+            Vial.FS.unlink("/home/web_user/.export/" + exp.name);
+        }, 1);
+    });
+}
 function getFSChecksum() {
     let checksum = 0;
     const targets = Vial.FS.root.contents.home.contents?.web_user?.contents?.[".local"]?.contents?.share?.contents?.vital?.contents?.User?.contents?.Presets?.mounted?.root?.contents;
@@ -112,6 +133,7 @@ createVial({
     //Vial.FS.mkdir('/home/web_user');
     //vIDBFS.mkdir("/home/web_user");
     Vial.FS.mkdirTree('/home/web_user/.local/share/vital/User/Presets');
+    Vial.FS.mkdirTree('/home/web_user/.export');
     Vial.FS.mount(vIDBFS, {}, '/home/web_user/.local/share/vital/User/Presets');
     const targetDir = "/home/web_user/.local/share/vital/User/";
     Vial.FS.syncfs(true, (err) => {
@@ -252,6 +274,7 @@ addEventListener("load", () => {
 
             prevFrame = now;
             deallocateUnusedFiles();
+            exportTrigger();
         }
         renderLoop();
         document.querySelector("#canvas").style.zIndex = 100;
@@ -438,6 +461,48 @@ addEventListener("load", () => {
         }
         Vial._vialSetWindowSize(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio);
     };
+
+    console.log("drop listener added");
+    addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = "copy";
+    });
+    addEventListener("drop", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        console.log("done");
+        /** @type {DataTransfer} */
+        const dT = ev.dataTransfer;
+        ev.dataTransfer.dropEffect = "copy";
+        const data = [...dT.files];
+        if (data.length !== 1) {
+            return;
+        }
+        let fileExt = data[0].name.split(".");
+        fileExt = fileExt[fileExt.length - 1];
+        const accept = ["vital", "vial", "json"];
+        if (!accept.includes(fileExt)) {
+            return console.error("Invalid file type!");
+        }
+        const fileName = data[0].name.split(".")[0];
+        const fr = new FileReader();
+        fr.onload = ()=>{
+            const buffer = new Uint8Array(fr.result);
+            const storeName = "/" + fileName.substring(0, 25) + "." + fileExt;
+            const strPtr = Vial._malloc(32);
+            for (let i = 0; i < storeName.length; i++) {
+                Vial.HEAPU8[strPtr + i] = storeName.charCodeAt(i) & 255;
+            }
+            Vial.HEAPU8[strPtr + storeName.length] = 0; //null byte terminator
+            Vial.FS.writeFile(storeName, buffer);
+            Vial._processDnD(strPtr);
+            console.log("DnD sent!");
+            Vial._free(strPtr);
+            Vial.FS.unlink(storeName);
+        };
+        fr.readAsArrayBuffer(data[0]);
+    });
 
     const debouncedHandler = debounce(resizeHandler, 850);
     addEventListener("resize", () => {
