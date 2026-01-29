@@ -544,13 +544,17 @@ void SynthBase::renderAudioForResynthesis(float* data, int samples, int note) {
   engine_->allSoundsOff();
 }
 
-bool SynthBase::saveToFile(File preset) {
+bool SynthBase::saveToFile(File preset, bool doNotRename) {
   preset = preset.withFileExtension(String(vital::kPresetExtension));
 
   File parent = preset.getParentDirectory();
   if (!parent.exists()) {
     if (!parent.createDirectory().wasOk() || !parent.hasWriteAccess())
       return false;
+  }
+
+  if (doNotRename) {
+    return preset.replaceWithText(saveToJson().dump());
   }
 
   setPresetName(preset.getFileNameWithoutExtension());
@@ -570,7 +574,7 @@ bool SynthBase::saveToActiveFile() {
   if (!active_file_.exists() || !active_file_.hasWriteAccess())
     return false;
 
-  return saveToFile(active_file_);
+  return saveToFile(active_file_, false);
 }
 
 void SynthBase::setMpeEnabled(bool enabled) {

@@ -369,7 +369,7 @@ void SaveSection::save() {
           style = style_buttons_[i]->getName();
       }
       parent->getSynth()->setStyle(style.removeCharacters("\""));
-      parent->getSynth()->saveToFile(save_file);
+      parent->getSynth()->saveToFile(save_file, false);
 
       for (Listener* listener : listeners_)
         listener->save(save_file);

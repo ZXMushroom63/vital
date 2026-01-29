@@ -196,7 +196,7 @@ class SynthApplication : public JUCEApplication {
             File active_file = editor_->getActiveFile();
             FileChooser save_box("Export Preset", File(), String("*.") + vital::kPresetExtension);
             if (save_box.browseForFileToSave(true))
-              editor_->saveToFile(save_box.getResult().withFileExtension(vital::kPresetExtension));
+              editor_->saveToFile(save_box.getResult().withFileExtension(vital::kPresetExtension), true);
             grabKeyboardFocus();
             editor_->setFocus();
             return true;

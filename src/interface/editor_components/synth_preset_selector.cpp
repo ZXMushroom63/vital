@@ -203,8 +203,8 @@ void SynthPresetSelector::showPopupMenu(Component* anchor) {
   options.addItem(kExportBank, "Export Bank");
   options.addItem(-1, "");
   options.addItem(kInitPreset, "Initialize Preset");
-  options.addItem(-1, "");
-  options.addItem(kLoadTuning, "Load Tuning File");
+  //options.addItem(-1, "");
+  //options.addItem(kLoadTuning, "Load Tuning File");
   if (!hasDefaultTuning()) {
     options.addItem(kClearTuning, "Clear Tuning: " + getTuningName());
   }
@@ -307,8 +307,8 @@ void SynthPresetSelector::exportPreset() {
   if (!save_box.browseForFileToSave(true))
     return;
   
-  synth->saveToFile(save_box.getResult().withFileExtension(vital::kPresetExtension));
-  parent->externalPresetLoaded(synth->getActiveFile());
+  synth->saveToFile(save_box.getResult().withFileExtension(vital::kPresetExtension), true);
+  //parent->externalPresetLoaded(synth->getActiveFile());
 }
 
 void SynthPresetSelector::importBank() {

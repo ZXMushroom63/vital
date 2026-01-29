@@ -54,6 +54,27 @@ function buf2str(buf) {
 function getVialConfig() {
     return buf2str(lookupFSPath("/home/web_user/.vial/Vial.config").contents);
 }
+function exportTrigger() {
+    let exports = Vial.FS.root.contents.home.contents?.web_user?.contents?.[".export"]?.contents || [];
+    if (!Array.isArray(exports)) {
+        exports = Object.values(exports);
+    }
+    exports.forEach(exp => {
+        if (!(exp.contents instanceof Object.getPrototypeOf(Uint8Array))) {
+            return;
+        }
+        const blob = new File([exp.contents], exp.name, {type: "application/octet-steam"});
+        const dlTarget = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        dlTarget.href = url;
+        dlTarget.setAttribute("download", exp.name);
+        dlTarget.click();
+        setTimeout(()=>{
+            URL.revokeObjectURL(url);
+            Vial.FS.unlink("/home/web_user/.export/" + exp.name);
+        }, 1);
+    });
+}
 function getFSChecksum() {
     let checksum = 0;
     const targets = Vial.FS.root.contents.home.contents?.web_user?.contents?.[".local"]?.contents?.share?.contents?.vital?.contents?.User?.contents?.Presets?.mounted?.root?.contents;
@@ -112,6 +133,7 @@ createVial({
     //Vial.FS.mkdir('/home/web_user');
     //vIDBFS.mkdir("/home/web_user");
     Vial.FS.mkdirTree('/home/web_user/.local/share/vital/User/Presets');
+    Vial.FS.mkdirTree('/home/web_user/.export');
     Vial.FS.mount(vIDBFS, {}, '/home/web_user/.local/share/vital/User/Presets');
     const targetDir = "/home/web_user/.local/share/vital/User/";
     Vial.FS.syncfs(true, (err) => {
@@ -252,6 +274,7 @@ addEventListener("load", () => {
 
             prevFrame = now;
             deallocateUnusedFiles();
+            exportTrigger();
         }
         renderLoop();
         document.querySelector("#canvas").style.zIndex = 100;

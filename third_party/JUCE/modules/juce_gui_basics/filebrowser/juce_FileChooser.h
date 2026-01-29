@@ -57,6 +57,7 @@ namespace juce
 class JUCE_API  FileChooser
 {
 public:
+
     //==============================================================================
     /** Creates a FileChooser.
 
@@ -139,6 +140,8 @@ public:
         @see browseForFileToSave, browseForDirectory
     */
     bool browseForFileToOpen (FilePreviewComponent* previewComponent = nullptr);
+    
+    bool patchingExportRequest = false;
 
     /** Same as browseForFileToOpen, but allows the user to select multiple files.
 
