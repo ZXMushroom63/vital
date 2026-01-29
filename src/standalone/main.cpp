@@ -796,19 +796,18 @@ extern "C" {
       std::string error;
       global_editor->loadFromFile(juce::File(std::string(fileName)), error);
       std::cerr << error << std::endl;
-      // ComponentPeer::DragInfo dragData;
-      // StringArray arr;
-      // switch (type) {
-      //   case 0:
-      //     arr.add("/dnd_target.vital");
-      //     break;
-      //   default:
-      //   arr.add("/dnd_target");
-      //     break;
-      // }
-      // dragData.files = arr;
-      // dragData.position = Point<int>(x, y);
-      // ComponentPeer::inst->handleDragMove(dragData);
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void vialLoadSlot0() {
+      std::string error;
+      global_editor->loadFromFile(juce::File("/slot0.json"), error);
+      std::cerr << error << std::endl;
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    void vialSaveSlot0() {
+      global_editor->saveToFile(juce::File("/slot0.json"), true);
     }
 
     EMSCRIPTEN_KEEPALIVE
