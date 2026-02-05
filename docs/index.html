@@ -13,46 +13,72 @@
     <video src="background.mp4" id="bgvideo" muted autoplay loop playbackRate="0.5"></video>
     <canvas width="400" height="300" id="canvas"></canvas>
     <span id="fps_counter">Stats will appear here after initialisation.</span>
-    <div id="loading_blocker" style="z-index: 899; top: 0; left: 0; align-content: center; text-align: center; width: 100vw; height: 100vh; position: fixed; background-color: black; color: white; font-family: monospace; user-select: none;"><span style="background-color: #0074ffcc;">loading...</span></div>
+    
+    <div id="loading_blocker"
+        style="z-index: 899; top: 0; left: 0; align-content: center; text-align: center; width: 100vw; height: 100vh; position: fixed; background-color: black; color: white; font-family: monospace; user-select: none;">
+        <span style="background-color: #0074ffcc;">loading...</span></div>
     <br>
     <section id="init_panel">
         <h1>
             WebVial
         </h1>
-        Ported by <a href="https://github.com/ZXMushroom63" target="_blank">@ZXMushroom63</a>
-        <br><br>
         <span id="webgl">Checking WebGL Availability...</span>
-        <br><br>Framerate:<br>
-        <button data-value="6" data-target="VIAL_TARGET_FPS" data-suffix="FPS"></button>
-        <button data-value="12" data-target="VIAL_TARGET_FPS" data-suffix="FPS"></button>
-        <button data-value="24" data-target="VIAL_TARGET_FPS" data-suffix="FPS"></button>
-        <button data-value="30" data-target="VIAL_TARGET_FPS" data-suffix="FPS"></button>
-        <button data-value="60" data-target="VIAL_TARGET_FPS" data-suffix="FPS"></button>
-        <button data-value="999" data-target="VIAL_TARGET_FPS" data-suffix="">MAX</button>
-        <br><br>Samplerate:<br>
-        <button data-value="4000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
-        <button data-value="8000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
-        <button data-value="12000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
-        <button data-value="16000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
-        <button data-value="24000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
-        <button data-value="32000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
-        <button data-value="44100" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
-        <button data-value="48000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
-        <br><br>Stereo:<br>
-        <button data-value="1" data-target="VIAL_CHANNEL_COUNT">MONO</button>
-        <button data-value="2" data-target="VIAL_CHANNEL_COUNT">STEREO</button>
-        <br><br><span title="buffer to smooth over timing inconsistencies">Buffer Size:</span><br>
-        <button data-value="512" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
-        <button data-value="1024" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
-        <button data-value="2048" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
-        <button data-value="4096" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
-        <button data-value="8192" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
-        <br><br><span title="multiplier for the speed that the audio thread checks for processing">ACM:</span><br>
-        <button data-value="1" data-target="VIAL_CLOCKSPEED_MULTIPLIER" data-suffix="x"></button>
-        <button data-value="1.25" data-target="VIAL_CLOCKSPEED_MULTIPLIER" data-suffix="x"></button>
-        <button data-value="1.5" data-target="VIAL_CLOCKSPEED_MULTIPLIER" data-suffix="x"></button>
-        <br><br>
+        <div id="inputs">
+            <div class="configEntry">
+                <span>Framerate:</span>
+                <button data-value="6" data-target="VIAL_TARGET_FPS" data-suffix="FPS"></button>
+                <button data-value="12" data-target="VIAL_TARGET_FPS" data-suffix="FPS"></button>
+                <button data-value="24" data-target="VIAL_TARGET_FPS" data-suffix="FPS"></button>
+                <button data-value="30" data-target="VIAL_TARGET_FPS" data-suffix="FPS"></button>
+                <button data-value="60" data-target="VIAL_TARGET_FPS" data-suffix="FPS"></button>
+                <button data-value="999" data-target="VIAL_TARGET_FPS" data-suffix="">MAX</button>
+            </div>
+            <div class="configEntry">
+                <span>Screen Percentage:</span>
+                <button data-value="25" data-target="VIAL_SCREEN_PERCENTAGE" data-suffix="%"></button>
+                <button data-value="33.3" data-target="VIAL_SCREEN_PERCENTAGE" data-suffix="%"></button>
+                <button data-value="50" data-target="VIAL_SCREEN_PERCENTAGE" data-suffix="%"></button>
+                <button data-value="66.6" data-target="VIAL_SCREEN_PERCENTAGE" data-suffix="%"></button>
+                <button data-value="75" data-target="VIAL_SCREEN_PERCENTAGE" data-suffix="%"></button>
+                <button data-value="80" data-target="VIAL_SCREEN_PERCENTAGE" data-suffix="%"></button>
+                <button data-value="90" data-target="VIAL_SCREEN_PERCENTAGE" data-suffix="%"></button>
+                <button data-value="100" data-target="VIAL_SCREEN_PERCENTAGE" data-suffix="%"></button>
+            </div>
+            <div class="configEntry">
+                <span>Samplerate:</span>
+                <button data-value="4000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+                <button data-value="8000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+                <button data-value="12000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+                <button data-value="16000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+                <button data-value="24000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+                <button data-value="32000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+                <button data-value="44100" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+                <button data-value="48000" data-target="VIAL_TARGET_SAMPLERATE" data-suffix="Hz"></button>
+            </div>
+            <div class="configEntry">
+                <span>Stereo:</span>
+                <button data-value="1" data-target="VIAL_CHANNEL_COUNT">MONO</button>
+                <button data-value="2" data-target="VIAL_CHANNEL_COUNT">STEREO</button>
+            </div>
+            <div class="configEntry"><span title="buffer to smooth over timing inconsistencies">Buffer Size:</span>
+                <button data-value="512" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+                <button data-value="1024" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+                <button data-value="2048" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+                <button data-value="4096" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+                <button data-value="8192" data-target="VIAL_AUDIO_STACK_SIZE_SAMPLES"></button>
+            </div>
+
+            <div class="configEntry"><span
+                    title="multiplier for the speed that the audio thread checks for processing">ACM:</span>
+                <button data-value="1" data-target="VIAL_CLOCKSPEED_MULTIPLIER" data-suffix="x"></button>
+                <button data-value="1.25" data-target="VIAL_CLOCKSPEED_MULTIPLIER" data-suffix="x"></button>
+                <button data-value="1.5" data-target="VIAL_CLOCKSPEED_MULTIPLIER" data-suffix="x"></button>
+            </div>
+        </div>
         <button id="init" style="border: none; text-decoration: underline;">&lt; Launch WebVial &gt;</button>
+        <span id="credits">
+            Ported by <a href="https://github.com/ZXMushroom63" target="_blank">@ZXMushroom63</a>
+        </span>
     </section>
     <script src="coi-sw.min.js"></script>
     <script src="vial.js"></script>

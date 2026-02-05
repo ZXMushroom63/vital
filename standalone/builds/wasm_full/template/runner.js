@@ -11,6 +11,7 @@ globalThis.VIAL_TARGET_SAMPLERATE = 24000;
 globalThis.VIAL_AUDIO_STACK_SIZE_SAMPLES = 2048; //How much buffer to smooth over timing inconsistencies
 globalThis.VIAL_CLOCKSPEED_MULTIPLIER = 1.25; //Speed multiplier for how often the audio render loop checks if rendering is necessary
 globalThis.VIAL_BSIZE = 0; //is initialised automatically
+globalThis.VIAL_SCREEN_PERCENTAGE = 100;
 globalThis.VIAL_TARGET_FPS = 24;
 
 const pages = 9800; //64kb pages
@@ -234,6 +235,7 @@ function ratelimit(func, mininterval, deb) {
 function isPageHidden() {
     return document.hidden || document.msHidden || document.webkitHidden || document.mozHidden;
 }
+const getRatio = ()=>globalThis.VIAL_SCREEN_PERCENTAGE / 100 * devicePixelRatio;
 addEventListener("load", () => {
     document.querySelector("#loading_blocker").remove();
     let inited = false;
@@ -242,6 +244,14 @@ addEventListener("load", () => {
     if (document.querySelector("#webgl").innerText.toLowerCase().includes("error")) {
         launchingDisabled = true;
     }
+    const resizeHandler = () => {
+        console.log("Triggering resize!");
+        canvas.style.imageRendering = (VIAL_SCREEN_PERCENTAGE === 100) ? "pixelated" : "auto";
+        if (!inited) {
+            return;
+        }
+        Vial._vialSetWindowSize(Math.round(innerWidth * getRatio()), Math.round(innerHeight * getRatio()));
+    };
     document.querySelector("#init").addEventListener("click", () => {
         if (!crossOriginIsolated && (location.protocol === "https:" || location.hostname === "localhost")) {
             return location.reload();
@@ -251,7 +261,7 @@ addEventListener("load", () => {
         }
         inited = true;
         Vial._startApplication_Classic();
-        Vial._vialSetWindowSize(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio);
+        resizeHandler();
         let prevFrame = performance.now();
         let audioTimeRef = -1;
         document.querySelector("#bgvideo").remove();
@@ -339,7 +349,7 @@ addEventListener("load", () => {
             return;
         }
         //console.log("sending mouse data.");
-        Vial._processMouseEvent(ev.lmb, ev.mmb, ev.rmb, ev.ctrlKey, ev.shiftKey, ev.altKey, Math.floor(ev.x * devicePixelRatio), Math.floor(ev.y * devicePixelRatio), ev.dbl, ev.wheel);
+        Vial._processMouseEvent(ev.lmb, ev.mmb, ev.rmb, ev.ctrlKey, ev.shiftKey, ev.altKey, Math.floor(ev.x * getRatio()), Math.floor(ev.y * getRatio()), ev.dbl, ev.wheel);
         ev.wheel = 0;
         ev.dbl = false;
     }
@@ -454,13 +464,7 @@ addEventListener("load", () => {
             queueMouseEvent();
         }
     });
-    const resizeHandler = () => {
-        console.log("Triggering resize!");
-        if (!inited) {
-            return;
-        }
-        Vial._vialSetWindowSize(innerWidth * devicePixelRatio, innerHeight * devicePixelRatio);
-    };
+    
 
     console.log("drop listener added");
     addEventListener("dragover", (e) => {
