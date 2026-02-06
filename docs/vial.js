@@ -12836,9 +12836,9 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  135622076: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
+  135622092: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
 };
-function getEmsdkSamplerate() { return globalThis.VIAL_TARGET_SAMPLERATE || 44100; }
+function getEmsdkSamplerate() { return globalThis.VIAL_SAMPLERATE || 44100; }
 function getEmsdkChannelCount() { return Math.min(2, Math.max(1, Math.floor(globalThis.VIAL_CHANNEL_COUNT))) || 1; }
 function sendAudioStack(lock,consumption,audioStack) { globalThis._V_AUDIO_LOCK_PTR = lock; globalThis._V_AUDIO_CONSUMPTION_PTR = consumption; globalThis._V_AUDIO_PTRSTACK = audioStack; }
 function prepareForFileRead(str) { let filePath = ""; let ptr = str; while (HEAPU8[ptr] > 0) { filePath += String.fromCharCode(HEAPU8[ptr]); ptr++; } filePath = filePath.trim(); const splits = filePath.split("/"); const entName = "./" + splits[splits.length - 2] + "/" + splits[splits.length - 1]; const entry = FILE_OVERRIDES[entName]; if (!entry) { console.log("No entry for", entName); return; } if (entry instanceof Uint8Array) { console.log("Entry already patched:", entName); return; } if (entry instanceof Blob) { const st = Date.now(); console.log("[JS] Shimming read request for:", filePath); const SAB = new SharedArrayBuffer(1 + entry.size); const view = new Uint8Array(SAB); globalThis.fileReadWorker.postMessage({ SAB: SAB, lockPtr: 0, file: entry }); while (Atomics.compareExchange(view, 0, 1, 2) !== 1) {}; FILE_OVERRIDES[entName] = view.subarray(1, view.length); let targetWritePath = entName; let foundSymlink = false; Object.entries(globalThis.ASSET_MOUNTPOINTS).forEach(ent => { if (targetWritePath.includes(ent[0])) { foundSymlink = true; targetWritePath = targetWritePath.replace(ent[0], ent[1]); } }); if (!foundSymlink) { targetWritePath = filePath; } Vial.FS.writeFile(targetWritePath, FILE_OVERRIDES[entName]); console.log("Shimmed read was successful! Completed in ", Math.floor(Date.now() - st), "ms"); FILE_DEALLOC_QUEUE.add({ targetWritePath, readTime: Date.now(), entName, entry, gcBuffer: FILE_OVERRIDES[entName] }); } }
@@ -12856,6 +12856,8 @@ var _vialTickResizeEvents = Module['_vialTickResizeEvents'] = makeInvalidEarlyAc
 var _dispatchSystemMessage = Module['_dispatchSystemMessage'] = makeInvalidEarlyAccess('_dispatchSystemMessage');
 var _processMouseEvent = Module['_processMouseEvent'] = makeInvalidEarlyAccess('_processMouseEvent');
 var _processDnD = Module['_processDnD'] = makeInvalidEarlyAccess('_processDnD');
+var _vialLoadSlot0 = Module['_vialLoadSlot0'] = makeInvalidEarlyAccess('_vialLoadSlot0');
+var _vialSaveSlot0 = Module['_vialSaveSlot0'] = makeInvalidEarlyAccess('_vialSaveSlot0');
 var _processKeyboardKey = Module['_processKeyboardKey'] = makeInvalidEarlyAccess('_processKeyboardKey');
 var _preinit = Module['_preinit'] = makeInvalidEarlyAccess('_preinit');
 var _processMidiEvent = Module['_processMidiEvent'] = makeInvalidEarlyAccess('_processMidiEvent');
@@ -12902,6 +12904,8 @@ function assignWasmExports(wasmExports) {
   Module['_dispatchSystemMessage'] = _dispatchSystemMessage = createExportWrapper('dispatchSystemMessage', 1);
   Module['_processMouseEvent'] = _processMouseEvent = createExportWrapper('processMouseEvent', 10);
   Module['_processDnD'] = _processDnD = createExportWrapper('processDnD', 1);
+  Module['_vialLoadSlot0'] = _vialLoadSlot0 = createExportWrapper('vialLoadSlot0', 0);
+  Module['_vialSaveSlot0'] = _vialSaveSlot0 = createExportWrapper('vialSaveSlot0', 0);
   Module['_processKeyboardKey'] = _processKeyboardKey = createExportWrapper('processKeyboardKey', 3);
   Module['_preinit'] = _preinit = createExportWrapper('preinit', 0);
   Module['_processMidiEvent'] = _processMidiEvent = createExportWrapper('processMidiEvent', 3);

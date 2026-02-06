@@ -1,3 +1,6 @@
+//?screen_percentage=100&target_fps=12&channel_count=2&audio_stack_size_samples=512&clockspeed_multiplier=1&autostart
+
+const AUTOSTART = (new URLSearchParams(location.search)).has("autostart");
 function detectWebGLContext() {
     const canvas = document.createElement("canvas");
     const gl = canvas.getContext("webgl");
@@ -7,7 +10,7 @@ function detectWebGLContext() {
 }
 
 globalThis.VIAL_CHANNEL_COUNT = 2;
-globalThis.VIAL_TARGET_SAMPLERATE = 24000;
+globalThis.VIAL_SAMPLERATE = 24000;
 globalThis.VIAL_AUDIO_STACK_SIZE_SAMPLES = 2048; //How much buffer to smooth over timing inconsistencies
 globalThis.VIAL_CLOCKSPEED_MULTIPLIER = 1.25; //Speed multiplier for how often the audio render loop checks if rendering is necessary
 globalThis.VIAL_BSIZE = 0; //is initialised automatically
@@ -194,6 +197,9 @@ createVial({
             }
         }
         setTimeout(trySave, SAVE_INTERVAL);
+        if (AUTOSTART) {
+            setTimeout( () => document.querySelector("#init").click(), 250 );
+        }
     });
 
 }).catch(function (error) {
@@ -237,7 +243,7 @@ function isPageHidden() {
 }
 const getRatio = ()=>globalThis.VIAL_SCREEN_PERCENTAGE / 100 * devicePixelRatio;
 addEventListener("load", () => {
-    document.querySelector("#loading_blocker").remove();
+    if (!AUTOSTART) {document.querySelector("#loading_blocker").remove();}
     let inited = false;
     let launchingDisabled = false;
     document.querySelector("#webgl").innerHTML = detectWebGLContext() + "<br>" + (crossOriginIsolated ? "✓ SharedArrayBuffer supported." : `<span style="color:red">⚠︎ Error: SharedArrayBuffer not supported. (try reloading?)</span>`);
@@ -275,9 +281,9 @@ addEventListener("load", () => {
             const post = performance.now();
 
             setTimeout(renderLoop, Math.max(1000 / (VIAL_TARGET_FPS) - (post - now), 1));
-            const audioResponseTime = (VIAL_BSIZE / VIAL_TARGET_SAMPLERATE * 1000).toFixed(1);
+            const audioResponseTime = (VIAL_BSIZE / VIAL_SAMPLERATE * 1000).toFixed(1);
             if (visible) {
-                document.querySelector("#fps_counter").innerText = `${(1000 / (now - prevFrame)).toFixed(2)} FPS [💻${(1000 / (post - now)).toFixed(2)}] [🔊${(Vial.HEAPF64[audioTimeRef] || 0).toFixed(1)}ms / ${audioResponseTime}ms] [📦${VIAL_BSIZE}/${VIAL_TARGET_SAMPLERATE} : ${["MONO", "STEREO"][VIAL_CHANNEL_COUNT - 1] || "OTHER"}]`;
+                document.querySelector("#fps_counter").innerText = `${(1000 / (now - prevFrame)).toFixed(2)} FPS [💻${(1000 / (post - now)).toFixed(2)}] [🔊${(Vial.HEAPF64[audioTimeRef] || 0).toFixed(1)}ms / ${audioResponseTime}ms] [📦${VIAL_BSIZE}/${VIAL_SAMPLERATE} : ${["MONO", "STEREO"][VIAL_CHANNEL_COUNT - 1] || "OTHER"}]`;
             } else {
                 document.querySelector("#fps_counter").innerText = `webvial is not focused/visible`;
             }
@@ -288,13 +294,16 @@ addEventListener("load", () => {
         }
         renderLoop();
         document.querySelector("#canvas").style.zIndex = 100;
+        if (AUTOSTART) {document.querySelector("#loading_blocker").remove();}
 
         setTimeout(async () => {
+            console.log("Attempting Audio Init!");
             const audioContext = new AudioContext({
-                sampleRate: VIAL_TARGET_SAMPLERATE,
+                sampleRate: VIAL_SAMPLERATE,
                 latencyHint: "playback"
             });
             await audioContext.audioWorklet.addModule("worklet.js");
+            console.log("Audio Worklet loaded.");
             const vialNode = new AudioWorkletNode(
                 audioContext,
                 "vial",
@@ -304,11 +313,12 @@ addEventListener("load", () => {
                 }
             );
             vialNode.port.onmessage = (ev) => {
+                console.log("Port event: ", ev);
                 if (ev.data.bufferSize) {
                     globalThis.VIAL_BSIZE = ev.data.bufferSize;
                     const audioStackSize = Math.ceil(VIAL_AUDIO_STACK_SIZE_SAMPLES / VIAL_BSIZE);
                     console.log("Buffer size: ", VIAL_BSIZE);
-                    console.log(((audioStackSize * VIAL_BSIZE) / VIAL_TARGET_SAMPLERATE * 1000).toFixed(1) + "ms of audio latency.");
+                    console.log(((audioStackSize * VIAL_BSIZE) / VIAL_SAMPLERATE * 1000).toFixed(1) + "ms of audio latency.");
 
                     audioTimeRef = Vial._setupAudioThread(VIAL_CHANNEL_COUNT, audioStackSize, VIAL_BSIZE, VIAL_CLOCKSPEED_MULTIPLIER) / 8;
 
@@ -327,8 +337,13 @@ addEventListener("load", () => {
                 }
             }
 
-
+            console.log("Connecting to audio dest");
             vialNode.connect(audioContext.destination);
+            addEventListener("mousedown", (e)=>{
+                if (audioContext.state === "suspended") {
+                    audioContext.resume();
+                }
+            });
         }, 250);
     });
     const ev = {

@@ -37,7 +37,7 @@ int stackSizeGlobal = 4;
 int channelCountGlobal = 2;
 
 EM_JS(int, getEmsdkSamplerate, (), {
-  return globalThis.VIAL_TARGET_SAMPLERATE || 44100;
+  return globalThis.VIAL_SAMPLERATE || 44100;
 });
 
 EM_JS(int, getEmsdkChannelCount, (), {

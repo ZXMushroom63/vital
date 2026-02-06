@@ -1,10 +1,17 @@
 addEventListener("load", ()=>{
+    const params = new URLSearchParams(location.search);
+
     document.querySelectorAll("[data-target][data-value]").forEach(node => {
         const value = parseFloat(node.getAttribute("data-value"));
         const targetProp = node.getAttribute("data-target");
+        const searchKey = targetProp.substring(5).toLowerCase();
+        
         const storageKey = `vialLauncherProperty->${targetProp}`;
         const stored = localStorage.getItem(storageKey);
-        if (stored) {
+        if (params.has(searchKey)) {
+            const v = parseFloat(params.get(searchKey));
+            globalThis[targetProp] = parseFloat(isFinite(v) ? v: value);
+        } else if (stored) {
             globalThis[targetProp] = parseFloat(stored);
         }
         if (!node.innerText.trim()) {
