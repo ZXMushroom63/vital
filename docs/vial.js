@@ -12836,7 +12836,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  135622092: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
+  135620380: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
 };
 function getEmsdkSamplerate() { return globalThis.VIAL_SAMPLERATE || 44100; }
 function getEmsdkChannelCount() { return Math.min(2, Math.max(1, Math.floor(globalThis.VIAL_CHANNEL_COUNT))) || 1; }
@@ -12859,13 +12859,18 @@ var _processDnD = Module['_processDnD'] = makeInvalidEarlyAccess('_processDnD');
 var _vialLoadSlot0 = Module['_vialLoadSlot0'] = makeInvalidEarlyAccess('_vialLoadSlot0');
 var _vialSaveSlot0 = Module['_vialSaveSlot0'] = makeInvalidEarlyAccess('_vialSaveSlot0');
 var _processKeyboardKey = Module['_processKeyboardKey'] = makeInvalidEarlyAccess('_processKeyboardKey');
+var _setBPM = Module['_setBPM'] = makeInvalidEarlyAccess('_setBPM');
+var _setSamplerate = Module['_setSamplerate'] = makeInvalidEarlyAccess('_setSamplerate');
 var _preinit = Module['_preinit'] = makeInvalidEarlyAccess('_preinit');
 var _processMidiEvent = Module['_processMidiEvent'] = makeInvalidEarlyAccess('_processMidiEvent');
 var _dumpAudioBuffers = Module['_dumpAudioBuffers'] = makeInvalidEarlyAccess('_dumpAudioBuffers');
 var __ZN4juce13AudioIODevice9zeroAudioEv = Module['__ZN4juce13AudioIODevice9zeroAudioEv'] = makeInvalidEarlyAccess('__ZN4juce13AudioIODevice9zeroAudioEv');
 var _main = Module['_main'] = makeInvalidEarlyAccess('_main');
+var _acquire_lock = Module['_acquire_lock'] = makeInvalidEarlyAccess('_acquire_lock');
+var _release_lock = Module['_release_lock'] = makeInvalidEarlyAccess('_release_lock');
 var _setThreadMode = Module['_setThreadMode'] = makeInvalidEarlyAccess('_setThreadMode');
 var _setupAudioThread = Module['_setupAudioThread'] = makeInvalidEarlyAccess('_setupAudioThread');
+var _clientAudioCallback = Module['_clientAudioCallback'] = makeInvalidEarlyAccess('_clientAudioCallback');
 var _ntohs = makeInvalidEarlyAccess('_ntohs');
 var _htons = makeInvalidEarlyAccess('_htons');
 var _htonl = makeInvalidEarlyAccess('_htonl');
@@ -12907,13 +12912,18 @@ function assignWasmExports(wasmExports) {
   Module['_vialLoadSlot0'] = _vialLoadSlot0 = createExportWrapper('vialLoadSlot0', 0);
   Module['_vialSaveSlot0'] = _vialSaveSlot0 = createExportWrapper('vialSaveSlot0', 0);
   Module['_processKeyboardKey'] = _processKeyboardKey = createExportWrapper('processKeyboardKey', 3);
+  Module['_setBPM'] = _setBPM = createExportWrapper('setBPM', 1);
+  Module['_setSamplerate'] = _setSamplerate = createExportWrapper('setSamplerate', 1);
   Module['_preinit'] = _preinit = createExportWrapper('preinit', 0);
   Module['_processMidiEvent'] = _processMidiEvent = createExportWrapper('processMidiEvent', 3);
   Module['_dumpAudioBuffers'] = _dumpAudioBuffers = createExportWrapper('dumpAudioBuffers', 0);
   Module['__ZN4juce13AudioIODevice9zeroAudioEv'] = __ZN4juce13AudioIODevice9zeroAudioEv = createExportWrapper('_ZN4juce13AudioIODevice9zeroAudioEv', 0);
   Module['_main'] = _main = createExportWrapper('__main_argc_argv', 2);
+  Module['_acquire_lock'] = _acquire_lock = createExportWrapper('acquire_lock', 2);
+  Module['_release_lock'] = _release_lock = createExportWrapper('release_lock', 1);
   Module['_setThreadMode'] = _setThreadMode = createExportWrapper('setThreadMode', 1);
   Module['_setupAudioThread'] = _setupAudioThread = createExportWrapper('setupAudioThread', 4);
+  Module['_clientAudioCallback'] = _clientAudioCallback = createExportWrapper('clientAudioCallback', 3);
   _ntohs = createExportWrapper('ntohs', 1);
   _htons = createExportWrapper('htons', 1);
   _htonl = createExportWrapper('htonl', 1);

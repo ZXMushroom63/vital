@@ -838,6 +838,16 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE
+    void setBPM(int bpm) {
+      global_editor->computer_keyboard_->synth_->setBpm(bpm);
+    }
+    
+    EMSCRIPTEN_KEEPALIVE
+    void setSamplerate(int sp) {
+      global_editor->computer_keyboard_->synth_->setSampleRate(sp);
+    }
+
+    EMSCRIPTEN_KEEPALIVE
     bool* preinit() {
       KeyPress::keyCodeMap = (bool*)malloc(256 * sizeof(bool));
       EM_ASM(

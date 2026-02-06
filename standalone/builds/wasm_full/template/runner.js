@@ -1,6 +1,7 @@
 //?screen_percentage=100&target_fps=12&channel_count=2&audio_stack_size_samples=512&clockspeed_multiplier=1&autostart
 
-const AUTOSTART = (new URLSearchParams(location.search)).has("autostart");
+const PARAMS = new URLSearchParams(location.search);
+const AUTOSTART = PARAMS.has("autostart");
 function detectWebGLContext() {
     const canvas = document.createElement("canvas");
     const gl = canvas.getContext("webgl");
@@ -101,6 +102,10 @@ const FILE_DEALLOC_TIMEOUT = 30 * 1000;
 globalThis.FILE_DEALLOC_QUEUE = new Set();
 globalThis.BLANK_BUF = new Uint8Array(0);
 
+const SLEEP_TIME_CAP = 10;
+let sleepTime = 0;
+let sleeping = false;
+
 globalThis.ASSET_MOUNTPOINTS = {
     "./Wavetables": "/wavetable_mount",
     "./Samples": "/sample_mount",
@@ -198,7 +203,7 @@ createVial({
         }
         setTimeout(trySave, SAVE_INTERVAL);
         if (AUTOSTART) {
-            setTimeout( () => document.querySelector("#init").click(), 250 );
+            setTimeout(() => document.querySelector("#init").click(), 250);
         }
     });
 
@@ -239,11 +244,11 @@ function ratelimit(func, mininterval, deb) {
     };
 }
 function isPageHidden() {
-    return document.hidden || document.msHidden || document.webkitHidden || document.mozHidden;
+    return document.hidden || document.msHidden || document.webkitHidden || document.mozHidden || document._hiddenFlag;
 }
-const getRatio = ()=>globalThis.VIAL_SCREEN_PERCENTAGE / 100 * devicePixelRatio;
+const getRatio = () => globalThis.VIAL_SCREEN_PERCENTAGE / 100 * devicePixelRatio;
 addEventListener("load", () => {
-    if (!AUTOSTART) {document.querySelector("#loading_blocker").remove();}
+    if (!AUTOSTART) { document.querySelector("#loading_blocker").remove(); }
     let inited = false;
     let launchingDisabled = false;
     document.querySelector("#webgl").innerHTML = detectWebGLContext() + "<br>" + (crossOriginIsolated ? "✓ SharedArrayBuffer supported." : `<span style="color:red">⚠︎ Error: SharedArrayBuffer not supported. (try reloading?)</span>`);
@@ -272,7 +277,7 @@ addEventListener("load", () => {
         let audioTimeRef = -1;
         document.querySelector("#bgvideo").remove();
         document.querySelector("#init_panel").remove();
-        function renderLoop() {
+        async function renderLoop() {
             const now = performance.now();
             const visible = !isPageHidden();
             if (visible) {
@@ -288,13 +293,43 @@ addEventListener("load", () => {
                 document.querySelector("#fps_counter").innerText = `webvial is not focused/visible`;
             }
 
+            if (!sleeping) {
+                if (visible) {
+                    sleepTime = 0;
+                    sleeping = false;
+                } else {
+                    sleepTime += 1 / VIAL_TARGET_FPS;
+                    if (sleepTime >= SLEEP_TIME_CAP) {
+                        sleeping = true;
+                        sleepTime = SLEEP_TIME_CAP;
+                    }
+                }
+            } else if (visible) {
+                sleepTime = 0;
+                sleeping = false;
+            }
+
+            /** @type {AudioContext} */
+            const ctx = globalThis._v_audioContext;
+            if (ctx) {
+                if (_v_vialNode._con === 0 && !sleeping) {
+                    _v_vialNode.connect(_v_audioContext.destination);
+                    _v_vialNode._con = 1;
+                } else if (_v_vialNode._con === 1 && sleeping) {
+                    console.log("Autosuspended.");
+                    _v_vialNode.disconnect();
+                    _v_vialNode._con = 0;
+                }
+            }
+
             prevFrame = now;
             deallocateUnusedFiles();
             exportTrigger();
         }
         renderLoop();
+        window.parent.vialInstance = Vial;
         document.querySelector("#canvas").style.zIndex = 100;
-        if (AUTOSTART) {document.querySelector("#loading_blocker").remove();}
+        if (AUTOSTART) { document.querySelector("#loading_blocker").remove(); }
 
         setTimeout(async () => {
             console.log("Attempting Audio Init!");
@@ -338,12 +373,15 @@ addEventListener("load", () => {
             }
 
             console.log("Connecting to audio dest");
+            globalThis._v_vialNode = vialNode;
             vialNode.connect(audioContext.destination);
-            addEventListener("mousedown", (e)=>{
+            vialNode._con = 1;
+            addEventListener("mousedown", (e) => {
                 if (audioContext.state === "suspended") {
                     audioContext.resume();
                 }
             });
+            globalThis._v_audioContext = audioContext;
         }, 250);
     });
     const ev = {
@@ -404,6 +442,8 @@ addEventListener("load", () => {
         if (!e.altKey && !e.ctrlKey && !e.metaKey && inited && !e.repeat) {
             const charCode = e.key.length > 1 ? 0 : e.key.charCodeAt(0);
             Vial.HEAPU8[globalThis._V_KMAP_PTR + charCode] = 1;
+            sleepTime = 0;
+            sleeping = false;
             Vial._processKeyboardKey(e.keyCode, charCode, true);
         }
     });
@@ -413,6 +453,8 @@ addEventListener("load", () => {
         }
         const charCode = e.key.length > 1 ? 0 : e.key.charCodeAt(0);
         Vial.HEAPU8[globalThis._V_KMAP_PTR + charCode] = 0;
+        sleepTime = 0;
+        sleeping = false;
         Vial._processKeyboardKey(e.keyCode, charCode, false);
     });
     canvas.addEventListener("mouseout", () => {
@@ -441,8 +483,8 @@ addEventListener("load", () => {
             // trackpad event flooding
             ratelimitedWheel(e);
         }
-        e.preventDefault();
-    }, { passive: false });
+        //e.preventDefault();
+    }, { passive: true });
     canvas.addEventListener("mouseup", (event) => {
         if (event instanceof MouseEvent) {
             switch (event.button) {
@@ -479,7 +521,7 @@ addEventListener("load", () => {
             queueMouseEvent();
         }
     });
-    
+
 
     console.log("drop listener added");
     addEventListener("dragover", (e) => {
@@ -506,7 +548,7 @@ addEventListener("load", () => {
         }
         const fileName = data[0].name.split(".")[0];
         const fr = new FileReader();
-        fr.onload = ()=>{
+        fr.onload = () => {
             const buffer = new Uint8Array(fr.result);
             const storeName = "/" + fileName.substring(0, 25) + "." + fileExt;
             const strPtr = Vial._malloc(32);
@@ -544,6 +586,9 @@ addEventListener("load", () => {
             const [stat, note, vel] = message.data;
             const isDownEvent = isNoteOn(stat, vel);
 
+            sleepTime = 0;
+            sleeping = false;
+
             Vial._processMidiEvent(isDownEvent, note, vel);
         }
 
@@ -578,4 +623,19 @@ function getProgramComponents(programID, kNumShaders) {
         "VertexShaderID": Math.floor(programID / kNumShaders),
         "FragmentShaderID": programID % kNumShaders
     };
+}
+if (PARAMS.has("syn")) {
+    const track = window.parent.trackChildren[0].parentElement.parentElement;
+    addEventListener(
+        "wheel",
+        (e) => {
+            if (document.documentElement.classList.contains("fullscreen")) {
+                return;
+            }
+            //make scroll permeate through
+            track.scrollTop += e.deltaY;
+            track.scrollLeft += e.deltaX;
+        },
+        true
+    );
 }

@@ -298,14 +298,24 @@ EM_JS(void, sendAudioStack, (uint8_t* lock, uint8_t* consumption, float*** audio
     globalThis._V_AUDIO_PTRSTACK = audioStack;
 });
 
+EMSCRIPTEN_KEEPALIVE
 void acquire_lock(uint8_t* lockRef, bool* increasedLockDelay) {
-    while (*lockRef == 1) {
-        usleep((*increasedLockDelay) ? 200000 : 3000); //3ms
-        // spinlock
+    if (!increasedLockDelay) {
+        while (*lockRef == 1) {
+            usleep(3000); //3ms
+            // spinlock
+        }
+        *lockRef = 1;
+    } else {
+        while (*lockRef == 1) {
+            usleep((*increasedLockDelay) ? 200000 : 3000); //3ms
+            // spinlock
+        }
+        *lockRef = 1;
     }
-    *lockRef = 1;
 }
 
+EMSCRIPTEN_KEEPALIVE
 void release_lock(uint8_t* lockRef) {
     *lockRef = 0;
 }
@@ -371,6 +381,7 @@ void* audioThread(void* arg) {
             std::cerr << "Error: targetFillIndex out of bounds: " << targetFillIndex << " in " << stackSize << std::endl;
         }
         while (readableStack[targetFillIndex] == nullptr) {
+            //std::cout << "write audio packet" << std::endl;
             int writeIndex = getLowestWriteIdx(readableStack, targetFillIndex);
 
             if (writeIndex < 0 || writeIndex >= stackSize) {
@@ -462,6 +473,17 @@ double* setupAudioThread(int c, int stackSize, int bSize, double clockspeedMult)
     sendAudioStack(&audioLock, &consumption, audioStack);
     
     return &audioPerfTime;
+}
+
+EMSCRIPTEN_KEEPALIVE
+void clientAudioCallback(int bSize, int c, float** audioBuffer) { //64bits total (32bit address space / 4 bytes)
+    EMSDKAudioIODevice::internalCallback->audioDeviceIOCallback (
+        nullptr,
+        0,
+        audioBuffer, //float**
+        c,
+        bSize
+    );
 }
 }
 

@@ -45,8 +45,12 @@ class VialProcessor extends AudioWorkletProcessor {
         const self = this;
         
         this.Lock.acquireLock = function () {
+            const b = Date.now();
             while (Atomics.compareExchange(self.HEAPU8, lockPtr, 0, 1) !== 0) {
                 // spinlock
+                //if (Date.now() - b > 1000) {
+                //    throw new Error("Spinlock stuck!");
+                //}
             }
         }
 
