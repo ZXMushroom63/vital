@@ -801,13 +801,13 @@ extern "C" {
     EMSCRIPTEN_KEEPALIVE
     void vialLoadSlot0() {
       std::string error;
-      global_editor->loadFromFile(juce::File("/slot0.json"), error);
+      global_editor->loadFromFile(juce::File("/slot0.vital"), error);
       std::cerr << error << std::endl;
     }
 
     EMSCRIPTEN_KEEPALIVE
     void vialSaveSlot0() {
-      global_editor->saveToFile(juce::File("/slot0.json"), true);
+      global_editor->saveToFile(juce::File("/slot0.vital"), true);
     }
 
     EMSCRIPTEN_KEEPALIVE

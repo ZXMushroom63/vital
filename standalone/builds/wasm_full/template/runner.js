@@ -103,8 +103,8 @@ globalThis.FILE_DEALLOC_QUEUE = new Set();
 globalThis.BLANK_BUF = new Uint8Array(0);
 
 const SLEEP_TIME_CAP = 10;
-let sleepTime = 0;
-let sleeping = false;
+globalThis.sleepTime = 0;
+globalThis.sleeping = false;
 
 globalThis.ASSET_MOUNTPOINTS = {
     "./Wavetables": "/wavetable_mount",
