@@ -110,7 +110,7 @@ wasm_full:
 wasm_hyprpass_lite:
 	@echo START HYPRPASS LITE
 	@echo this can take a long time, please be patient! =O3
-	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O3 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug --unroll-loops $(WASMOPT_FLAGS)
+	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O3 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug $(WASMOPT_FLAGS)
 	@echo HYPRPASS COMPLETE!
 	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
 	-mv docs/vial.tmp.js docs/vial.js
@@ -119,7 +119,7 @@ wasm_hyprpass_lite:
 wasm_hyprpass:
 	@echo START HYPRPASS O4
 	@echo this can take a long time, please be patient! =O4
-	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug --unroll-loops $(WASMOPT_FLAGS)
+	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug $(WASMOPT_FLAGS)
 	@echo HYPRPASS COMPLETE!
 	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
 	-mv docs/vial.tmp.js docs/vial.js
@@ -128,7 +128,7 @@ wasm_hyprpass:
 wasm_hyprpass_convergent:
 	@echo START HYPRPASS CONVERGENT
 	@echo this can take a long time, please be patient! =O4conv
-	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --converge --debug --unroll-loops $(WASMOPT_FLAGS)
+	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --converge --debug $(WASMOPT_FLAGS)
 	@echo HYPRPASS COMPLETE!
 	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
 	-mv docs/vial.tmp.js docs/vial.js
