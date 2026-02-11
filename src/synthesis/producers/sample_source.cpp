@@ -442,6 +442,7 @@ namespace vital {
 
     poly_mask current_bounce = bounce_mask_;
     poly_int length = audio_length;
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_phase_inc += delta_phase_inc;
 
@@ -487,6 +488,7 @@ namespace vital {
     poly_float* levelled_output = output(kLevelled)->buffer;
     poly_float zero = 0.0f;
     poly_float max = kMaxAmplitude;
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_pan_amplitude += delta_pan_amplitude;
       poly_float level = utils::clamp(level_input[i], zero, max);

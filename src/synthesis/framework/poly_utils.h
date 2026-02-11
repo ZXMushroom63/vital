@@ -504,6 +504,7 @@ namespace vital {
     force_inline poly_int toInt(poly_float floats) {
       VITAL_ASSERT(poly_float::kSize == poly_int::kSize);
 
+      return wasm_i32x4_trunc_sat_f32x4(floats.value);
     #if VITAL_AVX2
       return _mm256_cvtps_epi32(floats.value);
     #elif VITAL_SSE2

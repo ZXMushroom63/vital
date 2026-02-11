@@ -25,6 +25,7 @@
 
 namespace {
   int getFirstNonZeroSample(const float* audio_buffer, int num_samples) {
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       if (audio_buffer[i])
         return i;

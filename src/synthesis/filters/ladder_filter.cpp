@@ -79,6 +79,7 @@ namespace vital {
     poly_float base_frequency = utils::midiNoteToFrequency(base_midi) * (1.0f / getSampleRate());
     poly_float max_frequency = kMaxCutoff / getSampleRate();
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float midi_delta = midi_cutoff_buffer[i] - base_midi;
       poly_float frequency = utils::min(base_frequency * futils::midiOffsetToRatio(midi_delta), max_frequency);

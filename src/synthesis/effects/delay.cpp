@@ -149,6 +149,7 @@ namespace vital {
 
     poly_float* dest = output()->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_feedback += delta_feedback;
       current_wet += delta_wet;
@@ -171,6 +172,7 @@ namespace vital {
 
     poly_float* dest = output()->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_feedback += delta_feedback;
       current_wet += delta_wet;
@@ -198,6 +200,7 @@ namespace vital {
 
     poly_float* dest = output()->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_feedback += delta_feedback;
       current_wet += delta_wet;
@@ -227,6 +230,7 @@ namespace vital {
 
     poly_float* dest = output()->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_feedback += delta_feedback;
       current_wet += delta_wet;
@@ -257,6 +261,7 @@ namespace vital {
 
     poly_float* dest = output()->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_feedback += delta_feedback;
       current_wet += delta_wet;
@@ -289,6 +294,7 @@ namespace vital {
 
     poly_float* dest = output()->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_feedback += delta_feedback;
       current_wet += delta_wet;

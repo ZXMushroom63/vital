@@ -274,6 +274,8 @@ namespace vital {
       const poly_float* phase_inc_buffer = voice_block.phase_inc_buffer + start;
       const poly_int* phase_buffer = voice_block.phase_buffer + start;
       int num_samples = voice_block.end_sample - start;
+
+      #pragma GCC unroll 64
       for (int i = 0; i < num_samples; ++i) {
         current_phase_inc_mult += delta_phase_inc_mult;
         phase += utils::toInt(phase_inc_buffer[i] * current_phase_inc_mult);
@@ -317,6 +319,8 @@ namespace vital {
       const poly_float* phase_inc_buffer = voice_block.phase_inc_buffer + start;
       const poly_int* phase_buffer = voice_block.phase_buffer + start;
       int num_samples = voice_block.end_sample - start;
+
+      #pragma GCC unroll 64
       for (int i = 0; i < num_samples; ++i) {
         current_phase_inc_mult += delta_phase_inc_mult;
         phase += utils::toInt(phase_inc_buffer[i] * current_phase_inc_mult);
@@ -367,6 +371,8 @@ namespace vital {
       const poly_float* phase_inc_buffer = voice_block.phase_inc_buffer + start;
       const poly_int* phase_buffer = voice_block.phase_buffer + start;
       int num_samples = voice_block.end_sample - start;
+
+      #pragma GCC unroll 64
       for (int i = 0; i < num_samples; ++i) {
         current_phase_inc_mult += delta_phase_inc_mult;
         phase += utils::toInt(phase_inc_buffer[i] * current_phase_inc_mult);
@@ -418,6 +424,8 @@ namespace vital {
       const poly_float* phase_inc_buffer = voice_block.phase_inc_buffer + start;
       const poly_int* phase_buffer = voice_block.phase_buffer + start;
       int num_samples = voice_block.end_sample - start;
+
+      #pragma GCC unroll 64
       for (int i = 0; i < num_samples; ++i) {
         current_phase_inc_mult += delta_phase_inc_mult;
         phase += utils::toInt(phase_inc_buffer[i] * current_phase_inc_mult);
@@ -879,6 +887,8 @@ namespace vital {
     if (delta_stereo_mult.sum() + delta_center_mult.sum() == 0.0f && utils::equal(stereo_spread, 1.0f))
       return;
 
+
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_stereo_mult += delta_stereo_mult;
       current_center_mult += delta_center_mult;
@@ -900,6 +910,8 @@ namespace vital {
 
     const poly_float* amplitude = input(kAmplitude)->source->buffer;
     poly_float zero = 0.0f;
+
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float amp = utils::max(amplitude[i], zero);
       current_pan_amplitude += delta_pan_amplitude;
@@ -1320,6 +1332,9 @@ namespace vital {
     poly_float* inc_dest = phase_inc_buffer_->buffer;
     poly_int* phase_dest = phase_buffer_->buffer;
 
+    #pragma message("Loop should be unrolled here.")
+    #pragma GCC optimize ("unroll-loops")
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float shift_phase = utils::mod(phase_buffer[i]) - 0.5f;
       poly_int phase = utils::toInt(shift_phase * phase_scale);

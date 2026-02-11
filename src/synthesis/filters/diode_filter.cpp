@@ -78,6 +78,7 @@ namespace vital {
     poly_float high_pass_frequency_ratio = kHighPassFrequency * (1.0f / getSampleRate());
     poly_float high_pass_feedback_coefficient = coefficient_lookup->cubicLookup(high_pass_frequency_ratio);
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float midi_delta = midi_cutoff_buffer[i] - base_midi;
       poly_float frequency = utils::min(base_frequency * futils::midiOffsetToRatio(midi_delta), 1.0f);

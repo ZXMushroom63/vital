@@ -35,6 +35,8 @@ namespace vital {
     poly_float current_value = current_value_;
     poly_float target_value = value_;
     poly_float* dest = output()->buffer;
+
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_value = utils::interpolate(target_value, current_value, decay);
       dest[i] = current_value;
@@ -54,6 +56,8 @@ namespace vital {
     poly_float delta_value = (value_ - current_value) * (1.0f / num_samples); 
 
     poly_float* dest = output()->buffer;
+
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_value += delta_value;
       dest[i] = utils::maskLoad(dest[i], current_value, linear_mask);

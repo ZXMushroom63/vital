@@ -87,6 +87,7 @@ namespace vital {
     poly_float low_enveloped_mean_squared = low_enveloped_mean_squared_;
     poly_float high_enveloped_mean_squared = high_enveloped_mean_squared_;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float sample = audio_in[i];
       poly_float sample_squared = sample * sample;
@@ -132,6 +133,7 @@ namespace vital {
     mix_ = utils::clamp(input(kMix)->at(0), 0.0f, 1.0f);
     poly_float delta_mix = (mix_ - current_mix) * (1.0f / num_samples);
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_output_mult += delta_output_mult;
       current_mix += delta_mix;
@@ -155,6 +157,7 @@ namespace vital {
     float rms_adjusted = rms_samples - 1.0f;
     mono_float input_scale = 1.0f / rms_samples;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float sample = audio_in[i];
       poly_float sample_squared = sample * sample;
@@ -227,6 +230,7 @@ namespace vital {
     const poly_float* low_output = filter->output(LinkwitzRileyFilter::kAudioLow)->buffer;
     const poly_float* high_output = filter->output(LinkwitzRileyFilter::kAudioHigh)->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float low_sample = low_output[i];
       poly_float high_sample = utils::swapVoices(high_output[i]);
@@ -238,6 +242,7 @@ namespace vital {
     const poly_float* low_output = band_high_filter_.output(LinkwitzRileyFilter::kAudioLow)->buffer;
     const poly_float* high_output = band_high_filter_.output(LinkwitzRileyFilter::kAudioHigh)->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float low_band_sample = low_output[i];
       poly_float low_high_sample = high_output[i] & constants::kFirstMask;
@@ -249,6 +254,7 @@ namespace vital {
     const poly_float* low_band_output = low_band_compressor_.output(Compressor::kAudioOut)->buffer;
     const poly_float* high_output = band_high_compressor_.output(Compressor::kAudioOut)->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float low_band_sample = low_band_output[i];
       low_band_sample += utils::swapVoices(low_band_sample);
@@ -260,6 +266,7 @@ namespace vital {
   void MultibandCompressor::writeCompressorOutputs(Compressor* compressor, int num_samples, poly_float* dest) {
     const poly_float* compressor_output = compressor->output(Compressor::kAudioOut)->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float sample = compressor_output[i];
       dest[i] = sample + utils::swapVoices(sample);

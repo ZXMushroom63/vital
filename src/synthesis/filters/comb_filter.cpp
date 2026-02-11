@@ -266,6 +266,7 @@ namespace vital {
     poly_float sample_rate = getSampleRate();
     poly_float max_period = memory_->getMaxPeriod() - 5.0f;
     Memory* memory = memory_.get();
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float midi_offset = midi_cutoff_buffer[i] - base_midi;
       poly_float frequency = base_frequency * futils::midiOffsetToRatio(midi_offset);

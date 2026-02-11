@@ -43,6 +43,8 @@ namespace vital {
 
     poly_float current_square_sum = current_square_sum_;
 
+
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_peak *= mult;
       current_remembered_peak *= remembered_mult;

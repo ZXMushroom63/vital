@@ -891,6 +891,7 @@ void Thread::launchThread()
         pthread_detach (handle);
         threadHandle = (void*) handle;
         threadId = (ThreadID) threadHandle.get();
+        std::cout << "PThread spawned" << std::endl;
     }
 
     if (attrPtr != nullptr)
@@ -910,6 +911,7 @@ void Thread::killThread()
        #if JUCE_ANDROID
         jassertfalse; // pthread_cancel not available!
        #else
+        std::cout << "PThread killed" << std::endl;
         pthread_cancel ((pthread_t) threadHandle.get());
        #endif
     }

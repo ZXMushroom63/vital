@@ -81,6 +81,7 @@ namespace vital {
     poly_float delta_mix = (mix_ - current_mix) * (1.0f / num_samples);
     poly_float* audio_out = output()->buffer;
     
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_mix += delta_mix;
       audio_out[i] = utils::interpolate(audio_in[i], audio_out[i], current_mix);

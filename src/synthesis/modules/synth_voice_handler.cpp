@@ -330,6 +330,7 @@ namespace vital {
           buffer[0] = masked_value + utils::swapVoices(masked_value);
         }
         else {
+          #pragma GCC unroll 64
           for (int i = 0; i < num_samples; ++i) {
             poly_float masked_value = buffer[i] & last_active_voice_mask_;
             buffer[i] = masked_value + utils::swapVoices(masked_value);

@@ -33,6 +33,7 @@ namespace vital {
 
   void LinkwitzRileyFilter::processWithInput(const poly_float* audio_in, int num_samples) {
     poly_float* dest_low = output(kAudioLow)->buffer;
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float audio = audio_in[i];
 
@@ -48,6 +49,7 @@ namespace vital {
       dest_low[i] = low;
     }
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float audio = dest_low[i];
 
@@ -64,6 +66,7 @@ namespace vital {
     }
 
     poly_float* dest_high = output(kAudioHigh)->buffer;
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float audio = audio_in[i];
       poly_float high_in01 = utils::mulAdd(audio * high_in_0_, past_in_1a_[kAudioHigh], high_in_1_);
@@ -78,6 +81,7 @@ namespace vital {
       dest_high[i] = high;
     }
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float audio = dest_high[i];
       poly_float high_in01 = utils::mulAdd(audio * high_in_0_, past_in_1b_[kAudioHigh], high_in_1_);

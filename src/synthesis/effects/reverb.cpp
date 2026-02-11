@@ -219,6 +219,7 @@ namespace vital {
     poly_float makeup_delay = target_delay - end_target;
     poly_float delta_delay_increment = makeup_delay / (0.5f * num_samples * num_samples) * kSampleIncrementMultiplier;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_chorus_amount += delta_chorus_amount;
       current_chorus_real = current_chorus_real * chorus_increment_real -

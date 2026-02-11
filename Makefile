@@ -15,22 +15,29 @@ VERSION := $(shell sh -c 'grep -oh -m 1 "VERSION=[0-9\.]*" standalone/builds/lin
 
 MACHINE := $(shell sh -c 'uname -m 2> /dev/null || echo not')
 
+WASMOPT_FLAGS :=
 #FINAL_FLAGS := -sSHARED_MEMORY=1 -Wl,--shared-memory -O3 -g0 -sSIMD=1 -ftree-vectorize -flto -fvisibility=hidden -DNDEBUG=1 --closure 1 -sEVAL_CTORS -fno-rtti -fno-exceptions
 EMXXFLAGS := -sINITIAL_MEMORY=642252800 -msimd128 -msse4.2 -sINVOKE_RUN=0 -sSTACK_SIZE=134217728 -sALLOW_MEMORY_GROWTH=0 --cache ./emsdk_cache -sUSE_WEBGL2=1 -sFULL_ES2=1 -sFULL_ES3=1 -sMIN_WEBGL_VERSION=2 -sMODULARIZE=1 -sEXPORT_NAME='createVial' -sEXPORTED_FUNCTIONS="['_release_lock','_acquire_lock','_clientAudioCallback','_setupAudioThread','_main','_dumpAudioBuffers','_setThreadMode','_vialSetWindowSize','_vialRedraw','_processKeyboardKey','_processMouseEvent','_processMidiEvent','_preinit','_processDnD','_malloc','_free','_vialLoadSlot0','_vialSaveSlot0','_setBPM','_setSamplerate']" -sEXPORTED_RUNTIME_METHODS="['HEAPU8','HEAPF32','HEAPU32','HEAP32','HEAPF64','FS','ccall']" -sLEGACY_VM_SUPPORT=0 -sIMPORTED_MEMORY=1 -sSHARED_MEMORY=1 -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=2 -sFORCE_FILESYSTEM -lidbfs.js
-# also make sure that SIMD is being correctly used
-# add relaxed simd when that comes out (-mrelaxed-simd)
 
 #DEBUG CONFIGS
 #EMXXFLAGS += -O0 -g3 -ggdb -fvisibility=default -Wl,--keep-section=.debug_* "-DDEBUG=1" -gseparate-dwarf -gdwarf-4 -fno-split-dwarf-inlining --source-map-base http://localhost:3000/ -fdebug-prefix-map=/emsdk/=/emroot/ -sASSERTIONS=2 -sSTACK_OVERFLOW_CHECK=2
 #EMXXFLAGS += -sWASM=0 -sSEPARATE_DWARF=0
 
+#-fsimd
 #RELEASE CONFIGS
 EMMXFLAGS += -O3 -flto -fvisibility=hidden "-DNDEBUG=1" --closure 1 -sEVAL_CTORS -fno-rtti -fno-exceptions -g0 -sSIMD=1 -sNO_EXIT_RUNTIME=1 -ftree-vectorize -finline-functions -funroll-loops -fvectorize --use-llvm-opts --disable-assertions -sSTACK_OVERFLOW_CHECK=1 -freorder-blocks -floop-vectorize
+EMMXFLAGS += -fopt-info-vec-optimized -fopt-info-vec-missed -sRETAIN_TYPE_INFO=1 -sOPTIMIZE_FOR_SIZE=0
 
 # AGGRESSIVE MATH OPTIMISATIONS
 EMMXFLAGS += -ffast-math -fno-signed-zeros -fno-nans -fno-infs -fno-trapping-math -funsafe-math-optimizations -fassociative-math -freciprocal-math -ffinite-math-only -fno-strict-aliasing
 
+# LOGGING CHANGES
+EMMXFLAGS += -Wno-nan-infinity -Wno-implicit-const-int-float-conversion -Wsimd --logging -Wunroll
 #EMMXFLAGS += -g3 -ggdb
+
+# RELAXED SIMD
+EMMXFLAGS += -mrelaxed-simd
+WASMOPT_FLAGS += --enable-relaxed-simd
 
 PROGRAM = vial
 LIB_PROGRAM = Vial
@@ -103,7 +110,7 @@ wasm_full:
 wasm_hyprpass_lite:
 	@echo START HYPRPASS LITE
 	@echo this can take a long time, please be patient! =O3
-	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O3 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug
+	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O3 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug --unroll-loops $(WASMOPT_FLAGS)
 	@echo HYPRPASS COMPLETE!
 	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
 	-mv docs/vial.tmp.js docs/vial.js
@@ -112,7 +119,7 @@ wasm_hyprpass_lite:
 wasm_hyprpass:
 	@echo START HYPRPASS O4
 	@echo this can take a long time, please be patient! =O4
-	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug
+	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug --unroll-loops $(WASMOPT_FLAGS)
 	@echo HYPRPASS COMPLETE!
 	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
 	-mv docs/vial.tmp.js docs/vial.js
@@ -121,7 +128,7 @@ wasm_hyprpass:
 wasm_hyprpass_convergent:
 	@echo START HYPRPASS CONVERGENT
 	@echo this can take a long time, please be patient! =O4conv
-	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --converge --debug
+	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --converge --debug --unroll-loops $(WASMOPT_FLAGS)
 	@echo HYPRPASS COMPLETE!
 	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
 	-mv docs/vial.tmp.js docs/vial.js

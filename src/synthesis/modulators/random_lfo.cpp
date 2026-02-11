@@ -161,6 +161,7 @@ namespace vital {
     if (!isControlRate()) {
       poly_float current_value = last_value_;
       poly_float delta_value = (result - current_value) * (1.0f / num_samples);
+      #pragma GCC unroll 64
       for (int i = 0; i < num_samples; ++i) {
         current_value += delta_value;
         dest[i] = current_value;
@@ -179,6 +180,7 @@ namespace vital {
 
     poly_float* dest = output()->buffer;
     if (!isControlRate()) {
+      #pragma GCC unroll 64
       for (int i = 0; i < num_samples; ++i) {
         poly_mask over = poly_int::greaterThan(i, sample_change);
         dest[i] = utils::maskLoad(last_random_value, current_random_value, over);
@@ -236,6 +238,7 @@ namespace vital {
     poly_float t = utils::min(kMaxFrequency, frequency * (0.5f / getSampleRate()));
 
     poly_float* dest = output()->buffer;
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float delta1 = (state2 - state1) * kLorenzA;
       poly_float delta2 = (-state3 + kLorenzB) * state1 - state2;

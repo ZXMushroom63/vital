@@ -64,6 +64,7 @@ namespace vital {
     poly_float* dest = output()->buffer;
     const poly_float* source = input()->source->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float value = source[i];
       dest[i] = value * value;
@@ -121,6 +122,7 @@ namespace vital {
     current_multiply = utils::maskLoad(current_multiply, multiply_, getResetMask(kReset));
     poly_float delta_multiply = (multiply_ - current_multiply) * (1.0f / num_samples);
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_multiply += delta_multiply;
       audio_out[i] = audio_in[i] * current_multiply;
@@ -150,6 +152,7 @@ namespace vital {
       current_fraction = utils::maskLoad(current_fraction, fraction_, getResetMask(kReset));
       poly_float delta_fraction = (fraction_ - current_fraction) * (1.0f / num_samples);
 
+      #pragma GCC unroll 64
       for (int i = 0; i < num_samples; ++i) {
         current_fraction += delta_fraction;
         dest[i] = utils::interpolate(from[i], to[i], current_fraction);
@@ -175,6 +178,7 @@ namespace vital {
     const poly_float* x_position = input(kXPosition)->source->buffer;
     const poly_float* y_position = input(kYPosition)->source->buffer;
     poly_float* dest = output()->buffer;
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float x = utils::clamp(x_position[i], -kMaxOffset, 1.0f + kMaxOffset);
       poly_float y = utils::clamp(y_position[i], -kMaxOffset, 1.0f + kMaxOffset);
@@ -283,6 +287,7 @@ namespace vital {
     const poly_float* source = input()->source->buffer;
     poly_float* dest = output()->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_cos_mult += delta_cos;
       current_sin_mult += delta_sin;
@@ -305,6 +310,7 @@ namespace vital {
     const poly_float* source = input()->source->buffer;
     poly_float* dest = output()->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_cos_mult += delta_cos;
       current_sin_mult += delta_sin;

@@ -530,6 +530,7 @@ void SynthBase::renderAudioForResynthesis(float* data, int samples, int note) {
     current_time += num_samples * sample_time;
     engine_->process(num_samples);
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       float sample = engine_output[i][0];
       data[s + i] = sample;

@@ -100,6 +100,7 @@ namespace vital {
   template<poly_float(*distort)(poly_float, poly_float), poly_float(*scale)(poly_float)>
   void Distortion::processTimeInvariant(int num_samples, const poly_float* audio_in, const poly_float* drive,
                                         poly_float* audio_out) {
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float current_drive = scale(drive[i]);
       poly_float sample = audio_in[i];
@@ -113,6 +114,7 @@ namespace vital {
     mono_float sample_rate = getSampleRate();
     poly_float current_samples = current_samples_;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float current_period = downSampleScale(drive[i]) * sample_rate; 
       current_samples += 1.0f;

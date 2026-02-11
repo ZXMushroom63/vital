@@ -223,6 +223,7 @@ namespace vital {
     }
 
     static force_inline simd_type vector_call greaterThan(simd_type one, simd_type two) {
+      return wasm_i32x4_gt(one, two);
 #if VITAL_AVX2
       return _mm256_cmpgt_epi32(_mm256_xor_si256(one, init(kSignMask)), _mm256_xor_si256(two, init(kSignMask)));
 #elif VITAL_SSE2

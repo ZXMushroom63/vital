@@ -99,6 +99,7 @@ namespace vital {
     current_amount = utils::maskLoad(current_amount, modulation_amount_, getResetMask(kReset));
     poly_float delta_amount = (modulation_amount_ - current_amount) * (1.0f / num_samples);
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_amount += delta_amount;
       poly_float modulation_value = modulation_source[i];
@@ -134,6 +135,7 @@ namespace vital {
     poly_float delta_amount = (modulation_amount_ - current_amount) * sample_inc;
     poly_float delta_power = (power - current_power) * sample_inc;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_amount += delta_amount;
       current_power += delta_power;
@@ -178,6 +180,8 @@ namespace vital {
     poly_float delta_power = (power - current_power) * sample_inc;
 
     mono_float* buffer = map_generator_->getCubicInterpolationBuffer();
+
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_amount += delta_amount;
       current_power += delta_power;
@@ -220,6 +224,8 @@ namespace vital {
     poly_float delta_amount = (modulation_amount_ - current_amount) * (1.0f / num_samples);
 
     mono_float* buffer = map_generator_->getCubicInterpolationBuffer();
+
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_amount += delta_amount;
       poly_float modulation_value = modulation_source[i];

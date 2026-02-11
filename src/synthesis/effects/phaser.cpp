@@ -68,6 +68,7 @@ namespace vital {
 
     const poly_float* center_buffer = input(kCenter)->source->buffer;
     poly_int current_phase = phase_;
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       phase_offset += delta_phase_offset;
       current_mod_depth += delta_depth;
@@ -87,6 +88,7 @@ namespace vital {
 
     const poly_float* phaser_out = phaser_filter_->output()->buffer;
     poly_float* audio_out = output(kAudioOutput)->buffer;
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       current_mix += delta_mix;
       audio_out[i] = utils::interpolate(audio_in[i], phaser_out[i], current_mix);

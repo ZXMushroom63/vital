@@ -21,6 +21,7 @@
 // Debugging.
 #if DEBUG
 #include <cassert>
+#error "asserts are being compiled btw"
 #define VITAL_ASSERT(x) assert(x)
 #else
 #define VITAL_ASSERT(x) ((void)0)

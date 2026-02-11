@@ -104,6 +104,7 @@ namespace vital {
 
     poly_float* audio_out = output()->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float midi_delta = midi_cutoff_buffer[i] - base_midi;
       poly_float frequency = utils::min(base_frequency * futils::midiOffsetToRatio(midi_delta), 1.0f);
@@ -156,6 +157,7 @@ namespace vital {
 
     poly_float* audio_out = output()->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float midi_delta = midi_cutoff_buffer[i] - base_midi;
       poly_float frequency = utils::min(base_frequency * futils::midiOffsetToRatio(midi_delta), 1.0f);
@@ -209,6 +211,7 @@ namespace vital {
 
     poly_float* audio_out = output()->buffer;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       poly_float midi_delta = midi_cutoff_buffer[i] - base_midi;
       poly_float frequency = utils::min(base_frequency * futils::midiOffsetToRatio(midi_delta), 1.0f);

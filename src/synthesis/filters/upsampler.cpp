@@ -31,6 +31,7 @@ namespace vital {
 
     int oversample_amount = getOversampleAmount();
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       int offset = i * oversample_amount;
       for (int s = 0; s < oversample_amount; ++s)

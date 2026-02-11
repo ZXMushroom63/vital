@@ -168,6 +168,7 @@ namespace vital {
     poly_float phased_offset = 0.0f;
     poly_float current_value = audio_rate_state_.smooth_value;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       delay_time_passed += tick_time;
       poly_mask past_delay_mask = poly_float::greaterThanOrEqual(delay_time_passed, delay_time);
@@ -220,6 +221,7 @@ namespace vital {
     poly_int trigger_sample = trigger_sample_;
     poly_float current_value = audio_rate_state_.smooth_value;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       delay_time_passed += tick_time;
       poly_mask past_delay_mask = poly_float::greaterThanOrEqual(delay_time_passed, delay_time);
@@ -273,6 +275,7 @@ namespace vital {
     poly_float phased_offset = 0.0f;
     poly_float current_value = audio_rate_state_.smooth_value;
 
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       delay_time_passed += tick_time;
       poly_mask past_delay_mask = poly_float::greaterThanOrEqual(delay_time_passed, delay_time);
@@ -323,6 +326,7 @@ namespace vital {
     poly_float* dest = output(kValue)->buffer;
     poly_float current_value = audio_rate_state_.smooth_value;
     
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       delay_time_passed += tick_time;
       poly_mask past_delay_mask = poly_float::greaterThanOrEqual(delay_time_passed, delay_time);
@@ -373,6 +377,7 @@ namespace vital {
     poly_mask held_mask = held_mask_;
     poly_float current_value = audio_rate_state_.smooth_value;
     
+    #pragma GCC unroll 64
     for (int i = 0; i < num_samples; ++i) {
       delay_time_passed += tick_time;
       poly_mask past_delay_mask = poly_float::greaterThanOrEqual(delay_time_passed, delay_time);
