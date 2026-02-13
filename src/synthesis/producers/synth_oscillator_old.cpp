@@ -275,7 +275,7 @@ namespace vital {
       const poly_int* phase_buffer = voice_block.phase_buffer + start;
       int num_samples = voice_block.end_sample - start;
 
-      #pragma GCC unroll 64
+      #pragma GCC unroll 8
       for (int i = 0; i < num_samples; ++i) {
         current_phase_inc_mult += delta_phase_inc_mult;
         phase += utils::toInt(phase_inc_buffer[i] * current_phase_inc_mult);
@@ -320,7 +320,7 @@ namespace vital {
       const poly_int* phase_buffer = voice_block.phase_buffer + start;
       int num_samples = voice_block.end_sample - start;
 
-      #pragma GCC unroll 64
+      #pragma GCC unroll 8
       for (int i = 0; i < num_samples; ++i) {
         current_phase_inc_mult += delta_phase_inc_mult;
         phase += utils::toInt(phase_inc_buffer[i] * current_phase_inc_mult);
@@ -372,7 +372,7 @@ namespace vital {
       const poly_int* phase_buffer = voice_block.phase_buffer + start;
       int num_samples = voice_block.end_sample - start;
 
-      #pragma GCC unroll 64
+      #pragma GCC unroll 8
       for (int i = 0; i < num_samples; ++i) {
         current_phase_inc_mult += delta_phase_inc_mult;
         phase += utils::toInt(phase_inc_buffer[i] * current_phase_inc_mult);
@@ -425,7 +425,7 @@ namespace vital {
       const poly_int* phase_buffer = voice_block.phase_buffer + start;
       int num_samples = voice_block.end_sample - start;
 
-      #pragma GCC unroll 64
+      #pragma GCC unroll 8
       for (int i = 0; i < num_samples; ++i) {
         current_phase_inc_mult += delta_phase_inc_mult;
         phase += utils::toInt(phase_inc_buffer[i] * current_phase_inc_mult);
@@ -888,7 +888,7 @@ namespace vital {
       return;
 
 
-    #pragma GCC unroll 64
+    #pragma GCC unroll 8
     for (int i = 0; i < num_samples; ++i) {
       current_stereo_mult += delta_stereo_mult;
       current_center_mult += delta_center_mult;
@@ -911,7 +911,7 @@ namespace vital {
     const poly_float* amplitude = input(kAmplitude)->source->buffer;
     poly_float zero = 0.0f;
 
-    #pragma GCC unroll 64
+    #pragma GCC unroll 8
     for (int i = 0; i < num_samples; ++i) {
       poly_float amp = utils::max(amplitude[i], zero);
       current_pan_amplitude += delta_pan_amplitude;
@@ -1307,8 +1307,6 @@ namespace vital {
   template<poly_float(*snapTranspose)(poly_float, poly_float, float*)>
   void SynthOscillator::setPhaseIncBufferSnap(int num_samples, poly_mask reset_mask,
                                               poly_int trigger_sample, poly_mask active_mask, float* snap_buffer) {
-    
-
     bool midi_track = poly_float::notEqual(input(kMidiTrack)->at(0), 0.0f).anyMask();
     poly_float current_midi = midi_note_;
     midi_note_ = kNoMidiTrackDefault;
@@ -1318,7 +1316,6 @@ namespace vital {
     float sample_inc = 1.0f / num_samples;
     current_midi = utils::maskLoad(current_midi, midi_note_, reset_mask);
     poly_float delta_midi = (midi_note_ - current_midi) * sample_inc;
-
     current_midi = utils::maskLoad(utils::swapVoices(current_midi), current_midi, active_mask);
     delta_midi = utils::maskLoad(utils::swapVoices(delta_midi), delta_midi, active_mask);
 
@@ -1327,52 +1324,29 @@ namespace vital {
     const poly_float* phase_buffer = input(kPhase)->source->buffer;
 
     poly_float base_midi = current_midi + transpose_buffer[0] + tune_buffer[0];
-    poly_float base_frequency = futils::midiNoteToFrequencyCheap(base_midi);
+    poly_float base_frequency = utils::midiNoteToFrequency(base_midi);
 
     poly_float sample_rate_scale = kPhaseMult / getSampleRate();
     poly_float phase_scale = kPhaseMult;
 
     poly_float* inc_dest = phase_inc_buffer_->buffer;
     poly_int* phase_dest = phase_buffer_->buffer;
-    int safe_start_index = 0;
-    
-    if (reset_mask.anyMask()) {
-        safe_start_index = std::max({trigger_sample[0], trigger_sample[1], trigger_sample[2], trigger_sample[3]});
-        
-        if (safe_start_index > num_samples) safe_start_index = num_samples;
-    }
 
-    auto process_loop = [&](int start, int end, bool enable_reset) {
-      #pragma GCC unroll 8
-      for (int i = start; i < end; ++i) {
-        poly_float shift_phase = utils::mod(phase_buffer[i]) - 0.5f;
-        poly_int phase = utils::toInt(shift_phase * phase_scale);
-        phase_dest[i] = utils::maskLoad(utils::swapVoices(phase), phase, active_mask);
+    #pragma message("Loop should be unrolled here.")
+    #pragma GCC optimize ("unroll-loops")
+    #pragma GCC unroll 8
+    for (int i = 0; i < num_samples; ++i) {
+      poly_float shift_phase = utils::mod(phase_buffer[i]) - 0.5f;
+      poly_int phase = utils::toInt(shift_phase * phase_scale);
+      phase_dest[i] = utils::maskLoad(utils::swapVoices(phase), phase, active_mask);
 
-        current_midi += delta_midi;
-        
-        poly_float midi = snapTranspose(current_midi, transpose_buffer[i], snap_buffer) + tune_buffer[i];
-        
-        // switch to expensive version if it sounds shit
-        poly_float frequency = base_frequency * futils::midiOffsetToRatioCheap(midi - base_midi);
-        poly_float result = frequency * sample_rate_scale;
+      current_midi += delta_midi;
 
-        if (enable_reset) {
-          poly_mask zero_mask = poly_int::lessThan(i, trigger_sample) & reset_mask;
-          result = result & ~zero_mask;
-        }
-
-        inc_dest[i] = utils::maskLoad(utils::swapVoices(result), result, active_mask);
-      }
-    };
-
-    //last arg is 'enable_reset'. disabling could yield some performance boost
-    if (safe_start_index > 0) {
-        process_loop(0, safe_start_index, true);
-    }
-
-    if (safe_start_index < num_samples) {
-        process_loop(safe_start_index, num_samples, false);
+      poly_float midi = snapTranspose(current_midi, transpose_buffer[i], snap_buffer) + tune_buffer[i];
+      poly_float frequency = base_frequency * futils::midiOffsetToRatio(midi - base_midi);
+      poly_mask zero_mask = poly_int::lessThan(i, trigger_sample) & reset_mask;
+      poly_float result = (frequency * sample_rate_scale) & ~zero_mask;
+      inc_dest[i] = utils::maskLoad(utils::swapVoices(result), result, active_mask);
     }
   }
 

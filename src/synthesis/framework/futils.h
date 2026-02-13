@@ -35,6 +35,9 @@ namespace vital {
   namespace futils {
 
     force_inline poly_float exp2(poly_float exponent) {
+      #if FASTFUTILS
+        return cheapExp2(exponent);
+      #endif
       static constexpr mono_float kCoefficient0 = 1.0f;
       static constexpr mono_float kCoefficient1 = 16970.0 / 24483.0;
       static constexpr mono_float kCoefficient2 = 1960.0 / 8161.0;
@@ -52,6 +55,9 @@ namespace vital {
     }
 
     force_inline poly_float log2(poly_float value) {
+      #if FASTFUTILS
+        return cheapLog2(exponent);
+      #endif
       static constexpr mono_float kCoefficient0 = -1819.0 / 651.0;
       static constexpr mono_float kCoefficient1 = 5.0;
       static constexpr mono_float kCoefficient2 = -10.0 / 3.0;
@@ -60,7 +66,7 @@ namespace vital {
       static constexpr mono_float kCoefficient5 = 1.0 / 31.0;
 
       poly_int floored_log2 = utils::shiftRight<23>(utils::reinterpretToInt(value)) - 0x7f;
-      poly_float t = (value & 0x7fffff) | (0x7f << 23);
+      poly_float t = (value & 0x7fffff) | ( 0x7f << 23);
 
       poly_float cubic = t * (t * (t * kCoefficient5 + kCoefficient4) + kCoefficient3) + kCoefficient2;
       poly_float interpolate = t * (t * cubic + kCoefficient1) + kCoefficient0;
@@ -155,6 +161,14 @@ namespace vital {
 
     force_inline poly_float midiNoteToFrequency(poly_float note) {
       return midiOffsetToRatio(note) * kMidi0Frequency;
+    }
+
+    force_inline poly_float midiOffsetToRatioCheap(poly_float note_offset) {
+      return cheapExp2(note_offset * (1.0f / kNotesPerOctave));
+    }
+
+    force_inline poly_float midiNoteToFrequencyCheap(poly_float note) {
+      return midiOffsetToRatioCheap(note) * kMidi0Frequency;
     }
 
     force_inline mono_float magnitudeToDb(mono_float magnitude) {
@@ -260,6 +274,9 @@ namespace vital {
     }
 
     force_inline poly_float tanh(poly_float value) {
+      #if FASTFUTILS
+        return quickTanh(value);
+      #endif
       poly_float abs_value = poly_float::abs(value);
       poly_float square = value * value;
 
@@ -273,6 +290,9 @@ namespace vital {
     }
 
     force_inline mono_float tanh(mono_float value) {
+      #if FASTFUTILS
+        return quickTanh(value);
+      #endif
       mono_float abs_value = fabsf(value);
       mono_float square = value * value;
 
