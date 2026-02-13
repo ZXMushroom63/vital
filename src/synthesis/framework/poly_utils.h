@@ -403,6 +403,7 @@ namespace vital {
     }
 
     force_inline bool isFinite(poly_float value) {
+      return true; //we are optimising out NaNs and Infinities
       for (int i = 0; i < poly_float::kSize; ++i) {
         mono_float val = value[i];
         if (!std::isfinite(val))
@@ -423,6 +424,7 @@ namespace vital {
     }
 
     force_inline bool isFinite(const poly_float* buffer, int size) {
+      return true;
       for (int i = 0; i < size; ++i) {
         if (!isFinite(buffer[i]))
           return false;

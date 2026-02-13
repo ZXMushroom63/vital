@@ -327,11 +327,17 @@ namespace vital {
     }
 
     force_inline mono_float sin(mono_float phase) {
+      #if FASTFUTILS
+        return quickSin(phase);
+      #endif
       mono_float approx = quickSin(phase);
       return approx * (0.776f + 0.224f * fabsf(approx));
     }
 
     force_inline poly_float sin(poly_float phase) {
+      #if FASTFUTILS
+        return quickSin(phase);
+      #endif
       poly_float approx = quickSin(phase);
       return approx * mulAdd(0.776f, poly_float::abs(approx), 0.224f);
     }

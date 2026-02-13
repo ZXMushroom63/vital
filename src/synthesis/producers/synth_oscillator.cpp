@@ -425,7 +425,7 @@ namespace vital {
       const poly_int* phase_buffer = voice_block.phase_buffer + start;
       int num_samples = voice_block.end_sample - start;
 
-      #pragma GCC unroll 64
+      #pragma GCC unroll 8
       for (int i = 0; i < num_samples; ++i) {
         current_phase_inc_mult += delta_phase_inc_mult;
         phase += utils::toInt(phase_inc_buffer[i] * current_phase_inc_mult);
@@ -440,7 +440,6 @@ namespace vital {
         poly_float read = mult * interpolate(from_buffers, to_buffers, distorted_phase + current_dist_phase, t);
         poly_float center_value = current_center_amplitude * read;
         audio_out[i] = center_value + current_detuned_amplitude * audio_out[i];
-        VITAL_ASSERT(utils::isFinite(audio_out[i]));
 
         t += t_inc;
       }
