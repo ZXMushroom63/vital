@@ -15,7 +15,7 @@
  */
 
 #include "macro_knob_section.h"
-
+#include <emscripten.h>
 #include "fonts.h"
 #include "modulation_button.h"
 #include "synth_slider.h"
@@ -42,6 +42,16 @@ class MacroLabel : public OpenGlImageComponent {
     float text_size_;
 };
 
+extern "C" {
+  SynthSlider** macroMap = new SynthSlider*[4];
+  EMSCRIPTEN_KEEPALIVE
+  void setMacroValue(int macroIdx, float value) {
+    Component::preventRendering = true;
+    macroMap[macroIdx]->setValue(value);
+    Component::preventRendering = false;
+  }
+}
+
 class SingleMacroSection : public SynthSection, public TextEditor::Listener {
   public:
     SingleMacroSection(String name, int index) : SynthSection(name), index_(index) {
@@ -50,8 +60,10 @@ class SingleMacroSection : public SynthSection, public TextEditor::Listener {
 
       macro_knob_ = std::make_unique<SynthSlider>(control_name);
       addSlider(macro_knob_.get());
+      macroMap[index] = macro_knob_.get();
       macro_knob_->setSliderStyle(Slider::RotaryHorizontalVerticalDrag);
       macro_knob_->setPopupPlacement(BubbleComponent::right);
+      
 
       macro_source_ = std::make_unique<ModulationButton>(control_name);
       addModulationButton(macro_source_.get());

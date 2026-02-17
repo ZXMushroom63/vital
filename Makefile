@@ -15,12 +15,12 @@ VERSION := $(shell sh -c 'grep -oh -m 1 "VERSION=[0-9\.]*" standalone/builds/lin
 
 MACHINE := $(shell sh -c 'uname -m 2> /dev/null || echo not')
 
-WASMOPT_FLAGS :=
+WASMOPT :=
 #FINAL_FLAGS := -sSHARED_MEMORY=1 -Wl,--shared-memory -O3 -g0 -sSIMD=1 -ftree-vectorize -flto -fvisibility=hidden -DNDEBUG=1 --closure 1 -sEVAL_CTORS -fno-rtti -fno-exceptions
-EMXXFLAGS := -sINITIAL_MEMORY=642252800 -msimd128 -msse4.2 -sINVOKE_RUN=0 -sSTACK_SIZE=134217728 -sALLOW_MEMORY_GROWTH=0 --cache ./emsdk_cache -sUSE_WEBGL2=1 -sFULL_ES2=1 -sFULL_ES3=1 -sMIN_WEBGL_VERSION=2 -sMODULARIZE=1 -sEXPORT_NAME='createVial' -sEXPORTED_FUNCTIONS="['_release_lock','_acquire_lock','_clientAudioCallback','_setupAudioThread','_main','_dumpAudioBuffers','_setThreadMode','_vialSetWindowSize','_vialRedraw','_processKeyboardKey','_processMouseEvent','_processMidiEvent','_preinit','_processDnD','_malloc','_free','_vialLoadSlot0','_vialSaveSlot0','_setBPM','_setSamplerate']" -sEXPORTED_RUNTIME_METHODS="['HEAPU8','HEAPF32','HEAPU32','HEAP32','HEAPF64','FS','ccall']" -sLEGACY_VM_SUPPORT=0 -sIMPORTED_MEMORY=1 -sSHARED_MEMORY=1 -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=2 -sFORCE_FILESYSTEM -lidbfs.js
+EMXXFLAGS := -sINITIAL_MEMORY=642252800 -msimd128 -msse4.2 -sINVOKE_RUN=0 -sSTACK_SIZE=134217728 -sALLOW_MEMORY_GROWTH=0 --cache ./emsdk_cache -sUSE_WEBGL2=1 -sFULL_ES2=1 -sFULL_ES3=1 -sMIN_WEBGL_VERSION=2 -sMODULARIZE=1 -sEXPORT_NAME='createVial' -sEXPORTED_FUNCTIONS="['_release_lock','_acquire_lock','_clientAudioCallback','_setupAudioThread','_main','_dumpAudioBuffers','_setMacroValue','_setThreadMode','_vialSetWindowSize','_vialRedraw','_processKeyboardKey','_processMouseEvent','_processMidiEvent','_preinit','_processDnD','_malloc','_free','_vialLoadSlot0','_vialSaveSlot0','_setBPM','_setSamplerate']" -sEXPORTED_RUNTIME_METHODS="['HEAPU8','HEAPF32','HEAPU32','HEAP32','HEAPF64','FS','ccall']" -sLEGACY_VM_SUPPORT=0 -sIMPORTED_MEMORY=1 -sSHARED_MEMORY=1 -sUSE_PTHREADS=1 -sPTHREAD_POOL_SIZE=2 -sFORCE_FILESYSTEM -lidbfs.js
 
 #DEBUG CONFIGS
-EMXXFLAGS += -O0 -g3 -ggdb -fvisibility=default -Wl,--keep-section=.debug_* "-DDEBUG=1" -gseparate-dwarf -gdwarf-4 -fno-split-dwarf-inlining --source-map-base http://localhost:3000/ -fdebug-prefix-map=/emsdk/=/emroot/ -sASSERTIONS=2 -sSTACK_OVERFLOW_CHECK=2
+#EMXXFLAGS += -O0 -g3 -ggdb -fvisibility=default -Wl,--keep-section=.debug_* "-DDEBUG=1" -gseparate-dwarf -gdwarf-4 -fno-split-dwarf-inlining --source-map-base http://localhost:3000/ -fdebug-prefix-map=/emsdk/=/emroot/ -sASSERTIONS=2 -sSTACK_OVERFLOW_CHECK=2
 #EMXXFLAGS += -sWASM=0 -sSEPARATE_DWARF=0
 
 #-fsimd
@@ -32,15 +32,16 @@ EMMXFLAGS += -DFASTFUTILS=0 -ffast-math -fno-signed-zeros -fno-nans -fno-infs -f
 
 # LOGGING CHANGES
 EMMXFLAGS += -Wno-nan-infinity -Wno-implicit-const-int-float-conversion -Wsimd --logging -Wunroll
+#WASMOPT += --verbose 
 #EMMXFLAGS += -g3 -ggdb
 
-# RELAXED SIMD
+# RELAXED SIMD and other wasm features
 EMMXFLAGS += -mrelaxed-simd
-WASMOPT_FLAGS += --enable-relaxed-simd
+WASMOPT += --enable-relaxed-simd --enable-threads --enable-simd --enable-fp16 --disable-gc --disable-memory64
 
 # wasm_hyprpass_extreme flags
-XHYPRWASMOPT :=  -O4 --converge --disable-gc --disable-memory64 --const-hoisting --strip-debug
-XHYPRWASMOPT +=  --enable-threads --enable-simd --enable-fp16 --debug
+XHYPRWASMOPT :=  -O4 --converge --const-hoisting --strip-debug
+XHYPRWASMOPT +=  --debug
 XHYPRWASMOPT +=  -uim -ffm -tnh -iit -ifwl -s 0 --optimize-level 9 --vacuum --type-ssa
 XHYPRWASMOPT +=  --type-refining --type-merging --tuple-optimization --trap-mode-clamp
 XHYPRWASMOPT +=  --ssa --simplify-locals --simplify-globals-optimizing --signature-pruning
@@ -49,11 +50,11 @@ XHYPRWASMOPT +=  --reorder-globals --reorder-functions --remove-unused-types --r
 XHYPRWASMOPT +=  --remove-unused-names --remove-unused-brs --precompute-propagate --post-emscripten
 XHYPRWASMOPT +=  --optimize-instructions --optimize-casts --low-memory-unused --optimize-added-constants-propagate --once-reduction
 XHYPRWASMOPT +=  --merge-locals --merge-similar-functions --merge-j2cl-itables --merge-blocks
-XHYPRWASMOPT +=  --local-subtyping --local-cse --licm --inlining-optimizing --heap-store-optimization
+XHYPRWASMOPT +=  --local-subtyping --licm --inlining-optimizing --heap-store-optimization
 XHYPRWASMOPT +=  --gufa --gufa-optimizing --gto --gsi --global-refining --directize --dce
-XHYPRWASMOPT +=  --dae-optimizing --const-hoisting --code-folding --code-pushing --coalesce-locals
+XHYPRWASMOPT +=  --dae-optimizing --const-hoisting --code-folding --code-pushing
 XHYPRWASMOPT +=  --cfp --abstract-type-refining --monomorphize --pass-arg=monomorphize-min-benefit@30
-XHYPRWASMOPT += --log-execution
+XHYPRWASMOPT += --log-execution --simplify-locals --merge-locals --simplify-locals --coalesce-locals --merge-locals --vacuum
 
 PROGRAM = vial
 LIB_PROGRAM = Vial
@@ -126,16 +127,23 @@ wasm_full:
 wasm_hyprpass_lite:
 	@echo START HYPRPASS LITE
 	@echo this can take a long time, please be patient! =O3
-	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O3 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug $(WASMOPT_FLAGS)
+	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O3 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --debug $(WASMOPT)
 	@echo HYPRPASS COMPLETE!
 	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
 	-mv docs/vial.tmp.js docs/vial.js
 
 #very long time to optimise, getting kinda crazy atp
-wasm_hyprpass_extreme:
+wasm_hyprpass_combo:
 	@echo START HYPRPASS O4EXTREME
 	@echo this can take a long time, please be patient! =O4
-	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm $(WASMOPT_FLAGS) $(XHYPRWASMOPT)
+	-cp docs/vial.wasm docs/vialhypr.tmp.wasm
+	-wasm-opt docs/vialhypr.tmp.wasm -o docs/vialhypr.tmp.wasm -O3 -tnh -iit --fast-math --simplify-locals --dce --vacuum --precompute --debug $(WASMOPT)
+	-wasm-opt docs/vialhypr.tmp.wasm -o docs/vialhypr.tmp.wasm $(WASMOPT) --debug --precompute-propagate --type-refining-gufa --gufa-optimizing --optimize-instructions --optimize-casts --gufa --fast-math -tnh -iit --simplify-locals --merge-locals --reorder-globals --reorder-locals --remove-unused-brs
+	-wasm-opt docs/vialhypr.tmp.wasm -o docs/vialhypr.tmp.wasm $(WASMOPT) --debug  --fast-math -tnh -iit --merge-blocks --coalesce-locals --optimize-instructions --vacuum --ssa --rse --remove-unused-brs --simplify-locals --merge-locals
+	-wasm-opt docs/vialhypr.tmp.wasm -o docs/vialhypr.tmp.wasm $(WASMOPT) --debug  --fast-math -tnh -iit -O4 --converge --simplify-control-flow
+	-wasm-opt docs/vialhypr.tmp.wasm -o docs/vialhypr.tmp.wasm $(WASMOPT) --debug  --fast-math -tnh -iit --flatten --rereloop --dfo
+	-wasm-opt docs/vialhypr.tmp.wasm -o docs/vialhypr.tmp.wasm $(WASMOPT) --debug  --fast-math -tnh -iit -O4 --converge --simplify-control-flow
+	-mv docs/vialhypr.tmp.wasm docs/vialhypr.wasm
 	@echo HYPRPASS COMPLETE!
 	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
 	-mv docs/vial.tmp.js docs/vial.js
@@ -144,7 +152,7 @@ wasm_hyprpass_extreme:
 wasm_hyprpass_dataflowssa:
 	@echo START HYPRPASS O4DFO
 	@echo this can take multiple weeks, please be patient! =O4
-	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm $(WASMOPT_FLAGS) $(XHYPRWASMOPT) --flatten --dfo
+	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm $(WASMOPT) $(XHYPRWASMOPT) --flatten --dfo
 	@echo HYPRPASS COMPLETE!
 	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
 	-mv docs/vial.tmp.js docs/vial.js
@@ -153,7 +161,7 @@ wasm_hyprpass_dataflowssa:
 wasm_hyprpass_convergent:
 	@echo START HYPRPASS CONVERGENT
 	@echo this can take a long time, please be patient! =O4conv
-	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --converge --debug $(WASMOPT_FLAGS)
+	-wasm-opt docs/vial.wasm -o docs/vialhypr.wasm -O4 -tnh --fast-math --enable-simd --enable-threads --simplify-locals --dce --vacuum --precompute --converge --debug $(WASMOPT)
 	@echo HYPRPASS COMPLETE!
 	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js
 	-mv docs/vial.tmp.js docs/vial.js

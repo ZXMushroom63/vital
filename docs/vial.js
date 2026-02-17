@@ -12836,7 +12836,7 @@ function checkIncomingModuleAPI() {
   ignoredModuleProp('fetchSettings');
 }
 var ASM_CONSTS = {
-  135620412: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
+  135629452: () => { globalThis.vIDBFS = IDBFS; globalThis.vMEMFS = MEMFS; }
 };
 function getEmsdkSamplerate() { return globalThis.VIAL_SAMPLERATE || 44100; }
 function getEmsdkChannelCount() { return Math.min(2, Math.max(1, Math.floor(globalThis.VIAL_CHANNEL_COUNT))) || 1; }
@@ -12847,6 +12847,7 @@ function __asyncjs__debugStackFreezeGL() { return Asyncify.handleAsync(async () 
 // Imports from the Wasm binary.
 var _free = Module['_free'] = makeInvalidEarlyAccess('_free');
 var _malloc = Module['_malloc'] = makeInvalidEarlyAccess('_malloc');
+var _setMacroValue = Module['_setMacroValue'] = makeInvalidEarlyAccess('_setMacroValue');
 var _startApplication_Classic = Module['_startApplication_Classic'] = makeInvalidEarlyAccess('_startApplication_Classic');
 var _startApplication_Advanced = Module['_startApplication_Advanced'] = makeInvalidEarlyAccess('_startApplication_Advanced');
 var _vialSetWindowSize = Module['_vialSetWindowSize'] = makeInvalidEarlyAccess('_vialSetWindowSize');
@@ -12900,6 +12901,7 @@ var _emscripten_stack_get_current = makeInvalidEarlyAccess('_emscripten_stack_ge
 function assignWasmExports(wasmExports) {
   Module['_free'] = _free = createExportWrapper('free', 1);
   Module['_malloc'] = _malloc = createExportWrapper('malloc', 1);
+  Module['_setMacroValue'] = _setMacroValue = createExportWrapper('setMacroValue', 2);
   Module['_startApplication_Classic'] = _startApplication_Classic = createExportWrapper('startApplication_Classic', 0);
   Module['_startApplication_Advanced'] = _startApplication_Advanced = createExportWrapper('startApplication_Advanced', 0);
   Module['_vialSetWindowSize'] = _vialSetWindowSize = createExportWrapper('vialSetWindowSize', 2);
