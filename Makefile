@@ -142,7 +142,7 @@ wasm_hyprpass_combo:
 	-wasm-opt docs/vialhypr.tmp.wasm -o docs/vialhypr.tmp.wasm $(WASMOPT) --debug  --fast-math -tnh -iit --merge-blocks --coalesce-locals --optimize-instructions --vacuum --ssa --rse --remove-unused-brs --simplify-locals --merge-locals
 	-wasm-opt docs/vialhypr.tmp.wasm -o docs/vialhypr.tmp.wasm $(WASMOPT) --debug  --fast-math -tnh -iit -O4 --converge --simplify-control-flow
 	-wasm-opt docs/vialhypr.tmp.wasm -o docs/vialhypr.tmp.wasm $(WASMOPT) --debug  --fast-math -tnh -iit --flatten --rereloop --dfo
-	-wasm-opt docs/vialhypr.tmp.wasm -o docs/vialhypr.tmp.wasm $(WASMOPT) --debug  --fast-math -tnh -iit -O4 --converge --simplify-control-flow
+	-wasm-opt docs/vialhypr.tmp.wasm -o docs/vialhypr.tmp.wasm $(WASMOPT) --debug  --fast-math -tnh -iit -O4 --converge --coalesce-locals --merge-locals --simplify-locals
 	-mv docs/vialhypr.tmp.wasm docs/vialhypr.wasm
 	@echo HYPRPASS COMPLETE!
 	-sed "s/'vial.wasm'/'vialhypr.wasm'/g" docs/vial.js > docs/vial.tmp.js

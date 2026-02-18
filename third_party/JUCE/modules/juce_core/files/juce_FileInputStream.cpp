@@ -28,6 +28,12 @@ namespace juce
 int64 juce_fileSetPosition (void* handle, int64 pos);
 
 EM_JS(void, prepareForFileRead, (char* str), {
+    function crossOriginTypecheck(object, types) {
+        if (typeof object !== "object") {
+            return false;
+        }
+        return types.includes(entry.constructor.name);
+    }
     let filePath = "";
     let ptr = str;
     while (HEAPU8[ptr] > 0) {
@@ -36,17 +42,17 @@ EM_JS(void, prepareForFileRead, (char* str), {
     }
     filePath = filePath.trim();
     const splits = filePath.split("/");
-    const entName = "./" + splits[splits.length - 2] + "/" + splits[splits.length - 1];
+    const entName = filePath.replaceAll("/home/web_user/.local/share/vital/User", ".");
     const entry = FILE_OVERRIDES[entName];
     if (!entry) {
         console.log("No entry for", entName);
         return;
     }
-    if (entry instanceof Uint8Array) {
+    if (crossOriginTypecheck(entry, ["Uint8Array"])) {
         console.log("Entry already patched:", entName);
         return;
     }
-    if (entry instanceof Blob) {
+    if (crossOriginTypecheck(entry, ["Blob", "File"])) {
         const st = Date.now();
         console.log("[JS] Shimming read request for:", filePath);
 

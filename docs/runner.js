@@ -56,6 +56,11 @@ function buf2str(buf) {
     }
     return str;
 }
+function sleep(ms) {
+    return new Promise((resolve, reject) => {
+        setTimeout(()=>resolve(), ms);
+    });
+}
 function getVialConfig() {
     return buf2str(lookupFSPath("/home/web_user/.vial/Vial.config").contents);
 }
@@ -137,6 +142,11 @@ createVial({
         "./Samples/clock.wav": await (await fetch("clock_final.mp3")).blob(),
         "./Presets/demopad.vital": await (await fetch("demopad.vital")).blob(),
     };
+    globalThis.waitingOnRemoteAssets = PARAMS.get("remoteassets") === "true";
+    
+    while (waitingOnRemoteAssets) {
+        await sleep(350);
+    }
     globalThis.Vial = Vial;
     globalThis._V_KMAP_PTR = Vial._preinit();
     //Vial.FS.mkdir('/home/web_user');
@@ -166,20 +176,28 @@ createVial({
         });
 
         Object.keys(FILE_OVERRIDES).forEach(assetPath => {
+            let bmode = null;
+            if (FILE_OVERRIDES[assetPath].constructor.name === "ArrayBuffer") {
+                bmode = new Uint8Array(FILE_OVERRIDES[assetPath]);
+                delete FILE_OVERRIDES[assetPath];
+            }
             let targetAssetPath = assetPath;
             let foundMountpoint = false;
             Object.entries(globalThis.ASSET_MOUNTPOINTS).forEach(ent => {
-                if (targetAssetPath.includes(ent[0])) {
+                if (targetAssetPath.includes(ent[0]) && !foundMountpoint) {
                     foundMountpoint = true;
                     targetAssetPath = targetAssetPath.replace(ent[0], ent[1]);
                 }
             });
             if (foundMountpoint) {
-                console.log("1. Writing to ", targetAssetPath);
-                Vial.FS.writeFile(targetAssetPath, BLANK_BUF);
+                console.log("1. Writing to ", targetAssetPath, FILE_OVERRIDES[assetPath]);
+                Vial.FS.mkdirTree(targetAssetPath.slice(0, targetAssetPath.lastIndexOf("/")));
+                Vial.FS.writeFile(targetAssetPath, bmode || BLANK_BUF);
             } else {
+                targetAssetPath = targetDir + targetAssetPath.slice(2);
                 console.log("2. Writing to ", targetAssetPath);
-                Vial.FS.writeFile(targetDir + targetAssetPath.slice(2), BLANK_BUF);
+                Vial.FS.mkdirTree(targetAssetPath.slice(0, targetAssetPath.lastIndexOf("/")));
+                Vial.FS.writeFile(targetAssetPath, bmode || BLANK_BUF);
             }
         });
 
